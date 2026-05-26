@@ -1,0 +1,1114 @@
+/* equipment-slot.css — WoW-style "loadout" popover for the lined-title
+   callouts. All selectors namespaced .eq-slot__* to coexist with the
+   legacy .brain-picker__* block during the rollout phases.
+
+   Visual language consumes tokens.css only — no new design tokens. */
+
+.eq-slot {
+    position: absolute;
+    z-index: var(--z-modal);
+    width: 380px;
+    max-width: calc(100vw - 24px);
+    /* min-height ensures the popover always shows ~3 rows of inventory
+       by default — without it the popover sized to content, which when
+       inventory's flex-basis is 0 collapsed the grid to a sliver. */
+    min-height: min(420px, calc(100vh - 120px));
+    max-height: min(560px, calc(100vh - 120px));
+    display: flex;
+    flex-direction: column;
+    /* Default: clip overflow so the inventory grid sizes correctly
+       against the popover's max-height. Pre-connect popups switch to
+       overflow:visible so the Truffle bubble can extend past the
+       popover edges; the bubble is the only thing rendered above
+       inventory in that mode so no risk of grid overflow. */
+    overflow: hidden;
+
+    color: var(--ink-0);
+    font-family: var(--font-display);
+
+    background: linear-gradient(180deg,
+        rgba(0, 0, 0, 0.94) 0%,
+        rgba(5, 6, 10, 0.97) 100%);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.65),
+        0 0 32px rgba(6, 182, 212, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+    transform-origin: top center;
+    transition:
+        transform var(--pnl-dur-in) var(--pnl-ease),
+        opacity var(--pnl-dur-in) var(--pnl-ease);
+}
+.eq-slot[data-state="opening"] {
+    transform: translateY(-8px) scale(0.985);
+    opacity: 0;
+}
+.eq-slot[data-state="open"],
+.eq-slot[data-state="swapping"] {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+.eq-slot[data-state="closing"] {
+    transform: translateY(-4px) scale(0.99);
+    opacity: 0;
+    transition:
+        transform var(--pnl-dur-out) var(--pnl-ease),
+        opacity var(--pnl-dur-out) var(--pnl-ease);
+}
+.eq-slot--above {
+    transform-origin: bottom center;
+}
+.eq-slot--above[data-state="opening"] {
+    transform: translateY(8px) scale(0.985);
+}
+
+/* ── Truffle pre-connect chat bubble ─────────────────────────
+   Overlays the top of the popup (head + loadout area) like a
+   speech bubble Truffle is saying about this slot. The popup
+   underneath still renders — the bubble has its own shadow +
+   border so it reads as a separate floating element with a
+   directional tail pointing back toward Truffle/the model. */
+.eq-slot__truffle {
+    position: relative;
+    /* Stays within the popover's content box so the bubble can't push
+       past the viewport edge when the popup is anchored near the right
+       side. The 3D "sticking out" feel comes from the shadow + cyan
+       border, not actual overflow. */
+    margin: 12px 12px 14px;
+    padding: 16px 22px 18px;
+    background: rgba(6, 9, 18, 0.96);
+    border: 1px solid rgba(6, 182, 212, 0.55);
+    border-radius: 14px;
+    box-shadow:
+        0 18px 44px rgba(0, 0, 0, 0.6),
+        0 0 32px rgba(6, 182, 212, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+    animation: eq-slot-truffle-pop 360ms cubic-bezier(0.22, 1, 0.36, 1);
+    transform-origin: top left;
+}
+@keyframes eq-slot-truffle-pop {
+    from { transform: translateY(-6px) scale(0.96); opacity: 0; }
+    to   { transform: translateY(0)    scale(1);    opacity: 1; }
+}
+.eq-slot__truffle-text {
+    margin: 0;
+    color: var(--ink-0);
+    font-size: 14px;
+    line-height: 1.5;
+    letter-spacing: -0.005em;
+    font-family: var(--font-display);
+    min-height: 1.5em; /* avoid layout jitter while typewriter fills */
+}
+/* Blinking caret while speaking — matches the lobby chat bubble feel. */
+.eq-slot__truffle-text::after {
+    content: '▍';
+    color: var(--acc-cyan, #06b6d4);
+    margin-left: 2px;
+    opacity: 0.7;
+    animation: eq-slot-truffle-caret 700ms steps(2) infinite;
+}
+@keyframes eq-slot-truffle-caret { 50% { opacity: 0; } }
+
+/* Hide the head + loadout entirely while pre-connect — the
+   Truffle bubble takes their place. Without `display:none` the
+   chrome would peek out around the bubble's edges and break the
+   "single overlaid bubble" effect. */
+.eq-slot--preconnect .eq-slot__head,
+.eq-slot--preconnect .eq-slot__loadout { display: none; }
+/* Reserve a little headroom so the bubble has its 10px top inset
+   AND its own 14px bottom padding visible inside the popover.
+   Inventory grows from this baseline. */
+.eq-slot--preconnect .eq-slot__inventory,
+.eq-slot--preconnect .eq-slot__custom { margin-top: 0; }
+
+.eq-slot__close--in-truffle {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+}
+
+/* Directional tail — points from the bubble back toward the model,
+   per slot. The model is at the lobby center; each slot anchor sits
+   on one side of the model, so the tail leans toward that anchor's
+   side of the bubble. ::before is the cyan outline diamond; ::after
+   is the dark fill just inside it to leave a continuous border. */
+.eq-slot__truffle::before,
+.eq-slot__truffle::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    transform: rotate(45deg);
+    pointer-events: none;
+}
+.eq-slot__truffle::before {
+    background: rgba(6, 182, 212, 0.45);
+}
+.eq-slot__truffle::after {
+    background: rgba(6, 9, 18, 0.94);
+}
+/* Tail direction = side of bubble FACING Truffle's mouth.
+   Truffle sits at the lobby center; each slot label is on one side
+   of him, so the popup ends up on that same side and the tail
+   points back across the bubble toward where his mouth is. */
+
+/* Brain: label sits above-left of Truffle's head → popup below
+   the label is up-left of Truffle → mouth is down-right of the
+   bubble → tail at BOTTOM-RIGHT pointing down-right. */
+.eq-slot[data-part-id="brain"] .eq-slot__truffle::before { bottom: -9px; right: 36px; }
+.eq-slot[data-part-id="brain"] .eq-slot__truffle::after  { bottom: -7px; right: 37px; }
+
+/* Movement: label sits below Truffle → popup above the label
+   → bubble is below Truffle → tail at TOP pointing UP. */
+.eq-slot[data-part-id="movement"] .eq-slot__truffle::before { top: -9px; left: 50%; margin-left: -8px; }
+.eq-slot[data-part-id="movement"] .eq-slot__truffle::after  { top: -7px; left: 50%; margin-left: -7px; }
+
+/* Body: label sits to LEFT of Truffle → popup is left of Truffle
+   → mouth is to the RIGHT of the bubble → tail at RIGHT edge. */
+.eq-slot[data-part-id="body"] .eq-slot__truffle::before { right: -9px; top: 50%; margin-top: -8px; }
+.eq-slot[data-part-id="body"] .eq-slot__truffle::after  { right: -7px; top: 50%; margin-top: -7px; }
+
+/* Voice: label sits to RIGHT of Truffle → popup is right of Truffle
+   → mouth is to the LEFT of the bubble → tail at LEFT edge. */
+.eq-slot[data-part-id="voice"] .eq-slot__truffle::before { left: -9px; top: 50%; margin-top: -8px; }
+.eq-slot[data-part-id="voice"] .eq-slot__truffle::after  { left: -7px; top: 50%; margin-top: -7px; }
+
+/* The four topic popovers (Brain / Voice / Body / Movement) host a
+   full per-topic chat pane below — the small Truffle bubble at the
+   top of the popover was a duplicate of the same conversation, so
+   it's hidden here. Other eq-slot consumers (custom topics, future
+   slot types) keep their bubble. */
+.eq-slot[data-part-id="brain"]    .eq-slot__truffle,
+.eq-slot[data-part-id="voice"]    .eq-slot__truffle,
+.eq-slot[data-part-id="body"]     .eq-slot__truffle,
+.eq-slot[data-part-id="movement"] .eq-slot__truffle {
+    display: none !important;
+}
+
+/* ── Head ───────────────────────────────────────────────────── */
+
+.eq-slot__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--rule);
+    gap: 10px;
+    flex-shrink: 0;
+}
+.eq-slot__head-lead {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+.eq-slot__title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--acc-cyan);
+    text-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+}
+
+.eq-slot__owner-badge {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: 3px 6px;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-1);
+    background: rgba(255, 255, 255, 0.02);
+}
+.eq-slot__owner-badge--you {
+    color: var(--acc-cyan);
+    border-color: rgba(6, 182, 212, 0.4);
+    background: rgba(6, 182, 212, 0.08);
+}
+.eq-slot__owner-badge--readonly {
+    color: var(--warn);
+    border-color: rgba(251, 191, 36, 0.4);
+    background: rgba(251, 191, 36, 0.06);
+}
+
+.eq-slot__close {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: 50%;
+    color: var(--ink-2);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 0 1px;
+    flex-shrink: 0;
+    transition:
+        color var(--dur-sm),
+        border-color var(--dur-sm),
+        box-shadow var(--dur-sm);
+}
+.eq-slot__close:hover {
+    color: var(--err);
+    border-color: rgba(239, 68, 68, 0.6);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.22);
+}
+.eq-slot__close:focus-visible {
+    outline: none;
+    color: var(--acc-cyan);
+    border-color: var(--acc-cyan);
+    box-shadow: var(--glow-cyan-sm);
+}
+
+/* ── Loadout strip (top section — multi-item, click+drag from below) ─ */
+
+.eq-slot__loadout {
+    position: relative;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--rule);
+    flex-shrink: 0;
+    background: linear-gradient(135deg,
+        rgba(6, 182, 212, 0.05) 0%,
+        rgba(59, 130, 246, 0.025) 100%);
+    transition:
+        background var(--dur-sm) var(--ease-out),
+        box-shadow var(--dur-sm) var(--ease-out);
+}
+.eq-slot[data-state="swapping"] .eq-slot__loadout { opacity: 0.5; }
+.eq-slot__loadout.is-drag-over {
+    background: rgba(6, 182, 212, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.6);
+}
+.eq-slot__loadout--empty .eq-slot__loadout-hint {
+    text-align: center;
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 14px 8px;
+}
+.eq-slot__loadout-strip {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(6, 182, 212, 0.25) transparent;
+}
+/* Rows-layout loadout — one wide bar showing the active item. */
+.eq-slot__loadout--single { padding: 12px 16px; }
+.eq-slot__loadout-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: rgba(6, 182, 212, 0.10);
+    border: 1px solid rgba(6, 182, 212, 0.45);
+    border-radius: var(--r-2);
+    box-shadow: var(--glow-cyan-sm);
+}
+.eq-slot__loadout-bar .eq-slot__row-visual { background: rgba(0, 0, 0, 0.35); }
+
+.eq-slot__loadout-strip::-webkit-scrollbar { height: 4px; }
+.eq-slot__loadout-strip::-webkit-scrollbar-thumb {
+    background: rgba(6, 182, 212, 0.25);
+    border-radius: 2px;
+}
+
+.eq-slot__loadout-tile {
+    position: relative;
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-2);
+    color: var(--ink-1);
+    cursor: pointer;
+    overflow: hidden;
+    transition:
+        border-color var(--dur-xs),
+        background var(--dur-xs),
+        transform var(--dur-xs),
+        box-shadow var(--dur-xs);
+}
+.eq-slot__loadout-tile:hover {
+    border-color: rgba(6, 182, 212, 0.5);
+    transform: translateY(-1px);
+    box-shadow: var(--glow-cyan-sm);
+}
+.eq-slot__loadout-tile.is-active {
+    border-color: rgba(6, 182, 212, 0.85);
+    background: rgba(6, 182, 212, 0.10);
+    box-shadow:
+        inset 0 0 12px rgba(6, 182, 212, 0.20),
+        0 0 14px rgba(6, 182, 212, 0.30);
+}
+.eq-slot__loadout-tile.is-dragging { opacity: 0.4; }
+.eq-slot__loadout-tile-visual {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    line-height: 1;
+}
+.eq-slot__loadout-tile-visual > svg { width: 60%; height: 60%; max-width: 32px; max-height: 32px; }
+.eq-slot__loadout-tile-visual img { width: 100%; height: 100%; object-fit: cover; }
+.eq-slot__loadout-tile-active {
+    position: absolute;
+    top: 3px; right: 3px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--acc-cyan);
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.8);
+}
+.eq-slot__loadout-tile--empty {
+    background: transparent;
+    border-style: dashed;
+    border-color: var(--rule);
+    color: var(--ink-3);
+    font-size: 18px;
+    cursor: default;
+    opacity: 0.6;
+}
+.eq-slot__loadout-tile--empty:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: rgba(6, 182, 212, 0.35);
+    color: var(--acc-cyan);
+    opacity: 0.9;
+}
+
+.eq-slot__equipped-frame {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg,
+        rgba(6, 182, 212, 0.10) 0%,
+        rgba(59, 130, 246, 0.06) 100%);
+    border: 1px solid rgba(6, 182, 212, 0.50);
+    border-radius: var(--r-2);
+    color: var(--acc-cyan);
+    position: relative;
+    box-shadow:
+        inset 0 0 16px rgba(6, 182, 212, 0.12),
+        0 0 18px rgba(6, 182, 212, 0.15);
+    overflow: hidden;
+}
+.eq-slot__equipped-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.eq-slot__equipped-frame svg {
+    width: 36px;
+    height: 36px;
+}
+.eq-slot__equipped-frame--empty {
+    color: var(--ink-4);
+    border-color: var(--rule-strong);
+    background: rgba(255, 255, 255, 0.02);
+    box-shadow: none;
+    font-size: 22px;
+}
+
+.eq-slot__equipped-meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.eq-slot__equipped-name {
+    color: var(--ink-0);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.eq-slot__equipped-sub {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.eq-slot__equipped-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 2px;
+}
+.eq-slot__badge {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--acc-cyan);
+    background: rgba(6, 182, 212, 0.10);
+    border: 1px solid rgba(6, 182, 212, 0.30);
+    padding: 2px 6px;
+    border-radius: var(--r-1);
+    line-height: 1.2;
+}
+
+.eq-slot__visual-letter {
+    font-family: var(--font-mono);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--acc-cyan);
+    line-height: 1;
+}
+
+/* ── Inventory head ─────────────────────────────────────────── */
+
+.eq-slot__inventory-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px 6px;
+    flex-shrink: 0;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.eq-slot__inventory-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 600;
+}
+
+.eq-slot__filters {
+    display: inline-flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+.eq-slot__filter {
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: var(--r-1);
+    cursor: pointer;
+    transition:
+        color var(--dur-xs),
+        border-color var(--dur-xs),
+        background var(--dur-xs);
+}
+.eq-slot__filter:hover {
+    color: var(--ink-0);
+    border-color: rgba(6, 182, 212, 0.4);
+}
+.eq-slot__filter.is-active {
+    color: var(--acc-cyan);
+    border-color: rgba(6, 182, 212, 0.55);
+    background: rgba(6, 182, 212, 0.08);
+}
+.eq-slot__filter:focus-visible {
+    outline: none;
+    color: var(--acc-cyan);
+    border-color: var(--acc-cyan);
+    box-shadow: var(--glow-cyan-sm);
+}
+
+/* ── Inventory grid ─────────────────────────────────────────── */
+
+.eq-slot__inventory {
+    display: grid;
+    /* Fixed 80px tiles in a 4-column grid — no aspect-ratio juggling.
+       Container is 380px - 28px padding = 352px; 4 * 80 + 3 * 4 gap =
+       332px, leaving 20px which justify-content: start parks on the
+       right so columns stay flush with the left edge. */
+    grid-template-columns: repeat(4, 80px);
+    grid-auto-rows: 80px;
+    justify-content: start;
+    gap: 4px;
+    padding: 6px 14px 14px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(6, 182, 212, 0.25) transparent;
+}
+.eq-slot__inventory::-webkit-scrollbar { width: 6px; }
+.eq-slot__inventory::-webkit-scrollbar-track { background: transparent; }
+.eq-slot__inventory::-webkit-scrollbar-thumb {
+    background: rgba(6, 182, 212, 0.25);
+    border-radius: 3px;
+}
+
+/* Rows layout — full-width bars. Used by Brain where the model
+   label + provider matters more than the visual. */
+.eq-slot__inventory--rows {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    grid-auto-rows: auto;
+    gap: 4px;
+}
+.eq-slot__row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-2);
+    color: var(--ink-1);
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    text-align: left;
+    transition:
+        color var(--dur-xs),
+        border-color var(--dur-xs),
+        background var(--dur-xs);
+}
+.eq-slot__row:hover:not(.is-locked) {
+    color: var(--ink-0);
+    border-color: rgba(6, 182, 212, 0.50);
+    background: rgba(6, 182, 212, 0.06);
+}
+.eq-slot__row.is-current {
+    color: var(--ink-0);
+    border-color: rgba(6, 182, 212, 0.70);
+    background: rgba(6, 182, 212, 0.10);
+    box-shadow: var(--glow-cyan-sm);
+}
+.eq-slot__row.is-locked {
+    opacity: 0.55;
+}
+.eq-slot__row.is-locked:hover {
+    opacity: 0.8;
+    color: var(--warn);
+    border-color: rgba(251, 191, 36, 0.4);
+}
+.eq-slot__row.is-dragging { opacity: 0.45; }
+.eq-slot__row-visual {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--r-1);
+    background: rgba(0, 0, 0, 0.35);
+    color: inherit;
+}
+.eq-slot__row-visual > svg { width: 70%; height: 70%; }
+.eq-slot__row-visual img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--r-1); }
+.eq-slot__row-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.eq-slot__row-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: inherit;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.eq-slot__row-sub {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.eq-slot__row .eq-slot__like {
+    position: static;
+    flex-shrink: 0;
+}
+.eq-slot__row-status {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.eq-slot__row-status--active {
+    color: var(--acc-cyan);
+    background: rgba(6, 182, 212, 0.16);
+    border: 1px solid rgba(6, 182, 212, 0.45);
+}
+.eq-slot__row-status--locked {
+    color: var(--warn, #fbbf24);
+    background: rgba(251, 191, 36, 0.14);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+}
+.eq-slot__row-status--buy {
+    color: #0a0e18;
+    background: var(--acc-cyan, #06b6d4);
+    border: 1px solid var(--acc-cyan, #06b6d4);
+}
+
+.eq-slot__item {
+    /* Square tile — icon dominates. Status sits as a corner overlay
+       so the visual is "what is this thing" first, "is it active /
+       paid" second. Name lives in the native title tooltip on hover.
+       Tile is sized by the grid's fixed 80x80 cells; the box-sizing
+       border-box keeps the padding inside that 80px. */
+    position: relative;
+    box-sizing: border-box;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-2);
+    color: var(--ink-1);
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+    transition:
+        color var(--dur-xs),
+        border-color var(--dur-xs),
+        background var(--dur-xs),
+        transform var(--dur-xs),
+        box-shadow var(--dur-xs);
+}
+.eq-slot__item--empty {
+    background: rgba(255, 255, 255, 0.015);
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, 0.06);
+    cursor: default;
+}
+.eq-slot__item--empty:hover { transform: none; }
+.eq-slot__item:hover:not(.is-locked) {
+    color: var(--ink-0);
+    border-color: rgba(6, 182, 212, 0.50);
+    background: rgba(6, 182, 212, 0.06);
+    transform: translateY(-1px);
+    box-shadow: var(--glow-cyan-sm);
+}
+.eq-slot__item:focus-visible {
+    outline: none;
+    color: var(--ink-0);
+    border-color: var(--acc-cyan);
+    box-shadow: var(--glow-cyan-sm);
+}
+.eq-slot__item.is-current {
+    color: var(--ink-0);
+    border-color: rgba(6, 182, 212, 0.70);
+    background: rgba(6, 182, 212, 0.10);
+    box-shadow:
+        var(--glow-cyan-sm),
+        inset 0 0 12px rgba(6, 182, 212, 0.10);
+}
+/* Active state is conveyed by the .eq-slot__item-action--active pill
+   on the right side of the row, so the legacy top-right dot indicator
+   is removed in the app-row layout. */
+.eq-slot__item { position: relative; }
+.eq-slot__item.is-dragging {
+    opacity: 0.45;
+    transform: scale(0.97);
+}
+.eq-slot__item.is-locked {
+    opacity: 0.5;
+    cursor: pointer;
+}
+.eq-slot__item.is-locked:hover {
+    opacity: 0.75;
+    color: var(--warn);
+    border-color: rgba(251, 191, 36, 0.4);
+}
+
+.eq-slot__item-visual {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-1);
+    background: transparent;
+    /* Big icons — emoji + raw unicode glyphs scale via font-size; SVG
+       glyphs scale via the rule below. */
+    font-size: 30px;
+    line-height: 1;
+    overflow: hidden;
+    transition: color var(--dur-xs), background var(--dur-xs);
+}
+.eq-slot__item-visual > svg { width: 60%; height: 60%; max-width: 44px; max-height: 44px; }
+.eq-slot__item-visual .eq-slot__visual-letter { font-size: 26px; font-weight: 700; }
+.eq-slot__item-visual img { width: 100%; height: 100%; object-fit: cover; }
+.eq-slot__item:hover .eq-slot__item-visual,
+.eq-slot__item.is-current .eq-slot__item-visual {
+    color: var(--acc-cyan);
+    background: rgba(6, 182, 212, 0.08);
+}
+.eq-slot__item-visual img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* Status badge — corner ribbon along the bottom of the tile. Active =
+   cyan, Add-key = warning amber, $N = solid cyan price. The badge sits
+   absolute over the icon so the icon still dominates the tile. */
+.eq-slot__item-status {
+    position: absolute;
+    bottom: 3px;
+    left: 3px;
+    right: 3px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 2px 4px;
+    border-radius: 2px;
+    pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.eq-slot__item-status--active {
+    color: var(--acc-cyan);
+    background: rgba(6, 182, 212, 0.16);
+    border: 1px solid rgba(6, 182, 212, 0.45);
+}
+.eq-slot__item-status--locked {
+    color: var(--warn, #fbbf24);
+    background: rgba(251, 191, 36, 0.14);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+}
+.eq-slot__item-status--buy {
+    color: #0a0e18;
+    background: var(--acc-cyan, #06b6d4);
+    border: 1px solid var(--acc-cyan, #06b6d4);
+}
+
+/* Community-ranking heart — top-right corner badge on each tile.
+   Small dark pill with a heart glyph + count; turns coral when liked.
+   Captures its own click so heart taps don't fire the tile's equip. */
+.eq-slot__like {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 5px;
+    background: rgba(8, 12, 22, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0;
+    cursor: pointer;
+    z-index: 2;
+    transition:
+        color var(--dur-xs),
+        border-color var(--dur-xs),
+        background var(--dur-xs),
+        transform var(--dur-xs);
+}
+.eq-slot__like:hover {
+    color: #f87171;
+    border-color: rgba(248, 113, 113, 0.55);
+    background: rgba(40, 12, 22, 0.88);
+    transform: scale(1.08);
+}
+.eq-slot__like.is-liked {
+    color: #f87171;
+    border-color: rgba(248, 113, 113, 0.55);
+    background: rgba(40, 12, 22, 0.88);
+}
+.eq-slot__like.is-liked .eq-slot__like-icon { filter: drop-shadow(0 0 4px rgba(248, 113, 113, 0.6)); }
+.eq-slot__like-icon {
+    width: 10px;
+    height: 10px;
+    display: block;
+}
+.eq-slot__like-count {
+    font-variant-numeric: tabular-nums;
+    min-width: 1ch;
+    text-align: right;
+}
+
+/* ── Empty state ────────────────────────────────────────────── */
+
+.eq-slot__empty {
+    padding: 28px 20px 24px;
+    text-align: center;
+    color: var(--ink-2);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.eq-slot__empty-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-1);
+}
+.eq-slot__empty-hint {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    line-height: 1.5;
+    max-width: 280px;
+}
+.eq-slot__empty-cta {
+    margin-top: 8px;
+    background: transparent;
+    border: 1px solid rgba(6, 182, 212, 0.55);
+    color: var(--acc-cyan);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border-radius: var(--r-1);
+    cursor: pointer;
+    transition:
+        color var(--dur-sm),
+        background var(--dur-sm),
+        box-shadow var(--dur-sm);
+}
+.eq-slot__empty-cta:hover {
+    color: var(--ink-0);
+    background: rgba(6, 182, 212, 0.12);
+    box-shadow: var(--glow-cyan-sm);
+}
+
+/* ── Custom body slot (Voice's textarea mode) ───────────────── */
+
+.eq-slot__custom {
+    flex: 1;
+    overflow: auto;
+    padding: 12px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.brain-picker__llm-host {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.eq-slot__custom-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 600;
+    margin: 2px 0;
+}
+.eq-slot__custom-count {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+    text-transform: none;
+}
+.eq-slot__custom-textarea {
+    flex: 1;
+    min-height: 160px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-2);
+    color: var(--ink-0);
+    padding: 12px;
+    font-family: var(--font-display);
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+    transition: border-color var(--dur-sm), box-shadow var(--dur-sm), background var(--dur-sm);
+}
+.eq-slot__custom-textarea::placeholder {
+    color: var(--ink-3);
+}
+.eq-slot__custom-textarea:focus {
+    outline: none;
+    border-color: rgba(6, 182, 212, 0.55);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: var(--glow-cyan-sm);
+}
+.eq-slot__custom-textarea[readonly] {
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--ink-2);
+    cursor: default;
+}
+
+/* ── Footer ─────────────────────────────────────────────────── */
+
+.eq-slot__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-top: 1px solid var(--rule);
+    background: rgba(0, 0, 0, 0.4);
+    gap: 12px;
+    flex-shrink: 0;
+}
+.eq-slot__foot-hint {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.eq-slot__foot-actions {
+    display: inline-flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.eq-slot__list-your-own {
+    background: transparent;
+    border: 0;
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 4px 0;
+    flex: 1;
+    text-align: left;
+    transition: color var(--dur-sm);
+}
+.eq-slot__list-your-own:hover { color: var(--acc-cyan); }
+.eq-slot__btn {
+    background: transparent;
+    border: 1px solid var(--rule-strong);
+    color: var(--ink-1);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    padding: 7px 12px;
+    border-radius: var(--r-1);
+    cursor: pointer;
+    transition:
+        color var(--dur-sm),
+        border-color var(--dur-sm),
+        background var(--dur-sm),
+        box-shadow var(--dur-sm);
+}
+.eq-slot__btn:hover:not(:disabled) {
+    color: var(--ink-0);
+    border-color: rgba(6, 182, 212, 0.50);
+}
+.eq-slot__btn:focus-visible {
+    outline: none;
+    color: var(--ink-0);
+    border-color: var(--acc-cyan);
+    box-shadow: var(--glow-cyan-sm);
+}
+.eq-slot__btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.eq-slot__btn--ghost {
+    color: var(--ink-2);
+    border-color: var(--rule);
+}
+.eq-slot__btn--primary {
+    color: var(--acc-cyan);
+    border-color: rgba(6, 182, 212, 0.55);
+}
+.eq-slot__btn--primary:hover:not(:disabled) {
+    background: rgba(6, 182, 212, 0.12);
+    box-shadow: var(--glow-cyan-sm);
+}
+
+/* ── Mobile collapse ────────────────────────────────────────── */
+
+/* ═══ Phone polish ═══
+ * Pin the slot edge-to-edge with 12px gutters at ≤640px; tighten
+ * interior padding and step down the equipped-item type so chips, rows
+ * and the equipped header all fit inside the slot on a 375px viewport
+ * without overflow. */
+@media (max-width: 640px) {
+    .eq-slot {
+        width: auto;
+        left: 12px !important;
+        right: 12px !important;
+        top: calc(var(--nav-h) + 16px) !important;
+        max-height: calc(100vh - var(--nav-h) - 32px);
+        transform-origin: top center;
+    }
+    .eq-slot--above { transform-origin: top center; }
+    .eq-slot__equipped { padding: 10px; gap: 10px; }
+    .eq-slot__equipped-name { font-size: 14px; }
+    .eq-slot__row { padding: 8px 10px; }
+}
+
+@media (max-width: 360px) {
+    .eq-slot { left: 8px !important; right: 8px !important; }
+    .eq-slot__equipped-name { font-size: 13.5px; }
+    .eq-slot__equipped-sub { font-size: 10px; letter-spacing: 0.12em; }
+}

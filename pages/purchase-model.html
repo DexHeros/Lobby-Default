@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Model | DexHero</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <!-- Model Viewer -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <style>
+        .utility-container {
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .utility-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+        }
+
+        .utility-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .model-preview-container {
+            width: 100%;
+            height: 300px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            margin-bottom: 24px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        model-viewer {
+            width: 100%;
+            height: 100%;
+        }
+
+        .utility-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .utility-header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .info-box {
+            padding: 16px;
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+
+        .info-row .label {
+            color: var(--text-muted);
+        }
+
+        .info-row .value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Rights List */
+        .rights-list {
+            margin-bottom: 24px;
+            padding: 0 8px;
+        }
+
+        .rights-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .rights-item svg {
+            width: 18px;
+            height: 18px;
+            color: #60a5fa;
+            flex-shrink: 0;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: #3b82f6;
+            /* Blue for Own */
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-submit:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        @media (max-width: 768px) {
+            .utility-container {
+                max-width: 100%;
+                padding: 0 16px;
+            }
+            .utility-card {
+                padding: 20px;
+            }
+            .model-preview-container {
+                height: 240px;
+            }
+            .info-row {
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .utility-card {
+                padding: 16px;
+                border-radius: 14px;
+            }
+            .model-preview-container {
+                height: 200px;
+                border-radius: 12px;
+            }
+            .utility-header h1 {
+                font-size: 20px;
+            }
+            .rights-list {
+                padding: 0;
+            }
+            .rights-item {
+                font-size: 13px;
+                gap: 8px;
+            }
+            .btn-submit {
+                padding: 14px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+    <main class="main-content page-content">
+        <div class="utility-container">
+            <div class="utility-card">
+                <!-- 3D Model Section -->
+                <div class="model-preview-container">
+                    <model-viewer
+                        src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb"
+                        camera-controls auto-rotate shadow-intensity="1"
+                        style="background-color: transparent;"></model-viewer>
+                </div>
+
+                <div class="utility-header">
+                    <h1 id="model-name-title">Loading...</h1>
+                    <p id="model-description">Full ownership rights to this 3D asset</p>
+                </div>
+
+                <div class="rights-list">
+                    <div class="rights-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        Full Commercial Rights Included
+                    </div>
+                    <div class="rights-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        Unlimited Use Rights
+                    </div>
+                    <div class="rights-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        Game & Metaverse Ready
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-row">
+                        <span class="label">Creator</span>
+                        <span class="value" id="creator-wallet">Loading...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">File Type</span>
+                        <span class="value" id="file-type">GLB</span>
+                    </div>
+                    <div class="info-row"
+                        style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(59, 130, 246, 0.2);">
+                        <span class="label">Purchase Price</span>
+                        <span class="value" style="font-size: 18px; color: #60a5fa;" id="purchase-price">--</span>
+                    </div>
+                </div>
+
+                <button class="btn-submit" id="buy-btn" onclick="handlePurchase()" disabled>Loading...</button>
+
+                <div id="already-owned"
+                    style="display: none; padding: 16px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; text-align: center; color: #34d399;">
+                    You already own this model!
+                    <br>
+                    <a href="#" id="download-link"
+                        style="color: #60a5fa; text-decoration: underline; margin-top: 8px; display: inline-block;">Download
+                        Now</a>
+                </div>
+            </div>
+        </div>
+    </main>
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+    <script src="/js/utils.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="../js/model-marketplace.js"></script>
+    <script src="../js/unified-wallet.js"></script>
+    <script src="../js/blockchain-integration.js"></script>
+    <script src="../js/rental-manager.js"></script>
+    <script>
+        let currentModel = null;
+
+        async function loadModelData() {
+            try {
+                // Get model ID from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const modelId = urlParams.get('id');
+
+                if (!modelId) {
+                    alert('No model ID provided');
+                    window.location.href = 'model-marketplace.html';
+                    return;
+                }
+
+                // Fetch model from database
+                const result = await window.DexHeroMarketplace.getModelById(modelId);
+
+                if (!result.success || !result.model) {
+                    alert('Model not found');
+                    window.location.href = 'model-marketplace.html';
+                    return;
+                }
+
+                currentModel = result.model;
+                displayModelData(currentModel);
+
+                // Check if user already owns this model
+                const sessionWallet = sessionStorage.getItem('walletAddress');
+                if (sessionWallet) {
+                    const wallet = sessionWallet;
+                    const ownership = await window.DexHeroMarketplace.userOwnsModel(modelId, wallet);
+
+                    if (ownership.owns) {
+                        showAlreadyOwned();
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error loading model:', error);
+                alert('Failed to load model data');
+            }
+        }
+
+        function displayModelData(model) {
+            // Update model viewer
+            const modelViewer = document.querySelector('model-viewer');
+            if (model.model_url) {
+                modelViewer.src = model.model_url;
+            } else {
+                modelViewer.style.display = 'none';
+            }
+
+            // Update text fields
+            document.getElementById('model-name-title').textContent = model.name;
+            document.getElementById('model-description').textContent = model.description || 'Full ownership rights to this 3D asset';
+            document.getElementById('creator-wallet').textContent = `${model.creator_wallet.slice(0, 8)}...${model.creator_wallet.slice(-6)}`;
+            document.getElementById('file-type').textContent = (model.file_type || 'GLB').toUpperCase();
+            document.getElementById('purchase-price').textContent = `${model.purchase_price} USDC`;
+
+            // Update page title
+            document.title = `${model.name} | DexHero Marketplace`;
+
+            // Configure button based on blockchain
+            const buyBtn = document.getElementById('buy-btn');
+            buyBtn.disabled = false;
+
+            // Purchase flow (EVM)
+            buyBtn.textContent = 'Buy Model';
+            buyBtn.className = 'btn-submit btn-buy';
+            buyBtn.style.background = 'linear-gradient(135deg, #3b82f6, #3b82f6)';
+            buyBtn.onclick = () => showPurchaseModal(model.id);
+
+            // Show purchase price
+            const displayPrice = model.purchase_price ? `${model.purchase_price} USDC` : 'Dynamic Pricing';
+            document.getElementById('purchase-price').textContent = displayPrice;
+        }
+
+        function showPurchaseModal(modelId) {
+            if (window.DexHeroRental) {
+                window.DexHeroRental.showRentalModal(modelId);
+            } else {
+                console.error('Purchase system not loaded');
+                alert('Purchase system loading... please try again in a moment.');
+            }
+        }
+
+        function showAlreadyOwned() {
+            document.getElementById('buy-btn').style.display = 'none';
+            const ownedDiv = document.getElementById('already-owned');
+            ownedDiv.style.display = 'block';
+
+            const downloadLink = document.getElementById('download-link');
+            downloadLink.href = currentModel.model_url;
+            downloadLink.download = `${currentModel.name}.${currentModel.file_type}`;
+        }
+
+        async function handlePurchase() {
+            try {
+                // Check wallet connection
+                const walletAddr = sessionStorage.getItem('walletAddress');
+                if (!walletAddr) {
+                    openConnectModal();
+                    return;
+                }
+
+                if (!currentModel) {
+                    alert('Model data not loaded');
+                    return;
+                }
+
+                const buyBtn = document.getElementById('buy-btn');
+                if (buyBtn && buyBtn.disabled) return;
+                const originalText = buyBtn.textContent;
+                buyBtn.disabled = true;
+                buyBtn.textContent = 'Processing...';
+
+                // Confirm purchase
+                if (!confirm(`Purchase ${currentModel.name}?`)) {
+                    buyBtn.disabled = false;
+                    buyBtn.textContent = originalText;
+                    return;
+                }
+
+                // Execute purchase via EVM
+                const result = await window.DexHeroMarketplace.purchaseModel(
+                    currentModel.id,
+                    currentModel.purchase_price,
+                    currentModel.creator_wallet
+                );
+
+                if (result.success) {
+                    const successMsg = `Purchase Successful!\n\nModel: ${currentModel.name}\n\nTransaction:\n${result.explorerUrl}\n\nYour model is ready to download!`;
+
+                    if (confirm(successMsg + '\n\nView transaction on explorer?')) {
+                        window.open(result.explorerUrl, '_blank', 'noopener,noreferrer');
+                    }
+
+                    // Show download link
+                    showAlreadyOwned();
+
+                } else {
+                    throw new Error(result.error || 'Purchase failed');
+                }
+
+            } catch (error) {
+                console.error('Purchase error:', error);
+
+                let errorMsg = 'Purchase failed: ' + error.message;
+
+                if (error.message.includes('rejected')) {
+                    errorMsg += '\n\nYou rejected the transaction.';
+                }
+
+                alert(errorMsg);
+
+                // Re-enable button
+                const buyBtn = document.getElementById('buy-btn');
+                buyBtn.disabled = false;
+                buyBtn.textContent = 'Buy Now';
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize Supabase
+            if (window.DexHeroSupabase) window.DexHeroSupabase.init();
+
+            // Load model data
+            await loadModelData();
+        });
+    </script>
+</body>
+
+</html>

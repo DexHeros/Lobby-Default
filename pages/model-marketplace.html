@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Marketplace | DexHero</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <!-- Model Viewer -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <style>
+        .marketplace-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .marketplace-header h1 {
+            font-size: 32px;
+            font-weight: 800;
+        }
+
+        .search-filter-bar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .search-box svg {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 18px;
+            height: 18px;
+        }
+
+        .filter-select {
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 8px;
+        }
+
+        .view-btn {
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-btn.active {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            color: #000;
+        }
+
+        .models-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .model-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .model-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-4px);
+        }
+
+        .model-preview {
+            width: 100%;
+            height: 220px;
+            background: rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .model-preview model-viewer {
+            width: 100%;
+            height: 100%;
+        }
+
+        .model-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .model-info {
+            padding: 16px;
+        }
+
+        .model-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .model-creator {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .model-price {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            margin-bottom: 12px;
+        }
+
+        .model-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .model-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .model-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .model-tag {
+            padding: 4px 8px;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 6px;
+            font-size: 11px;
+            color: var(--accent-cyan);
+        }
+
+        .btn-buy {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent-cyan);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-buy:hover {
+            filter: brightness(1.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 64px 32px;
+            color: var(--text-muted);
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .btn-upload {
+            padding: 12px 24px;
+            background: var(--accent-cyan);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        /* Responsive: Mobile */
+        @media (max-width: 768px) {
+            .marketplace-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .marketplace-header h1 {
+                font-size: 24px;
+            }
+
+            .search-box {
+                min-width: 0;
+                width: 100%;
+            }
+
+            .search-filter-bar {
+                flex-direction: column;
+            }
+
+            .filter-select {
+                width: 100%;
+            }
+
+            .models-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 16px;
+            }
+
+            .model-preview {
+                height: 180px;
+            }
+        }
+
+        /* Responsive: Small Phone */
+        @media (max-width: 480px) {
+            .models-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .model-preview {
+                height: 200px;
+            }
+
+            .model-info {
+                padding: 12px;
+            }
+
+            .model-name {
+                font-size: 16px;
+            }
+
+            .model-price {
+                font-size: 20px;
+            }
+
+            .empty-state {
+                padding: 48px 20px;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <div class="marketplace-header">
+            <h1>Model Marketplace</h1>
+            <a href="upload-model.html" class="btn-upload">+ Upload Model</a>
+        </div>
+
+        <div class="search-filter-bar">
+            <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input type="text" id="model-search" placeholder="Search models...">
+            </div>
+
+            <select class="filter-select" id="category-filter">
+                <option value="all">All Categories</option>
+                <option value="characters">Characters</option>
+                <option value="props">Props</option>
+                <option value="environments">Environments</option>
+                <option value="vehicles">Vehicles</option>
+                <option value="weapons">Weapons</option>
+                <option value="uncategorized">Other</option>
+            </select>
+
+            <select class="filter-select" id="price-filter">
+                <option value="all">All Prices</option>
+                <option value="0-50">0 - 50 USDC</option>
+                <option value="50-100">50 - 100 USDC</option>
+                <option value="100+">100+ USDC</option>
+            </select>
+        </div>
+
+        <div class="models-grid" id="models-grid">
+            <!-- Models will be populated here -->
+        </div>
+
+        <div class="empty-state" id="empty-state" style="display: none;">
+            <h3>No models found</h3>
+            <p>Be the first to upload a model to the marketplace!</p>
+            <a href="upload-model.html" class="btn-upload" style="margin-top: 16px;">Upload Model</a>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+
+    <script src="/js/utils.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="../js/model-marketplace.js"></script>
+    <script>
+        let allModels = [];
+        let filteredModels = [];
+
+        // Load models from database
+        async function loadModels() {
+            try {
+                const result = await window.DexHeroMarketplace.getAllModels();
+
+                if (result.success) {
+                    allModels = result.models;
+                    filteredModels = allModels;
+                    displayModels();
+                } else {
+                    console.error('Failed to load models:', result.error);
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('Error loading models:', error);
+                showEmptyState();
+            }
+        }
+
+        // Display models in grid
+        function displayModels() {
+            const grid = document.getElementById('models-grid');
+            const emptyState = document.getElementById('empty-state');
+
+            if (filteredModels.length === 0) {
+                grid.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            grid.style.display = 'grid';
+            emptyState.style.display = 'none';
+
+            grid.innerHTML = filteredModels.map(model => createModelCard(model)).join('');
+        }
+
+        // Create model card HTML
+        function createModelCard(model) {
+            const previewUrl = sanitizeUrl(model.preview_image_url || model.thumbnail_url) || 'https://via.placeholder.com/280x220?text=No+Preview';
+            const creatorShort = `${escapeHtml(model.creator_wallet.slice(0, 6))}...${escapeHtml(model.creator_wallet.slice(-4))}`;
+            const tags = (model.tags || []).slice(0, 3);
+
+            // Determine visual content: 3D Model or Image
+            let visualContent = '';
+            if (model.model_url) {
+                visualContent = `
+                    <div class="model-preview">
+                        <model-viewer
+                            src="${sanitizeUrl(model.model_url)}"
+                            poster="${previewUrl}"
+                            auto-rotate
+                            camera-controls
+                            shadow-intensity="1"
+                            environment-image="neutral"
+                            interaction-prompt="none"
+                            style="width: 100%; height: 100%;">
+                        </model-viewer>
+                        <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.6); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">3D</div>
+                    </div>
+                `;
+            } else {
+                visualContent = `
+                    <div class="model-preview">
+                        <img src="${previewUrl}" alt="${escapeHtml(model.name)}" onerror="this.src='https://via.placeholder.com/280x220?text=No+Preview'">
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="model-card" onclick="window.location.href='purchase-model.html?id=${model.id}'">
+                    ${visualContent}
+                    <div class="model-info">
+                        <div class="model-name">${escapeHtml(model.name)}</div>
+                        <div class="model-creator">by ${creatorShort}</div>
+                        <div class="model-price">${model.purchase_price || '0'} USDC</div>
+                        <div class="model-stats">
+                            <div class="model-stat">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                ${model.views_count || 0}
+                            </div>
+                            <div class="model-stat">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                ${model.downloads_count || 0}
+                            </div>
+                        </div>
+                        ${tags.length > 0 ? `
+                            <div class="model-tags">
+                                ${tags.map(tag => `<span class="model-tag">${escapeHtml(tag)}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                        <button class="btn-buy" onclick="event.stopPropagation(); window.location.href='purchase-model.html?id=${model.id}'">Buy</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Show empty state
+        function showEmptyState() {
+            document.getElementById('models-grid').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'block';
+        }
+
+        // Filter models
+        function applyFilters() {
+            const searchTerm = document.getElementById('model-search').value.toLowerCase();
+            const category = document.getElementById('category-filter').value;
+            const priceRange = document.getElementById('price-filter').value;
+
+            filteredModels = allModels.filter(model => {
+                // Search filter
+                const matchesSearch = !searchTerm ||
+                    model.name.toLowerCase().includes(searchTerm) ||
+                    (model.description && model.description.toLowerCase().includes(searchTerm));
+
+                // Category filter
+                const matchesCategory = category === 'all' || model.category === category;
+
+                // Price filter
+                let matchesPrice = true;
+                if (priceRange !== 'all') {
+                    const price = model.purchase_price;
+                    if (priceRange === '0-50') matchesPrice = price >= 0 && price <= 50;
+                    else if (priceRange === '50-100') matchesPrice = price > 50 && price <= 100;
+                    else if (priceRange === '100+') matchesPrice = price > 100;
+                }
+
+                return matchesSearch && matchesCategory && matchesPrice;
+            });
+
+            displayModels();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize Supabase
+            if (window.DexHeroSupabase) window.DexHeroSupabase.init();
+
+            // Load models
+            await loadModels();
+
+            // Search and filter listeners
+            document.getElementById('model-search').addEventListener('input', applyFilters);
+            document.getElementById('category-filter').addEventListener('change', applyFilters);
+            document.getElementById('price-filter').addEventListener('change', applyFilters);
+        });
+    </script>
+</body>
+
+</html>

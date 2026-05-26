@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DexHero Guide | DexHero</title>
+    <meta name="description" content="Complete guide for players, creators, game developers and traders on DexHero.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <style>
+        /*  Layout  */
+        .guide-layout {
+            display: grid;
+            grid-template-columns: 230px 1fr;
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /*  Sidebar  */
+        .guide-sidebar {
+            position: sticky;
+            top: 130px;
+            height: fit-content;
+        }
+
+        .guide-nav {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px;
+        }
+
+        .guide-nav-group {
+            margin-bottom: 24px;
+        }
+
+        .guide-nav-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .guide-nav-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .guide-nav a {
+            display: block;
+            padding: 7px 10px;
+            border-radius: 7px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .guide-nav a:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .guide-nav a.active {
+            background: rgba(6, 182, 212, 0.12);
+            color: var(--accent-cyan);
+        }
+
+        /*  Content  */
+        .guide-content section {
+            margin-bottom: 72px;
+        }
+
+        .guide-content section:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Section header with audience badge */
+        .section-head {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 8px;
+        }
+
+        .audience-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+
+        .audience-icon.players { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+        .audience-icon.creators { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .audience-icon.devs { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+        .audience-icon.traders { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+
+        .section-title-block h2 {
+            font-size: 26px;
+            font-weight: 700;
+            margin: 0 0 4px;
+        }
+
+        .section-title-block p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .section-divider {
+            border: none;
+            border-top: 1px solid var(--border-color);
+            margin: 20px 0 32px;
+        }
+
+        /* Cards grid */
+        .guide-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .guide-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 24px;
+            transition: all 0.25s;
+        }
+
+        .guide-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-3px);
+        }
+
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            margin-bottom: 14px;
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--accent-cyan);
+        }
+
+        .card-icon.blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .card-icon.purple { background: rgba(96, 165, 250, 0.1); color: #60a5fa; }
+        .card-icon.green { background: rgba(34, 197, 94, 0.1); color: var(--success); }
+        .card-icon.amber { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+
+        .guide-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .guide-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.65;
+            margin: 0;
+        }
+
+        /* Step list */
+        .step-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .step-body h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 4px;
+        }
+
+        .step-body p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* Info callout */
+        .callout {
+            display: flex;
+            gap: 14px;
+            padding: 18px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid;
+        }
+
+        .callout.info {
+            background: rgba(6, 182, 212, 0.07);
+            border-color: rgba(6, 182, 212, 0.25);
+        }
+
+        .callout.warning {
+            background: rgba(245, 158, 11, 0.07);
+            border-color: rgba(245, 158, 11, 0.25);
+        }
+
+        .callout.tip {
+            background: rgba(34, 197, 94, 0.07);
+            border-color: rgba(34, 197, 94, 0.25);
+        }
+
+        .callout-icon {
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .callout.info .callout-icon { color: var(--accent-cyan); }
+        .callout.warning .callout-icon { color: #f59e0b; }
+        .callout.tip .callout-icon { color: var(--success); }
+
+        .callout p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.65;
+            margin: 0;
+        }
+
+        .callout strong {
+            color: var(--text-primary);
+        }
+
+        /* API Code blocks */
+        .api-endpoint {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .api-endpoint-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .http-method {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .http-method.get { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .http-method.post { background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); }
+        .http-method.delete { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+        .endpoint-path {
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .endpoint-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        .api-body {
+            padding: 16px;
+        }
+
+        .api-body pre {
+            margin: 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            color: #94a3b8;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .api-body pre .key { color: #93c5fd; }
+        .api-body pre .str { color: #86efac; }
+        .api-body pre .num { color: #fda4af; }
+        .api-body pre .comment { color: #475569; }
+
+        /* Param table */
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+
+        .param-table th {
+            text-align: left;
+            padding: 10px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .param-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-secondary);
+            line-height: 1.55;
+        }
+
+        .param-table td:first-child {
+            font-family: 'Fira Code', monospace;
+            color: #93c5fd;
+            font-size: 12px;
+        }
+
+        .param-required {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            font-weight: 600;
+            margin-left: 6px;
+        }
+
+        .param-optional {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(100, 116, 139, 0.2);
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-left: 6px;
+        }
+
+        /* Feature highlight row */
+        .feature-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .feature-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 16px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .feature-pill svg {
+            color: var(--accent-cyan);
+            flex-shrink: 0;
+        }
+
+        /* Page hero */
+        .guide-hero {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .guide-hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin-bottom: 18px;
+        }
+
+        .guide-hero h1 {
+            font-size: 40px;
+            font-weight: 800;
+            margin-bottom: 14px;
+            line-height: 1.15;
+        }
+
+        .guide-hero p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 540px;
+            margin: 0 auto 28px;
+            line-height: 1.65;
+        }
+
+        /* Audience quick-nav pills */
+        .audience-pills {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .audience-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: var(--text-secondary);
+        }
+
+        .audience-pill:hover { border-color: var(--accent-cyan); color: var(--text-primary); }
+        .audience-pill.players:hover { border-color: var(--accent-cyan); }
+        .audience-pill.creators:hover { border-color: #3b82f6; }
+        .audience-pill.devs:hover { border-color: #60a5fa; }
+        .audience-pill.traders:hover { border-color: var(--success); }
+
+        /*  Responsive  */
+        @media (max-width: 1024px) {
+            .guide-layout {
+                grid-template-columns: 1fr;
+            }
+            .guide-sidebar {
+                display: none;
+            }
+            .guide-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .feature-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .guide-hero h1 { font-size: 28px; }
+            .guide-cards { grid-template-columns: 1fr; }
+            .feature-row { grid-template-columns: 1fr; }
+            .section-head { flex-direction: column; align-items: flex-start; gap: 10px; }
+        }
+
+        @media (max-width: 480px) {
+            .guide-hero h1 { font-size: 24px; }
+            .guide-card { padding: 18px; }
+            .audience-pills { gap: 8px; }
+            .audience-pill { padding: 8px 14px; font-size: 13px; }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+
+        <!-- Hero -->
+        <div class="guide-hero">
+            <div class="guide-hero-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                DexHero Guide
+            </div>
+            <h1>Everything you need to<br><span class="gradient-text">master DexHero</span></h1>
+            <p>In-depth guides for players, creators, game developers, and traders — all in one place.</p>
+            <div class="audience-pills">
+                <a href="#players" class="audience-pill players">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Players
+                </a>
+                <a href="#creators" class="audience-pill creators">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    Creators
+                </a>
+                <a href="#developers" class="audience-pill devs">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                    Game Developers
+                </a>
+                <a href="#traders" class="audience-pill traders">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    Traders
+                </a>
+            </div>
+        </div>
+
+        <div class="guide-layout">
+
+            <!-- Sidebar nav -->
+            <aside class="guide-sidebar">
+                <nav class="guide-nav">
+                    <div class="guide-nav-group">
+                        <div class="guide-nav-label">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                            Players
+                        </div>
+                        <a href="#players-what">What is DexHero?</a>
+                        <a href="#players-collect">Collecting Characters</a>
+                        <a href="#players-games">Playing Games</a>
+                        <a href="#players-earn">Earning Rewards</a>
+                        <a href="#players-play-pass">Soulbound DexHero Play Pass</a>
+                    </div>
+                    <div class="guide-nav-group">
+                        <div class="guide-nav-label">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            Creators
+                        </div>
+                        <a href="#creators-overview">Overview</a>
+                        <a href="#creators-launch">Launching a DexHero</a>
+                        <a href="#creators-revshare">Revenue Sharing</a>
+                        <a href="#creators-taxes">Tax Configuration</a>
+                        <a href="#creators-manage">Managing Your Token</a>
+                    </div>
+                    <div class="guide-nav-group">
+                        <div class="guide-nav-label">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                            Game Developers
+                        </div>
+                        <a href="#dev-overview">Overview</a>
+                        <a href="#dev-register">Registering a Game</a>
+                        <a href="#dev-api-keys">API Keys</a>
+                        <a href="#dev-endpoints">API Endpoints</a>
+                        <a href="#dev-webhooks">Webhooks</a>
+                        <a href="#dev-examples">Code Examples</a>
+                    </div>
+                    <div class="guide-nav-group">
+                        <div class="guide-nav-label">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            Traders
+                        </div>
+                        <a href="#traders-overview">Overview</a>
+                        <a href="#traders-bonding">Bonding Curves</a>
+                        <a href="#traders-liquidity">Liquidity Pools</a>
+                        <a href="#traders-signals">Reading Signals</a>
+                    </div>
+                </nav>
+            </aside>
+
+            <!-- Main content -->
+            <div class="guide-content">
+
+                <!-- 
+                     PLAYERS
+                 -->
+                <section id="players">
+                    <div class="section-head">
+                        <div class="audience-icon players">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <div class="section-title-block">
+                            <h2>Player Guide</h2>
+                            <p>Collect characters, play games, and earn rewards from every trade.</p>
+                        </div>
+                    </div>
+                    <hr class="section-divider">
+
+                    <div id="players-what"></div>
+                    <div class="guide-cards">
+                        <div class="guide-card">
+                            <div class="card-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                            </div>
+                            <h3>What is a DexHero?</h3>
+                            <p>A DexHero is a tokenized 3D character — each one is a unique on-chain asset tied to a tradeable token. When people buy and sell the token, a portion of those fees flows directly to holders and game participants.</p>
+                        </div>
+                        <div class="guide-card">
+                            <div class="card-icon blue">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                            </div>
+                            <h3>Your Wallet is Your Account</h3>
+                            <p>Connect any BNB Chain, Base, or Ethereum wallet. No sign-up required — your wallet address is your identity, your inventory, and your earnings tracker all in one.</p>
+                        </div>
+                    </div>
+
+                    <div id="players-collect" style="margin-bottom: 20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Collecting Characters</h3>
+                    </div>
+                    <ul class="step-list">
+                        <li class="step-item">
+                            <div class="step-num">1</div>
+                            <div class="step-body">
+                                <h4>Browse the Marketplace</h4>
+                                <p>Head to <strong>Trade → All DexHeros</strong> to browse every character by price, volume, or most recent. Filter by chain to see only assets on your preferred network.</p>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-num">2</div>
+                            <div class="step-body">
+                                <h4>View the Token Detail Page</h4>
+                                <p>Each character has a detail page showing its 3D model, live price chart, bonding curve progress, total holders, and current tax split. Review this before buying.</p>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-num">3</div>
+                            <div class="step-body">
+                                <h4>Buy on the Bonding Curve or Pool</h4>
+                                <p>Tokens that haven't graduated yet trade on a bonding curve — price rises automatically with demand. Graduated tokens trade on standard DEX liquidity pools.</p>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-num">4</div>
+                            <div class="step-body">
+                                <h4>Hold to Earn Revenue</h4>
+                                <p>As long as you hold tokens, you receive a share of every buy and sell tax collected on that token — distributed automatically to holder wallets.</p>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div id="players-games" style="margin-bottom: 20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Playing Games</h3>
+                    </div>
+                    <div class="guide-cards">
+                        <div class="guide-card">
+                            <div class="card-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                            </div>
+                            <h3>Find a Game</h3>
+                            <p>Go to <strong>Trade → All Games</strong> to see every game registered on DexHero. Games use DexHero characters as playable assets — if you hold the token, you can use that character in compatible games.</p>
+                        </div>
+                        <div class="guide-card">
+                            <div class="card-icon amber">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <h3>Play-to-Hold Mechanics</h3>
+                            <p>Game developers distribute rewards to players who hold their DexHero's token. The longer you hold and the more you play, the more you can earn from in-game events and seasonal rankings.</p>
+                        </div>
+                    </div>
+
+                    <div id="players-earn" style="margin-bottom: 20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Earning Rewards</h3>
+                    </div>
+                    <div class="callout info">
+                        <div class="callout-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        </div>
+                        <p><strong>How DexHero revenue sharing works:</strong> Every token has a configurable buy tax and sell tax. A portion of these taxes — set by the creator — is distributed to token holders proportionally. Your share = your % of the circulating supply × the holders' allocation.</p>
+                    </div>
+                    <div class="feature-row">
+                        <div class="feature-pill"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg> Holder rewards</div>
+                        <div class="feature-pill"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> In-game prizes</div>
+                        <div class="feature-pill"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg> Referral earnings</div>
+                    </div>
+
+                    <div id="players-play-pass" style="margin-bottom: 20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Soulbound DexHero Play Pass</h3>
+                    </div>
+                    <p style="font-size:14px; color: var(--text-secondary); line-height:1.7; margin-bottom:16px;">
+                        Want to play games with a DexHero character? Mint the Soulbound DexHero Play Pass at a flat price set by the creator. It's non-transferable by default, locked to your wallet. The only way to permanently unlock it is through compute contribution.
+                    </p>
+                    <ul class="step-list">
+                        <li class="step-item">
+                            <div class="step-num">1</div>
+                            <div class="step-body">
+                                <h4>Mint a Play Pass</h4>
+                                <p>Purchase the DexHero's Soulbound Play Pass at the creator-set flat price. Your Play Pass grants access to every game that has whitelisted this character.</p>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-num">2</div>
+                            <div class="step-body">
+                                <h4>Play in Linked Games</h4>
+                                <p>Any game that has whitelisted this DexHero verifies your DexHero ownership on-chain and grants you playable access automatically.</p>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-num">3</div>
+                            <div class="step-body">
+                                <h4>Unlock via Compute</h4>
+                                <p>Contribute bandwidth to the DexHero's P2P network. When your bytes-served counter crosses the threshold, sacrifice your compute credits to permanently unlock the DexHero — making it freely transferable.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </section>
+
+                <!-- 
+                     CREATORS
+                 -->
+                <section id="creators">
+                    <div class="section-head">
+                        <div class="audience-icon creators">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        </div>
+                        <div class="section-title-block">
+                            <h2>Creator Guide</h2>
+                            <p>Launch your DexHero, configure revenue sharing, and grow your community.</p>
+                        </div>
+                    </div>
+                    <hr class="section-divider">
+
+                    <div id="creators-overview" style="margin-bottom:20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Overview</h3>
+                    </div>
+                    <div class="callout tip">
+                        <div class="callout-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        </div>
+                        <p><strong>Creator economics:</strong> As a DexHero creator you earn from every transaction on your token — forever. Set your buy and sell taxes, decide how fees split between yourself, holders, liquidity, and the platform, then sit back while trading activity generates ongoing revenue.</p>
+                    </div>
+
+                    <div id="creators-launch" style="margin-bottom:20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Launching a DexHero</h3>
+                    </div>
+                    <ul class="step-list">
+                        <li class="step-item">
+                            <div class="step-num">1</div>
+                            <div class="step-body">
+                                <h4>Go to Platform → Create</h4>
+                                <p>Select your target chain — BNB Chain, Base, or Ethereum. Each chain has different gas costs and community characteristics, so pick the one that matches your audience.</p>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-num">2</div>
+                            <div class="step-body">
+                                <h4>Upload or Generate Your 3D Model</h4>
+                                <p>Upload a custom 3D character model (GLB format) or use the AI model generator to create a unique character. The model becomes the face of your token across all DexHero-integrated games and marketplaces.</p>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-num">3</div>
+                            <div class="step-body">
+                                <h4>Set Token Details</h4>
+                                <p>Enter your token name, symbol, description, and social links. These appear on your token detail page and in the marketplace. Good metadata dramatically improves discoverability.</p>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-num">4</div>
+                            <div class="step-body">
+                                <h4>Choose Launch Mode</h4>
+                                <p><strong>Bonding Curve:</strong> Token starts with no external liquidity. Price rises algorithmically as buyers come in. Once the curve fills, it graduates to a DEX automatically. Ideal for fair launches.<br>
+                                <strong>Liquidity Pool:</strong> Seed the pool yourself with an initial token + SOL/ETH/BNB pair for immediate DEX trading.</p>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-num">5</div>
+                            <div class="step-body">
+                                <h4>Configure Taxes &amp; Deploy</h4>
+                                <p>Set your transaction taxes and fee distribution (see Tax Configuration below), then confirm the deploy transaction in your wallet. Your DexHero is live.</p>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div id="creators-revshare" style="margin-bottom:20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Revenue Sharing</h3>
+                    </div>
+                    <p style="font-size:14px; color: var(--text-secondary); line-height:1.7; margin-bottom:16px;">
+                        DexHero's revenue sharing system distributes a portion of every buy and sell fee across four buckets. As creator you control the exact split.
+                    </p>
+                    <div class="guide-cards">
+                        <div class="guide-card">
+                            <div class="card-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <h3>Creator Share</h3>
+                            <p>The largest bucket — goes directly to your wallet on every transaction. This is your ongoing royalty for creating the DexHero and maintaining its community.</p>
+                        </div>
+                        <div class="guide-card">
+                            <div class="card-icon blue">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </div>
+                            <h3>Holder Share</h3>
+                            <p>Distributed proportionally to all current token holders. Higher holder allocations make your token more attractive to long-term investors and reduce sell pressure.</p>
+                        </div>
+                        <div class="guide-card">
+                            <div class="card-icon green">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <h3>Liquidity Share</h3>
+                            <p>Auto-compounds back into the trading pool. A deeper liquidity pool means lower slippage for buyers, which supports price stability and makes your token easier to trade at scale.</p>
+                        </div>
+                        <div class="guide-card">
+                            <div class="card-icon amber">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            </div>
+                            <h3>Platform Share</h3>
+                            <p>A fixed platform fee that funds DexHero infrastructure, security audits, and new feature development. This rate is non-negotiable and applies to all tokens equally.</p>
+                        </div>
+                    </div>
+
+                    <div id="creators-taxes" style="margin-bottom:20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Tax Configuration</h3>
+                    </div>
+                    <div class="callout warning">
+                        <div class="callout-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </div>
+                        <p><strong>Tax strategy matters:</strong> Very high taxes (above 10–15% combined) are a common red flag that causes buyers to avoid a token. We recommend keeping total buy + sell tax under 10% for the best community growth. Taxes can be adjusted after launch via <strong>Platform → Manage</strong>.</p>
+                    </div>
+                    <p style="font-size:14px; color: var(--text-secondary); line-height:1.7; margin-bottom:16px;">
+                        DexHero supports separate buy tax and sell tax rates. Each can be configured independently. A common pattern is a slightly higher sell tax to discourage flipping while keeping the buy tax low to attract new holders.
+                    </p>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Range</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>buyTax</td><td>0 – 25%</td><td>Percentage taken from every buy transaction</td></tr>
+                            <tr><td>sellTax</td><td>0 – 25%</td><td>Percentage taken from every sell transaction</td></tr>
+                            <tr><td>creatorShare</td><td>0 – 100% of tax</td><td>Your cut of the collected tax</td></tr>
+                            <tr><td>holderShare</td><td>0 – 100% of tax</td><td>Distributed to all holders proportionally</td></tr>
+                            <tr><td>liquidityShare</td><td>0 – 100% of tax</td><td>Auto-added to the liquidity pool</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div id="creators-manage" style="margin-bottom:20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Managing Your Token</h3>
+                    </div>
+                    <div class="guide-cards">
+                        <div class="guide-card">
+                            <div class="card-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                            </div>
+                            <h3>Update Metadata</h3>
+                            <p>Update your token's name, description, image, website, and social links at any time via <strong>Platform → Update Metadata</strong>. Keeping metadata fresh helps with community trust.</p>
+                        </div>
+                        <div class="guide-card">
+                            <div class="card-icon blue">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            </div>
+                            <h3>Add &amp; Lock Liquidity</h3>
+                            <p>Add additional liquidity to your pool at any time. Lock liquidity for a set period to signal commitment to your community — visible on the token detail page as a trust indicator.</p>
+                        </div>
+                        <div class="guide-card">
+                            <div class="card-icon green">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                            </div>
+                            <h3>Referrals Program</h3>
+                            <p>Enable a referral program for your token. Share your unique link and earn a portion of fees from every wallet that trades through your referral. Track earnings in <strong>Platform → Referrals</strong>.</p>
+                        </div>
+                        <div class="guide-card">
+                            <div class="card-icon amber">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                            </div>
+                            <h3>Feature Your Token</h3>
+                            <p>Purchase a featured slot via <strong>Platform → Register Game</strong> to promote your DexHero at the top of the marketplace. Featured tokens get significantly higher visibility and trading volume.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 
+                     GAME DEVELOPERS
+                 -->
+                <section id="developers">
+                    <div class="section-head">
+                        <div class="audience-icon devs">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                        </div>
+                        <div class="section-title-block">
+                            <h2>Game Developer Guide</h2>
+                            <p>Integrate DexHero characters into your game using the REST API.</p>
+                        </div>
+                    </div>
+                    <hr class="section-divider">
+
+                    <div id="dev-overview" style="margin-bottom:20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Overview</h3>
+                    </div>
+                    <p style="font-size:14px; color: var(--text-secondary); line-height:1.7; margin-bottom:16px;">
+                        The DexHero Game Developer API lets you verify character ownership, fetch 3D model assets, check Play Pass status, and post in-game events — all from your game server or client. Integration takes roughly 30 minutes for most game engines.
+                    </p>
+                    <div class="feature-row">
+                        <div class="feature-pill"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Ownership verification</div>
+                        <div class="feature-pill"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> 3D model assets</div>
+                        <div class="feature-pill"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Play Pass verification</div>
+                    </div>
+
+                    <div id="dev-register" style="margin-bottom:20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Step 1 — Register Your Game</h3>
+                    </div>
+                    <ul class="step-list">
+                        <li class="step-item">
+                            <div class="step-num">1</div>
+                            <div class="step-body">
+                                <h4>Go to Platform → Register Game</h4>
+                                <p>Connect your developer wallet and submit your game name, description, website, and supported chains. This creates your developer profile on DexHero and makes your game discoverable in the games marketplace.</p>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-num">2</div>
+                            <div class="step-body">
+                                <h4>Receive Your Game ID</h4>
+                                <p>After registration, you receive a unique <code style="font-family:'Fira Code',monospace; font-size:12px; background:rgba(255,255,255,0.08); padding:2px 6px; border-radius:4px;">gameId</code>. Include this in all API requests so DexHero can verify calls come from your registered game.</p>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <div class="step-num">3</div>
+                            <div class="step-body">
+                                <h4>Generate an API Key</h4>
+                                <p>Open the <a href="/pages/api-docs.html" style="color:var(--accent-cyan);">Developer Portal</a>, connect your wallet, and generate an API key. Keys are scoped to your game and can be revoked at any time.</p>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div id="dev-api-keys" style="margin-bottom:20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Step 2 — Authentication</h3>
+                    </div>
+                    <div class="callout info">
+                        <div class="callout-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </div>
+                        <p><strong>Keep your API key secret.</strong> Never expose it in client-side JavaScript or commit it to a public repository. Always make DexHero API calls from your game server. For client-side verification, use the public read-only endpoints which require no authentication.</p>
+                    </div>
+                    <p style="font-size:14px; color: var(--text-secondary); line-height:1.7; margin-bottom:16px;">
+                        Include your API key in the <code style="font-family:'Fira Code',monospace; font-size:12px; background:rgba(255,255,255,0.08); padding:2px 6px; border-radius:4px;">Authorization</code> header on all authenticated requests:
+                    </p>
+                    <div class="api-endpoint">
+                        <div class="api-endpoint-header">
+                            <span style="font-family:'Fira Code',monospace; font-size:12px; color:var(--text-secondary);">Request Header</span>
+                        </div>
+                        <div class="api-body">
+                            <pre>Authorization: Bearer dxh_your_api_key_here
+Content-Type: application/json</pre>
+                        </div>
+                    </div>
+
+                    <div id="dev-endpoints" style="margin-bottom:20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Step 3 — API Endpoints</h3>
+                    </div>
+
+                    <p style="font-size:13px; color: var(--text-muted); margin-bottom:20px;">Base URL: <code style="font-family:'Fira Code',monospace; font-size:12px; background:rgba(255,255,255,0.08); padding:2px 6px; border-radius:4px;">https://api.dexhero.io/v1</code></p>
+
+                    <!-- Verify Ownership -->
+                    <div class="api-endpoint">
+                        <div class="api-endpoint-header">
+                            <span class="http-method get">GET</span>
+                            <span class="endpoint-path">/characters/{tokenAddress}/owner/{walletAddress}</span>
+                            <span class="endpoint-desc">Verify ownership</span>
+                        </div>
+                        <div class="api-body">
+                            <pre><span class="comment">// Check if a wallet holds a minimum balance of a DexHero token</span>
+<span class="comment">// Response</span>
+{
+  <span class="key">"owns"</span>: <span class="num">true</span>,
+  <span class="key">"balance"</span>: <span class="str">"15000000"</span>,
+  <span class="key">"tokenAddress"</span>: <span class="str">"0xabc...123"</span>,
+  <span class="key">"walletAddress"</span>: <span class="str">"0xdef...456"</span>,
+  <span class="key">"chain"</span>: <span class="str">"ethereum"</span>
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Get Character Info -->
+                    <div class="api-endpoint">
+                        <div class="api-endpoint-header">
+                            <span class="http-method get">GET</span>
+                            <span class="endpoint-path">/characters/{tokenAddress}</span>
+                            <span class="endpoint-desc">Get character metadata</span>
+                        </div>
+                        <div class="api-body">
+                            <pre><span class="comment">// Returns full character data including 3D model URLs</span>
+{
+  <span class="key">"id"</span>: <span class="str">"uuid"</span>,
+  <span class="key">"name"</span>: <span class="str">"Hero Name"</span>,
+  <span class="key">"symbol"</span>: <span class="str">"HERO"</span>,
+  <span class="key">"chain"</span>: <span class="str">"ethereum"</span>,
+  <span class="key">"modelUrl"</span>: <span class="str">"https://cdn.dexhero.io/models/uuid.glb"</span>,
+  <span class="key">"spriteUrl"</span>: <span class="str">"https://cdn.dexhero.io/sprites/uuid.png"</span>,
+  <span class="key">"thumbnailUrl"</span>: <span class="str">"https://cdn.dexhero.io/thumbs/uuid.png"</span>,
+  <span class="key">"price"</span>: <span class="str">"0.00042"</span>,
+  <span class="key">"marketCap"</span>: <span class="str">"42000"</span>,
+  <span class="key">"holders"</span>: <span class="num">318</span>
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- List Characters -->
+                    <div class="api-endpoint">
+                        <div class="api-endpoint-header">
+                            <span class="http-method get">GET</span>
+                            <span class="endpoint-path">/characters?chain=ethereum&amp;limit=20&amp;offset=0</span>
+                            <span class="endpoint-desc">List all characters</span>
+                        </div>
+                        <div class="api-body">
+                            <pre><span class="comment">// Query params: chain, limit, offset, sortBy (price|volume|holders|recent)</span>
+{
+  <span class="key">"characters"</span>: [ <span class="comment">/* array of character objects */</span> ],
+  <span class="key">"total"</span>: <span class="num">1247</span>,
+  <span class="key">"limit"</span>: <span class="num">20</span>,
+  <span class="key">"offset"</span>: <span class="num">0</span>
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Check Play Pass -->
+                    <div class="api-endpoint">
+                        <div class="api-endpoint-header">
+                            <span class="http-method get">GET</span>
+                            <span class="endpoint-path">/nft/balance?wallet={walletAddress}&sbt={sbtAddress}</span>
+                            <span class="endpoint-desc">Check Play Pass ownership</span>
+                        </div>
+                        <div class="api-body">
+                            <pre><span class="comment">// Returns DexHero ownership status for this DexHero</span>
+{
+  <span class="key">"owns"</span>: <span class="num">true</span>,
+  <span class="key">"access_type"</span>: <span class="str">"nft_holder"</span>,
+  <span class="key">"unlocked"</span>: <span class="num">false</span>
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Post Game Event -->
+                    <div class="api-endpoint">
+                        <div class="api-endpoint-header">
+                            <span class="http-method post">POST</span>
+                            <span class="endpoint-path">/games/{gameId}/events</span>
+                            <span class="endpoint-desc">Post a game event</span>
+                        </div>
+                        <div class="api-body">
+                            <pre><span class="comment">// Record in-game events for leaderboards and holder rewards</span>
+<span class="comment">// Request body</span>
+{
+  <span class="key">"walletAddress"</span>: <span class="str">"0xdef...456"</span>,
+  <span class="key">"tokenAddress"</span>: <span class="str">"0xabc...123"</span>,
+  <span class="key">"eventType"</span>: <span class="str">"match_win"</span>,
+  <span class="key">"score"</span>: <span class="num">1500</span>,
+  <span class="key">"metadata"</span>: { <span class="key">"level"</span>: <span class="num">12</span>, <span class="key">"duration"</span>: <span class="num">240</span> }
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Get Wallet Characters -->
+                    <div class="api-endpoint">
+                        <div class="api-endpoint-header">
+                            <span class="http-method get">GET</span>
+                            <span class="endpoint-path">/wallets/{walletAddress}/characters</span>
+                            <span class="endpoint-desc">Get all characters a wallet owns or rents</span>
+                        </div>
+                        <div class="api-body">
+                            <pre><span class="comment">// Returns owned + active rentals for a wallet — useful for character selection screens</span>
+{
+  <span class="key">"owned"</span>: [ <span class="comment">/* character objects */</span> ],
+  <span class="key">"rented"</span>: [ <span class="comment">/* character objects with expiresAt */</span> ]
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Params table -->
+                    <h3 style="font-size:15px; font-weight:600; margin:28px 0 14px;">Common Query Parameters</h3>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>chain<span class="param-optional">optional</span></td><td>string</td><td>Filter by chain: <code style="font-size:11px;">bnb</code>, <code style="font-size:11px;">base</code>, <code style="font-size:11px;">ethereum</code></td></tr>
+                            <tr><td>limit<span class="param-optional">optional</span></td><td>integer</td><td>Results per page. Default: 20. Max: 100.</td></tr>
+                            <tr><td>offset<span class="param-optional">optional</span></td><td>integer</td><td>Pagination offset. Default: 0.</td></tr>
+                            <tr><td>sortBy<span class="param-optional">optional</span></td><td>string</td><td><code style="font-size:11px;">price</code> | <code style="font-size:11px;">volume</code> | <code style="font-size:11px;">holders</code> | <code style="font-size:11px;">recent</code></td></tr>
+                            <tr><td>minBalance<span class="param-optional">optional</span></td><td>string</td><td>Minimum token balance required (for ownership checks). Default: 1.</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div id="dev-webhooks" style="margin-bottom:20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Webhooks</h3>
+                    </div>
+                    <p style="font-size:14px; color: var(--text-secondary); line-height:1.7; margin-bottom:16px;">
+                        Register a webhook URL in your developer portal to receive real-time push events instead of polling. DexHero will POST a JSON payload to your endpoint within seconds of each event.
+                    </p>
+                    <div class="guide-cards">
+                        <div class="guide-card">
+                            <div class="card-icon purple">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                            </div>
+                            <h3>token.transfer</h3>
+                            <p>Fired when a DexHero token moves between wallets. Use this to update in-game ownership in real time, so players can use a character immediately after purchase.</p>
+                        </div>
+                        <div class="guide-card">
+                            <div class="card-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </div>
+                            <h3>nft.minted / nft.unlocked</h3>
+                            <p>Fired when a Play Pass is minted or permanently unlocked via compute contribution. Subscribe to these events to automatically grant in-game access without requiring players to re-verify.</p>
+                        </div>
+                        <div class="guide-card">
+                            <div class="card-icon green">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            </div>
+                            <h3>token.graduated</h3>
+                            <p>Fired when a bonding curve token graduates to a full DEX pool. Useful for displaying milestone animations or unlocking special in-game rewards for early holders.</p>
+                        </div>
+                        <div class="guide-card">
+                            <div class="card-icon amber">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <h3>profile.updated</h3>
+                            <p>Fired when a player updates their DexHero profile (username, avatar). Sync these changes into your game to keep player names consistent across the ecosystem.</p>
+                        </div>
+                    </div>
+
+                    <div id="dev-examples" style="margin-bottom:20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Code Examples</h3>
+                    </div>
+
+                    <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">JavaScript / Node.js</p>
+                    <div class="api-endpoint">
+                        <div class="api-body">
+                            <pre><span class="comment">// Verify a player owns a specific DexHero before allowing access</span>
+async function verifyCharacterAccess(walletAddress, tokenAddress) {
+  const res = await fetch(
+    `https://api.dexhero.io/v1/characters/${tokenAddress}/owner/${walletAddress}`,
+    { headers: { <span class="key">'Authorization'</span>: `Bearer ${process.env.DEXHERO_API_KEY}` } }
+  );
+  const data = await res.json();
+  return data.owns === true;
+}
+
+<span class="comment">// Fetch all characters a player has available (owned + rented)</span>
+async function getPlayerRoster(walletAddress) {
+  const res = await fetch(
+    `https://api.dexhero.io/v1/wallets/${walletAddress}/characters`,
+    { headers: { <span class="key">'Authorization'</span>: `Bearer ${process.env.DEXHERO_API_KEY}` } }
+  );
+  const { owned, rented } = await res.json();
+  return [...owned, ...rented];
+}</pre>
+                        </div>
+                    </div>
+
+                    <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Unity / C#</p>
+                    <div class="api-endpoint">
+                        <div class="api-body">
+                            <pre><span class="comment">// Verify ownership from Unity game client (server-side call via your backend)</span>
+IEnumerator VerifyOwnership(string wallet, string token, System.Action&lt;bool&gt; callback)
+{
+    string url = $"https://api.dexhero.io/v1/characters/{token}/owner/{wallet}";
+    using (UnityWebRequest req = UnityWebRequest.Get(url))
+    {
+        req.SetRequestHeader(<span class="str">"Authorization"</span>, <span class="str">"Bearer "</span> + apiKey);
+        yield return req.SendWebRequest();
+        if (req.result == UnityWebRequest.Result.Success)
+        {
+            var data = JsonUtility.FromJson&lt;OwnershipResponse&gt;(req.downloadHandler.text);
+            callback(data.owns);
+        }
+    }
+}</pre>
+                        </div>
+                    </div>
+
+                    <div class="callout tip">
+                        <div class="callout-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        </div>
+                        <p><strong>Full API reference</strong> with interactive request builder, error codes, and SDK downloads is available at <a href="/pages/api-docs.html" style="color:var(--accent-cyan);">API Docs →</a></p>
+                    </div>
+                </section>
+
+                <!-- 
+                     TRADERS
+                 -->
+                <section id="traders">
+                    <div class="section-head">
+                        <div class="audience-icon traders">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        </div>
+                        <div class="section-title-block">
+                            <h2>Trader Guide</h2>
+                            <p>Navigate bonding curves and liquidity pools.</p>
+                        </div>
+                    </div>
+                    <hr class="section-divider">
+
+                    <div id="traders-bonding" style="margin-bottom:20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Bonding Curves</h3>
+                    </div>
+                    <p style="font-size:14px; color: var(--text-secondary); line-height:1.7; margin-bottom:16px;">
+                        Tokens trade on a bonding curve before graduation — price is set automatically by the contract based on supply. Every buy raises the price; every sell lowers it. Once the curve fills its collateral target, it graduates to a standard DEX liquidity pool.
+                    </p>
+                    <div class="guide-cards">
+                        <div class="guide-card">
+                            <div class="card-icon amber">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            </div>
+                            <h3>Risks</h3>
+                            <p>Bonding curve tokens are highly volatile pre-graduation. Assess creator credibility, community activity, and the token's game integration before entering.</p>
+                        </div>
+                        <div class="guide-card">
+                            <div class="card-icon blue">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            </div>
+                            <h3>Slippage</h3>
+                            <p>Large buys move price significantly in a single transaction. DexHero shows estimated slippage before you confirm — split large positions to reduce average entry cost.</p>
+                        </div>
+                    </div>
+
+                    <div id="traders-liquidity" style="margin-bottom:20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Post-Graduation</h3>
+                    </div>
+                    <p style="font-size:14px; color: var(--text-secondary); line-height:1.7; margin-bottom:16px;">
+                        Once graduated, it trades as a standard AMM token. Key metrics:
+                    </p>
+                    <table class="param-table">
+                        <thead>
+                            <tr><th>Metric</th><th>What It Tells You</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Liquidity Depth</td><td>How much you can trade without significant price impact.</td></tr>
+                            <tr><td>Locked Liquidity %</td><td>Higher = creator less likely to pull funds.</td></tr>
+                            <tr><td>24h Volume / MCap</td><td>High ratio = active; can also signal pump activity.</td></tr>
+                            <tr><td>Top Holder %</td><td>High concentration = centralisation risk.</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div id="traders-signals" style="margin-bottom:20px;">
+                        <h3 style="font-size:18px; font-weight:600; margin-bottom:12px;">Reading Signals</h3>
+                    </div>
+                    <div class="guide-cards">
+                        <div class="guide-card">
+                            <div class="card-icon green">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                            </div>
+                            <h3>Bullish Signals</h3>
+                            <p>New game integration, rising holder count, locked liquidity, creator track record, active community, growing volume with stable price.</p>
+                        </div>
+                        <div class="guide-card">
+                            <div class="card-icon" style="background:rgba(239,68,68,0.1); color:var(--danger);">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+                            </div>
+                            <h3>Red Flags</h3>
+                            <p>Unlocked liquidity, anonymous creator, sell tax above 15%, top wallet holding over 30%, no game backing the token, volume spike with no news.</p>
+                        </div>
+                    </div>
+
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script>
+        // Smooth scroll for sidebar links
+        document.querySelectorAll('.guide-nav a, .audience-pill').forEach(link => {
+            link.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+            });
+        });
+
+        // Highlight active sidebar link on scroll
+        const sections = document.querySelectorAll('section[id], [id^="players-"], [id^="creators-"], [id^="dev-"], [id^="traders-"]');
+        const navLinks = document.querySelectorAll('.guide-nav a');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === '#' + entry.target.id) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }, { rootMargin: '-20% 0px -70% 0px' });
+
+        sections.forEach(s => observer.observe(s));
+    </script>
+</body>
+
+</html>

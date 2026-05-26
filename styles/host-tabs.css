@@ -1,0 +1,346 @@
+/* ── Phase-5 — shared icon styles (used by app/ui/icons.js) ─────── */
+.icon {
+    display: inline-block;
+    vertical-align: -2px;
+    line-height: 0;
+    flex: 0 0 auto;
+}
+.icon-spinner { animation: icon-spin 1.2s linear infinite; }
+@keyframes icon-spin { to { transform: rotate(360deg); } }
+
+/* host-tabs.css — Phase 4 of the Steam-tier rebuild.
+ * Tab strip + Setup-step + Live-session-card + Earnings-sparkline +
+ * threshold-meter styles. Builds on tokens.css + hud.css; reuses
+ * --acc-cyan / --acc-blue / --acc-ok-warn-err palette throughout. */
+
+/* ── Tab strip ─────────────────────────────────────────────────── */
+
+.host-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--rule, rgba(255,255,255,0.08));
+    padding: 0 4px;
+    margin: -8px -16px 16px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.85) 100%);
+}
+.host-tabs button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--ink-2, rgba(255,255,255,0.55));
+    font-family: var(--font-display, 'Inter'), sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    padding: 14px 10px;
+    cursor: pointer;
+    position: relative;
+    transition: color 200ms ease;
+}
+.host-tabs button:hover { color: var(--ink-0, #fff); }
+.host-tabs button[aria-selected="true"] {
+    color: var(--acc-cyan, #06b6d4);
+}
+.host-tabs button[aria-selected="true"]::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 8px; right: 8px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--acc-cyan, #06b6d4), var(--acc-blue, #3b82f6));
+    box-shadow: 0 0 12px rgba(6,182,212,0.65);
+    border-radius: 2px;
+}
+.host-tab-badge {
+    display: inline-block;
+    margin-left: 6px;
+    min-width: 18px;
+    height: 18px;
+    line-height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--acc-cyan, #06b6d4);
+    color: #0a0a0e;
+    font-size: 10px;
+    font-weight: 700;
+    box-shadow: 0 0 8px rgba(6,182,212,0.55);
+}
+
+/* ── Setup tab — step rows ─────────────────────────────────────── */
+
+.host-steps {
+    display: grid;
+    gap: 10px;
+}
+
+.host-step {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+    transition: border-color 200ms ease, background 200ms ease;
+}
+
+.host-step--idle    { border-left: 2px solid rgba(255,255,255,0.12); }
+.host-step--pending { border-left: 2px solid var(--acc-warn, #fbbf24); }
+.host-step--ok      { border-left: 2px solid var(--acc-ok, #22c55e); background: rgba(34,197,94,0.04); }
+.host-step--err     { border-left: 2px solid var(--acc-err, #ef4444); background: rgba(239,68,68,0.04); }
+
+.host-step-bullet {
+    display: grid;
+    place-items: center;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+}
+.host-step--ok .host-step-bullet  { border-color: var(--acc-ok, #22c55e); box-shadow: 0 0 12px rgba(34,197,94,0.4); }
+.host-step--err .host-step-bullet { border-color: var(--acc-err, #ef4444); box-shadow: 0 0 12px rgba(239,68,68,0.4); }
+.host-step--pending .host-step-bullet { animation: host-step-pulse 1.5s ease-in-out infinite; }
+.host-step-bullet-num {
+    font-family: var(--font-display, 'Inter'), sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--ink-1, rgba(255,255,255,0.78));
+}
+.host-step--ok .host-step-bullet-num  { color: var(--acc-ok, #22c55e); }
+.host-step--err .host-step-bullet-num { color: var(--acc-err, #ef4444); }
+
+@keyframes host-step-pulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(251,191,36,0.0); }
+    50%      { box-shadow: 0 0 14px rgba(251,191,36,0.55); }
+}
+
+.host-step-label {
+    font-family: var(--font-display, 'Inter'), sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-0, #fff);
+}
+.host-step-detail {
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    color: var(--ink-2, rgba(255,255,255,0.55));
+    margin-top: 2px;
+}
+.host-step-action a { font-size: 10px; }
+
+.host-step-collapsed-banner {
+    padding: 10px 14px;
+    background: linear-gradient(90deg, rgba(34,197,94,0.10) 0%, rgba(34,197,94,0.02) 100%);
+    border: 1px solid rgba(34,197,94,0.35);
+    border-radius: 4px;
+    color: var(--acc-ok, #22c55e);
+    font-family: var(--font-display, 'Inter'), sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ── Live tab — session cards ──────────────────────────────────── */
+
+.session-card {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 14px;
+    padding: 12px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+    margin-bottom: 10px;
+    border-left: 2px solid var(--acc-cyan, #06b6d4);
+    box-shadow: 0 0 16px rgba(6,182,212,0.10);
+}
+.session-card-cover {
+    position: relative;
+    width: 96px; height: 144px;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(6,182,212,0.18), rgba(59,130,246,0.10));
+    border: 1px solid rgba(6,182,212,0.35);
+    border-radius: 3px;
+}
+.session-card-cover img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.session-card-cover-fallback {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    font-family: var(--font-display, 'Inter'), sans-serif;
+    font-weight: 800;
+    font-size: 36px;
+    letter-spacing: 0.08em;
+    color: var(--acc-cyan, #06b6d4);
+    text-shadow: 0 0 12px rgba(6,182,212,0.6);
+}
+
+.session-card-body { display: grid; gap: 8px; align-content: start; }
+.session-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+}
+.session-card-title {
+    font-family: var(--font-display, 'Inter'), sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-0, #fff);
+}
+.session-card-time {
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    color: var(--acc-cyan, #06b6d4);
+    font-variant-numeric: tabular-nums;
+}
+.session-card-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 12px;
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    color: var(--ink-1, rgba(255,255,255,0.78));
+}
+.session-card-meta > div {
+    display: flex; justify-content: space-between; gap: 8px;
+}
+.session-card-meta .hud-label { font-size: 10px; }
+.session-card-earned {
+    margin-top: 4px;
+    padding: 6px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: baseline; gap: 8px;
+}
+.session-card-earned-value {
+    font-family: var(--font-display, 'Inter'), sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--acc-cyan, #06b6d4);
+    text-shadow: 0 0 8px rgba(6,182,212,0.45);
+    margin-left: auto;
+}
+
+/* Empty-state hero on the Live tab when no session is in flight. */
+.live-empty {
+    text-align: center;
+    padding: 32px 16px;
+    border: 1px dashed rgba(255,255,255,0.10);
+    border-radius: 4px;
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.3));
+}
+.live-empty-title {
+    font-family: var(--font-display, 'Inter'), sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-1, rgba(255,255,255,0.78));
+    margin-bottom: 8px;
+}
+.live-empty-sub {
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    color: var(--ink-3, rgba(255,255,255,0.38));
+    line-height: 1.6;
+}
+
+/* ── Earnings tab — sparkline + threshold meter ─────────────────── */
+
+.earnings-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.earnings-stat {
+    padding: 12px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+}
+.earnings-stat-label {
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-3, rgba(255,255,255,0.38));
+    margin-bottom: 6px;
+}
+.earnings-stat-value {
+    font-family: var(--font-display, 'Inter'), sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--acc-cyan, #06b6d4);
+    text-shadow: 0 0 10px rgba(6,182,212,0.4);
+    font-variant-numeric: tabular-nums;
+}
+
+.earnings-chart {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+}
+.earnings-chart-title {
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-3, rgba(255,255,255,0.38));
+    margin-bottom: 8px;
+}
+
+.threshold-meters {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.threshold-meter {
+    text-align: center;
+    padding: 10px 6px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+    position: relative;
+}
+.threshold-meter--active { border-color: rgba(6,182,212,0.45); box-shadow: 0 0 12px rgba(6,182,212,0.18); }
+.threshold-meter--reached { border-color: rgba(34,197,94,0.45); background: rgba(34,197,94,0.06); }
+
+.threshold-ring { position: relative; width: 48px; height: 48px; margin: 0 auto 6px; }
+.threshold-ring svg { width: 100%; height: 100%; }
+.threshold-ring-percent {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    color: var(--ink-1, rgba(255,255,255,0.78));
+    font-variant-numeric: tabular-nums;
+}
+
+.threshold-name {
+    font-family: var(--font-display, 'Inter'), sans-serif;
+    font-weight: 600;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-1, rgba(255,255,255,0.78));
+    margin-bottom: 2px;
+}
+.threshold-target {
+    font-family: var(--font-mono, monospace);
+    font-size: 9px;
+    color: var(--ink-3, rgba(255,255,255,0.38));
+}

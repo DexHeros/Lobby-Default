@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Model | DexHero</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <style>
+        .upload-container {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .upload-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg-secondary);
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.05);
+        }
+
+        .file-upload-area.has-file {
+            border-color: var(--accent-cyan);
+        }
+
+        .file-upload-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 12px;
+            color: var(--text-muted);
+        }
+
+        .model-preview-box {
+            width: 100%;
+            height: 300px;
+            background: transparent;
+            border-radius: 12px;
+            margin-top: 16px;
+            overflow: hidden;
+        }
+
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            --poster-color: transparent;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent-cyan);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .info-note {
+            padding: 12px 16px;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .price-input-wrapper {
+            position: relative;
+        }
+
+        .price-input-wrapper::after {
+            content: 'USDC';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .upload-container {
+                max-width: 100%;
+                padding: 0 12px;
+            }
+            .upload-card {
+                padding: 20px;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .file-upload-area {
+                padding: 20px;
+            }
+            .model-preview-box {
+                height: 220px;
+            }
+            .section-title {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .upload-card {
+                padding: 16px;
+                border-radius: 14px;
+            }
+            .file-upload-area {
+                padding: 16px;
+            }
+            .model-preview-box {
+                height: 180px;
+            }
+            .section-title {
+                font-size: 15px;
+            }
+            .btn-submit {
+                font-size: 14px;
+                padding: 14px;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <div class="upload-container">
+            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 8px;">Upload 3D Model</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 32px;">List your 3D model for sale in the marketplace
+            </p>
+
+            <div class="upload-card">
+                <div class="section-title">Model File</div>
+                <div class="info-note">
+                    Accepted formats: .GLB, .GLTF • Maximum size: 50MB
+                </div>
+
+                <div class="file-upload-area" id="model-upload"
+                    onclick="document.getElementById('model-file-input').click()">
+                    <div id="upload-text">
+                        <strong>Click to upload</strong> or drag and drop<br>
+                        <span style="font-size: 12px; color: var(--text-muted);">GLB or GLTF file</span>
+                    </div>
+                </div>
+                <input type="file" id="model-file-input" accept=".glb,.gltf" style="display: none;"
+                    onchange="handleModelFile(this)">
+
+                <div id="model-preview" style="display: none;">
+                    <div class="model-preview-box">
+                        <model-viewer id="model-viewer" camera-controls auto-rotate shadow-intensity="1"></model-viewer>
+                    </div>
+                </div>
+            </div>
+
+            <div class="upload-card">
+                <div class="section-title">Preview Image (Optional)</div>
+                <div class="file-upload-area" id="image-upload"
+                    onclick="document.getElementById('image-file-input').click()">
+                    <div id="image-upload-text">
+                        <strong>Click to upload preview image</strong><br>
+                        <span style="font-size: 12px; color: var(--text-muted);">JPG or PNG • Recommended:
+                            800x600</span>
+                    </div>
+                </div>
+                <input type="file" id="image-file-input" accept="image/jpeg,image/png" style="display: none;"
+                    onchange="handleImageFile(this)">
+            </div>
+
+            <div class="upload-card">
+                <div class="section-title">Model Details</div>
+
+                <div class="form-group">
+                    <label>Model Name *</label>
+                    <input type="text" id="model-name" placeholder="e.g. Fantasy Sword" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="model-description"
+                        placeholder="Describe your 3D model, its uses, and features..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <select id="model-category" required>
+                            <option value="">Select category</option>
+                            <option value="characters">Characters</option>
+                            <option value="props">Props</option>
+                            <option value="environments">Environments</option>
+                            <option value="vehicles">Vehicles</option>
+                            <option value="weapons">Weapons</option>
+                            <option value="uncategorized">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Price (USDC) *</label>
+                        <div class="price-input-wrapper">
+                            <input type="number" id="model-price" placeholder="10.0" min="10" step="0.1" required>
+                        </div>
+                        <small style="color: var(--text-muted); font-size: 12px;">Minimum: 10 USDC</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Tags (comma-separated)</label>
+                    <input type="text" id="model-tags" placeholder="game-ready, low-poly, pbr, fantasy">
+                </div>
+            </div>
+
+            <div class="upload-card" style="background: rgba(6, 182, 212, 0.05);">
+                <div class="section-title">Token Benefits (Optional)</div>
+                <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;">
+                    Link this model to one of your tokens to offer exclusive benefits to token holders
+                </p>
+
+                <div class="form-group">
+                    <label>Select Token</label>
+                    <select id="linked-token">
+                        <option value="">None (Public Model)</option>
+                        <!-- Will be populated with user's tokens -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Benefit Description</label>
+                    <input type="text" id="token-benefit" placeholder="e.g. 20% discount for token holders">
+                </div>
+            </div>
+
+            <button class="btn-submit" id="submit-btn" onclick="handleSubmit()">Upload & List Model</button>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+
+    <script src="/js/utils.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="../js/blockchain-integration.js"></script>
+    <script src="../js/token-creation.js"></script>
+    <script src="../js/model-marketplace.js"></script>
+    <script>
+        const blockchain = new DexHeroBlockchain();
+        window.DexHeroBlockchain = blockchain; // Standardize for modals.js
+
+        let modelFile = null;
+        let imageFile = null;
+
+        function updateButtonText() {
+            const btn = document.getElementById('submit-btn');
+            if (btn) {
+                if (blockchain.userAddress) {
+                    btn.textContent = 'Upload & List Model';
+                } else {
+                    btn.textContent = 'Connect Wallet';
+                }
+            }
+        }
+
+        window.addEventListener('walletAccountChanged', (e) => {
+            if (e.detail && e.detail.address) {
+                blockchain.userAddress = e.detail.address;
+                updateButtonText();
+                loadUserTokens();
+            }
+        });
+
+        function handleModelFile(input) {
+            if (input.files && input.files[0]) {
+                modelFile = input.files[0];
+
+                // Check file size (50MB max)
+                if (modelFile.size > 50 * 1024 * 1024) {
+                    alert('File too large. Maximum size is 50MB.');
+                    modelFile = null;
+                    return;
+                }
+
+                // Update UI
+                const uploadArea = document.getElementById('model-upload');
+                uploadArea.classList.add('has-file');
+                const uploadTextEl = document.getElementById('upload-text');
+                uploadTextEl.textContent = '';
+                const strongEl = document.createElement('strong');
+                strongEl.textContent = modelFile.name;
+                uploadTextEl.appendChild(strongEl);
+                uploadTextEl.appendChild(document.createElement('br'));
+                const sizeSpan = document.createElement('span');
+                sizeSpan.style.fontSize = '12px';
+                sizeSpan.textContent = (modelFile.size / (1024 * 1024)).toFixed(2) + ' MB';
+                uploadTextEl.appendChild(sizeSpan);
+
+                // Show 3D preview
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const modelViewer = document.getElementById('model-viewer');
+                    modelViewer.src = e.target.result;
+                    document.getElementById('model-preview').style.display = 'block';
+                };
+                reader.readAsDataURL(modelFile);
+            }
+        }
+
+        function handleImageFile(input) {
+            if (input.files && input.files[0]) {
+                imageFile = input.files[0];
+
+                const uploadArea = document.getElementById('image-upload');
+                uploadArea.classList.add('has-file');
+                const imageTextEl = document.getElementById('image-upload-text');
+                imageTextEl.textContent = '';
+                const imgStrongEl = document.createElement('strong');
+                imgStrongEl.textContent = imageFile.name;
+                imageTextEl.appendChild(imgStrongEl);
+                imageTextEl.appendChild(document.createElement('br'));
+                const imgSizeSpan = document.createElement('span');
+                imgSizeSpan.style.fontSize = '12px';
+                imgSizeSpan.textContent = (imageFile.size / 1024).toFixed(2) + ' KB';
+                imageTextEl.appendChild(imgSizeSpan);
+            }
+        }
+
+        async function loadUserTokens() {
+            try {
+                // Check if wallet is connected
+                const wallet = sessionStorage.getItem('walletAddress');
+                if (!wallet) {
+                    return;
+                }
+                const result = await window.DexHeroTokens.getUserTokens(wallet);
+
+                if (result.success && result.tokens.length > 0) {
+                    const tokenSelect = document.getElementById('linked-token');
+                    result.tokens.forEach(token => {
+                        const option = document.createElement('option');
+                        option.value = token.id;
+                        option.textContent = `${token.name} (${token.symbol})`;
+                        tokenSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading tokens:', error);
+            }
+        }
+
+        async function handleSubmit() {
+            try {
+                // Check wallet connection
+                if (!blockchain.userAddress) {
+                    openConnectModal();
+                    return;
+                }
+
+                // Validate required fields
+                if (!modelFile) {
+                    alert('Please upload a 3D model file');
+                    return;
+                }
+
+                const modelName = document.getElementById('model-name').value.trim();
+                const modelPrice = parseFloat(document.getElementById('model-price').value);
+                const category = document.getElementById('model-category').value;
+
+                if (!modelName) {
+                    alert('Please enter a model name');
+                    return;
+                }
+
+                if (!category) {
+                    alert('Please select a category');
+                    return;
+                }
+
+                if (!modelPrice || modelPrice < 10) {
+                    alert('Price must be at least 10 USDC');
+                    return;
+                }
+
+                const wallet = blockchain.userAddress;
+                const submitBtn = document.getElementById('submit-btn');
+                if (submitBtn && submitBtn.disabled) return;
+                const originalText = submitBtn.textContent;
+                submitBtn.disabled = true;
+
+                // Step 1: Upload model file
+                submitBtn.textContent = 'Uploading Model (1/3)...';
+                const modelUploadResult = await window.DexHeroMarketplace.uploadModelFile(modelFile, wallet);
+
+                if (!modelUploadResult.success) {
+                    throw new Error('Model upload failed: ' + modelUploadResult.error);
+                }
+
+                console.log('Model uploaded:', modelUploadResult.url);
+
+                // Step 2: Upload preview image (if provided)
+                let imageUrl = null;
+                if (imageFile) {
+                    submitBtn.textContent = 'Uploading Image (2/3)...';
+                    const imageUploadResult = await window.DexHeroTokens.uploadImage(imageFile, wallet);
+
+                    if (imageUploadResult.success) {
+                        imageUrl = imageUploadResult.url;
+                        console.log('Image uploaded:', imageUrl);
+                    }
+                }
+
+                // Step 3: List in marketplace
+                submitBtn.textContent = 'Listing Model (3/3)...';
+
+                const description = document.getElementById('model-description').value.trim();
+                const tagsInput = document.getElementById('model-tags').value.trim();
+                const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()) : [];
+                const linkedToken = document.getElementById('linked-token').value || null;
+                const tokenBenefit = document.getElementById('token-benefit').value.trim() || null;
+
+                const listResult = await window.DexHeroMarketplace.listModel({
+                    name: modelName,
+                    description: description,
+                    modelUrl: modelUploadResult.url,
+                    previewImageUrl: imageUrl,
+                    price: modelPrice,
+                    creatorWallet: wallet,
+                    tokenId: linkedToken,
+                    tokenBenefit: tokenBenefit,
+                    fileType: modelFile.name.split('.').pop(),
+                    fileSizeMb: modelUploadResult.size,
+                    category: category,
+                    tags: tags
+                });
+
+                if (!listResult.success) {
+                    throw new Error('Listing failed: ' + listResult.error);
+                }
+
+                console.log('Model listed:', listResult.model);
+
+                // Success!
+                submitBtn.textContent = 'Success!';
+
+                alert(`Model Listed Successfully!\n\n${modelName}\nPrice: ${modelPrice} USDC\n\nYour model is now live in the marketplace!`);
+
+                // Redirect to marketplace
+                setTimeout(() => {
+                    window.location.href = 'model-marketplace.html';
+                }, 1500);
+
+            } catch (error) {
+                console.error('Upload failed:', error);
+                alert('Upload failed: ' + error.message);
+
+                const submitBtn = document.getElementById('submit-btn');
+                submitBtn.disabled = false;
+                updateButtonText();
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize Supabase
+            if (window.DexHeroSupabase) window.DexHeroSupabase.init();
+
+            // Load session if exists
+            if (sessionStorage.getItem('walletConnected') === 'true') {
+                blockchain.userAddress = sessionStorage.getItem('walletAddress');
+                updateButtonText();
+            }
+
+            // Load user's tokens for linking
+            await loadUserTokens();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,2684 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create a token with 3D model on DexHero.">
+    <title>Create Token with 3D Model | DexHero</title>
+
+    <!-- Wallet-state sync: when this page is embedded inside the lobby shell
+         (same-origin iframe), copy the shell's wallet sessionStorage into
+         this iframe BEFORE any other script runs, so updateCreateBtn and
+         friends see the connected address on first check. The stub's
+         cross-frame bridge also syncs later via walletChanged events, but
+         this inline copy prevents the brief "Connect Wallet" flash on load. -->
+    <script>
+        try {
+            if (window.top && window.top !== window && window.top.sessionStorage) {
+                ['walletConnected', 'walletAddress', 'walletChain', 'walletType', 'dexhero_wallet_base'].forEach(function (k) {
+                    var v = window.top.sessionStorage.getItem(k);
+                    if (v != null) sessionStorage.setItem(k, v);
+                });
+            }
+        } catch (_) {}
+        // Wipe any non-wallet sessionStorage from a previous flow. The model
+        // URL flows via URL params now; nothing else is cached client-side.
+        try {
+            sessionStorage.removeItem('dexhero_generated_model');
+            sessionStorage.removeItem('dexhero_pending_model_url');
+            sessionStorage.removeItem('dexhero_launch_type');
+            sessionStorage.removeItem('pass_verified_addr');
+        } catch (_) {}
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <!-- First-paint opaque background — prevents the lobby starfield from
+         showing through the iframe during the post-generation navigation.
+         The _stub.js panel injects a refined background AFTER its CSS lands,
+         but until then the browser default leaves the iframe transparent
+         (color-scheme:dark) and the user sees the parent shell's Bg1-4
+         starfield for the duration of the swap. This inline style is the
+         FIRST thing the parser hits — no waiting on external stylesheets. -->
+    <style>html,body{background:#0a0f1e;margin:0}</style>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <link rel="stylesheet" href="../model-upload.css">
+
+    <!-- Supabase JavaScript Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+    <!-- Google Model Viewer for 3D GLB files -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+
+    <!-- Cropper.js for Image Cropping -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+    <!-- Solana Libraries (needed for existing-token wrapping flow: scanning SPL addresses) -->
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.87.6/lib/index.iife.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@solana/spl-token@0.1.8/lib/index.iife.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bn.js/5.2.1/bn.min.js"></script>
+
+    <!-- EVM Blockchain Library (for session lookup via MetaMask) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" type="application/javascript"></script>
+    <script src="/js/utils.js"></script>
+    <script src="../js/blockchain-integration.js"></script>
+
+
+    <script src="../js/buffer-polyfill.js"></script>
+    <script>
+        // Polyfill Buffer from the bundle if it's not global
+        if (typeof window.Buffer === 'undefined') {
+            if (typeof window.buffer !== 'undefined' && window.buffer.Buffer) {
+                window.Buffer = window.buffer.Buffer;
+            } else if (typeof buffer !== 'undefined' && buffer.Buffer) {
+                window.Buffer = buffer.Buffer;
+            }
+        }
+    </script>
+    <style>
+        .create-container {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .create-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .create-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .create-header p {
+            color: var(--text-secondary);
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 32px;
+        }
+
+        .step {
+            width: 40px;
+            height: 4px;
+            background: var(--bg-secondary);
+            border-radius: 2px;
+        }
+
+        .step.active {
+            background: var(--accent-cyan);
+        }
+
+        .create-form {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title svg {
+            color: var(--accent-cyan);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .form-group label .required {
+            color: var(--danger);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        .image-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .image-upload:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .image-upload svg {
+            width: 48px;
+            height: 48px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .liquidity-input {
+            display: flex;
+            align-items: center;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+        }
+
+        .liquidity-input input {
+            flex: 1;
+            padding: 14px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+        }
+
+        .liquidity-input .currency {
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 1px solid var(--border-color);
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+
+
+        .distribution-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .distribution-card {
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+
+        .distribution-card label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .distribution-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .distribution-input input {
+            flex: 1;
+            padding: 10px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 16px;
+            text-align: center;
+            outline: none;
+        }
+
+        .distribution-input span {
+            color: var(--text-muted);
+        }
+
+        /* Tax Configuration Styles */
+        .tax-slider-container {
+            margin-top: 24px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+
+        .tax-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .tax-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .tax-slider {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            -webkit-appearance: none;
+        appearance: none;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .tax-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+        appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+
+        .tax-type-toggle {
+            display: flex;
+            background: var(--bg-secondary);
+            padding: 4px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .tax-type-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .tax-type-btn.active {
+            background: var(--accent-cyan);
+            color: black;
+            font-weight: 600;
+        }
+
+        .fee-summary {
+            padding: 20px;
+            background: rgba(6, 182, 212, 0.05);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .fee-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+
+        .fee-row.total {
+            border-top: 1px solid var(--border-color);
+            margin-top: 8px;
+            padding-top: 16px;
+            font-weight: 600;
+        }
+
+        .submit-section {
+            display: flex;
+            gap: 16px;
+        }
+
+        .btn-back {
+            flex: 1;
+            padding: 16px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .btn-submit {
+            flex: 2;
+            padding: 16px;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+
+            .form-row,
+            .distribution-grid,
+            .tax-type-toggle,
+            .pricing-info {
+                grid-template-columns: 1fr;
+                flex-direction: column;
+            }
+        }
+
+        /* EVM Parity Styles */
+        .pricing-section {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .pricing-info {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .pricing-card {
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        .pricing-card label {
+            display: block;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 8px;
+        }
+
+        .pricing-card input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* Master Unlock Card */
+        .master-unlock-card {
+            background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06));
+            border: 1px solid rgba(59,130,246,0.28);
+            border-radius: 14px;
+            padding: 20px;
+        }
+
+        .master-unlock-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .master-unlock-icon {
+            width: 46px;
+            height: 46px;
+            background: linear-gradient(135deg, rgba(59,130,246,0.35), rgba(59,130,246,0.2));
+            border: 1px solid rgba(59,130,246,0.5);
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .master-unlock-title {
+            font-size: 16px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #93c5fd, #bfdbfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.01em;
+        }
+
+        .master-unlock-subtitle {
+            font-size: 12px;
+            color: rgba(255,255,255,0.55);
+            margin-top: 3px;
+            line-height: 1.5;
+        }
+
+        .unlock-preview {
+            margin-top: 14px;
+            padding: 11px 14px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .unlock-preview-label {
+            font-size: 10px;
+            color: rgba(255,255,255,0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        #unlock-preview-text, #unlock-preview-text-existing {
+            font-size: 13px;
+            color: rgba(255,255,255,0.75);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .rental-info-card {
+            background: rgba(0,0,0,0.18);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-top: 12px;
+        }
+
+        .rental-info-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .auto-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            background: rgba(34,197,94,0.12);
+            color: #4ade80;
+            border: 1px solid rgba(34,197,94,0.28);
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Launch Option Styles */
+        input[type="radio"]:checked+.launch-option {
+            background: rgba(59, 130, 246, 0.2) !important;
+            border: 2px solid var(--accent-cyan) !important;
+        }
+
+        input[type="radio"]:not(:checked)+.launch-option {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+
+        @media (max-width: 768px) {
+            .create-container {
+                max-width: 100%;
+            }
+
+            .create-header h1 {
+                font-size: 24px;
+            }
+
+            .create-form {
+                padding: 20px 16px;
+                border-radius: 16px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .create-header h1 {
+                font-size: 20px;
+            }
+
+            .create-form {
+                padding: 16px 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <div class="create-token-container">
+            <!-- Back Button -->
+            <div style="text-align: left; margin-bottom: 24px;">
+                <a href="create-token-type.html?method=upload" id="back-link" style="color: var(--text-secondary); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-weight: 500; font-size: 15px; transition: all 0.2s;">
+                    ← Back
+                </a>
+            </div>
+            <div class="select-chain-header">
+                <h1>Create <span class="gradient-text">DexHero</span></h1>
+            </div>
+
+            <div class="step-indicator">
+                <div class="step active"></div>
+                <div class="step"></div>
+                <div class="step"></div>
+            </div>
+
+            <div class="create-form">
+                <!-- 3D Model Upload Section -->
+                <div class="section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                    3D Model & Image
+                </div>
+
+                <div class="form-group">
+                    <label>Upload GLB File</label>
+                    <div style="position: relative;">
+                        <div class="model-upload-area" id="model-drop-zone">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                <path d="M2 17l10 5 10-5" />
+                                <path d="M2 12l10 5 10-5" />
+                            </svg>
+                            <h4>Drop your 3D model here</h4>
+                            <p>Supported format: GLB (max 50MB)</p>
+                            <label for="model-file-input" class="btn-select-file" onclick="event.stopPropagation()">
+                                Select GLB File
+                            </label>
+                        </div>
+                        <input type="file" id="model-file-input" accept=".glb" style="display: none;">
+
+                        <!-- Image Preview Overlay -->
+                        <div id="image-preview-container"
+                            style="display:none; position: absolute; top: 16px; left: 16px; z-index: 20;">
+                            <img id="image-preview" src=""
+                                style="width: 120px; height: 120px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); display: block; object-fit: cover; background: #000;">
+                            <button type="button" onclick="removeImage()"
+                                style="position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; border: none; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">&times;</button>
+                        </div>
+
+                        <!-- Model Preview -->
+                        <div class="model-preview-container" id="model-preview-container" style="position: relative;">
+                            <model-viewer id="model-preview" class="model-preview"
+                                auto-rotate camera-controls
+                                autoplay animation-name="walk_in_place"
+                                shadow-intensity="0.6"
+                                exposure="1.1"
+                                interaction-prompt="none"
+                                disable-tap
+                                camera-target="auto auto auto"
+                                min-field-of-view="15deg"
+                                max-field-of-view="60deg">
+                            </model-viewer>
+                            <button type="button" id="btn-toggle-animation" onclick="toggleModelAnimation()" aria-label="Pause animation" title="Pause / Play"
+                                style="position:absolute;top:10px;right:10px;z-index:10;width:34px;height:34px;padding:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.15);color:#fff;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);">⏸</button>
+                            <div class="model-preview-info">
+                                <div>
+                                    <span class="file-name">model.glb</span>
+                                    <span class="file-size">0 MB</span>
+                                </div>
+                                <button type="button" class="btn-remove"
+                                    onclick="modelUploader.removeFile()">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="form-hint">Add a 3D model to make your token stand out</p>
+                </div>
+
+                <!-- Upload Progress -->
+                <div class="upload-progress">
+                    <div class="upload-progress-bar">
+                        <div class="upload-progress-fill"></div>
+                    </div>
+                    <div class="upload-progress-text">Uploading...</div>
+                </div>
+
+                <!-- Status Messages -->
+                <div class="model-status"></div>
+
+                <!-- Token Image Upload Group (Moved here before title) -->
+                <div class="form-group">
+                    <label>DexHero Image</label>
+                    <div class="image-upload" onclick="document.getElementById('token-image').click()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>Click to upload (512x512 recommended)</span>
+                    </div>
+                    <input type="file" id="token-image" accept="image/*" style="display:none"
+                        onchange="handleImageSelect(this)">
+                </div>
+
+                <!-- Token Information Title (Moved here) -->
+                <div class="section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                    </svg>
+                    Token Information
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group" id="name-group">
+                        <label>DexHero Name <span class="required">*</span></label>
+                        <input type="text" id="token-name" class="form-input" placeholder="e.g. MyToken">
+                    </div>
+                    <div class="form-group" id="symbol-group">
+                        <label>Token Symbol <span class="required">*</span></label>
+                        <input type="text" id="token-symbol" class="form-input" placeholder="e.g. MTK">
+                    </div>
+                </div>
+
+
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea class="form-input" rows="3" placeholder="Describe your token..."></textarea>
+                </div>
+
+
+
+                <!-- Launch Type Selection -->
+                <div class="section-title" style="margin-top: 32px;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Launch Settings
+                </div>
+
+                <div class="form-group" id="launch-type-group">
+                    <label>Launch Type</label>
+                    <div style="display: flex; gap: 16px; margin-top: 8px;">
+                        <label id="launch-new-option" style="flex: 1; position: relative; cursor: pointer;">
+                            <input type="radio" name="launch-type" value="new" checked
+                                style="position: absolute; opacity: 0;" onchange="updateLaunchUI()">
+                            <div class="launch-option"
+                                style="padding: 16px; background: rgba(59, 130, 246, 0.2); border: 2px solid var(--accent-cyan); border-radius: 12px; height: 100%;">
+                                <div style="font-weight: 600; margin-bottom: 4px; color: white;">Launch New ($100 USDC + 1% Supply)</div>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.7);">Flat fee + 1% of token supply minted to treasury. Includes deployment and setup.</div>
+                            </div>
+                        </label>
+
+                        <label id="launch-existing-option" style="flex: 1; position: relative; cursor: pointer;">
+                            <input type="radio" name="launch-type" value="existing"
+                                style="position: absolute; opacity: 0;" onchange="updateLaunchUI()">
+                            <div class="launch-option"
+                                style="padding: 16px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 12px; height: 100%;">
+                                <div style="font-weight: 600; margin-bottom: 4px; color: white;">Use Existing Token (1% of Supply)</div>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.7);">Transfer 1% of your token supply to the platform treasury. No flat fee.</div>
+                            </div>
+
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Pricing Configuration -->
+                <div class="master-unlock-card" id="pricing-title" style="margin-top: 24px;">
+                    <div class="pricing-info" style="margin-top: 0;">
+                        <div class="pricing-card">
+                            <label>Mint Price (USDC)</label>
+                            <input type="number" id="purchase-price" min="1" value="10" step="1">
+                            <div class="form-hint" style="margin-top: 8px;">Flat price every buyer pays to mint the Soulbound DexHero Play Pass. You can update this price once every 48 hours.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" id="existing-token-group" style="display: none; margin-top: 24px;">
+                    <label>Contract Address <span class="required">*</span></label>
+                    <div style="display: flex; gap: 12px;">
+                        <input type="text" id="existing-contract-address" class="form-input"
+                            placeholder="Enter token address (EVM or Solana SPL)..." style="flex: 1;">
+                        <button type="button" class="btn-submit" onclick="scanContract()"
+                            style="flex: 0 0 120px; padding: 10px;">Scan</button>
+                    </div>
+                    <div style="margin-top: 6px; text-align: right;">
+                        <a href="#" onclick="event.preventDefault(); openFeeCalculator()"
+                           style="color: #8ab6ff; font-size: 12px; text-decoration: underline;">
+                            Fee Calculator
+                        </a>
+                    </div>
+                    <div id="scan-results"
+                        style="margin-top: 12px; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 8px; display: none;">
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <!-- Master Unlock -->
+                        <div class="master-unlock-card">
+                            <div class="pricing-info" style="margin-top: 0;">
+                                <div class="pricing-card">
+                                    <label>Mint Price (USDC)</label>
+                                    <input type="number" id="existing-purchase-price" min="1" value="10" step="1">
+                                    <div class="form-hint" style="margin-top: 8px;">Flat price every buyer pays to mint the Soulbound DexHero Play Pass. You can update this price once every 48 hours.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div id="new-token-settings">
+                    <!-- Buy/Sell Tax Configuration -->
+                    <div class="tax-slider-container">
+                        <div class="tax-header">
+                            <div>
+                                <label style="margin-bottom: 4px; display: block;">Buy/Sell Tax Percentage</label>
+                                <div style="font-size: 11px; color: var(--text-muted);">Platform stability & creator fee</div>
+                            </div>
+                            <div class="tax-value" id="tax-value-display">5%</div>
+                        </div>
+
+                        <input type="range" class="tax-slider" id="tax-slider" min="0" max="10" step="1" value="5"
+                            oninput="updateTaxDisplay(this.value)">
+
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+                            <span>0%</span>
+                            <span>5%</span>
+                            <span>10% (Max)</span>
+                        </div>
+                    </div>
+
+                    <!-- Initial Buy Section (new tokens only) -->
+                    <div class="form-group" id="initial-buy-section" style="margin-top: 24px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <label>Initial Buy (% of Supply)</label>
+                            <span id="initial-buy-display" style="color: var(--accent-cyan); font-weight: 600;">0%</span>
+                        </div>
+                        <input type="range" id="initial-buy-slider" min="0" max="10" step="0.1" value="0"
+                            oninput="updateInitialBuyQuote()"
+                            style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; cursor: pointer; -webkit-appearance: none;">
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+                            <span>0%</span>
+                            <span>5%</span>
+                            <span>10% (Max)</span>
+                        </div>
+                        <div id="initial-buy-quote" style="margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.8); display: none;">
+                            Est. Cost: <span id="initial-buy-cost" style="color: white; font-weight: 600;">0</span> USDC
+                            <span style="color: var(--text-muted); font-size: 11px;">(for ~<span id="initial-buy-tokens">0</span> tokens)</span>
+                        </div>
+                        <div class="form-hint" style="margin-top: 8px;">Guarantee you're the first buyer. Tokens are sent to your wallet atomically.</div>
+                    </div>
+                </div>
+
+                <div class="fee-summary" id="fee-summary-box">
+                    <div class="fee-row"><span>Token Creation Fee</span><span id="fee-usdc-amount">100 USDC</span></div>
+                    <div class="fee-row"><span>Treasury Supply Mint</span><span>1% of Supply</span></div>
+                    <div class="fee-row"><span>Setup &amp; Deployment</span><span>Included</span></div>
+                    <div class="fee-row" id="initial-buy-row" style="display:none;"><span>Initial Buy</span><span id="initial-buy-fee-amount">0 USDC</span></div>
+                    <div class="fee-row" id="referral-discount-row" style="display:none; color:#22c55e;"><span>Referral Discount (10%)</span><span>-10 USDC</span></div>
+                    <div class="fee-row total"><span>Total Due</span><span class="gradient-text" id="summary-total">100 USDC</span></div>
+                </div>
+
+                <!-- Referral Code -->
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>Referral Code <span style="color: var(--text-muted); font-weight: 400; font-size: 12px;">— Optional · Saves 10% on your creation fee</span></label>
+                    <input type="text" id="referral-code" class="form-input"
+                        placeholder="Paste Code Here..."
+                        oninput="applyReferralCode(this.value.trim())">
+                    <div id="referral-status" style="margin-top: 8px; font-size: 13px; display: none;"></div>
+                </div>
+
+                <div class="submit-section">
+                    <button class="btn-back" onclick="history.back()">← Back</button>
+                    <button class="btn-submit" id="create-btn" onclick="handleCreate()">Create DexHero</button>
+                </div>
+
+            </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <!-- Crop Modal -->
+    <div id="crop-modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+        <div
+            style="background: var(--bg-primary); padding: 24px; border-radius: 16px; width: 90%; max-width: 500px; border: 1px solid var(--border-color);">
+            <h3 style="margin-bottom: 16px; font-size: 18px;">Crop Image</h3>
+            <div style="height: 300px; background: #000; margin-bottom: 20px; border-radius: 8px; overflow: hidden;">
+                <img id="crop-image" src="">
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button onclick="closeCropModal()"
+                    style="padding: 10px 20px; background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 8px; cursor: pointer;">Cancel</button>
+                <button onclick="saveCrop()"
+                    style="padding: 10px 20px; background: var(--accent-cyan); border: none; color: white; border-radius: 8px; cursor: pointer; font-weight: 600;">Save
+                    Selection</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Progress Modal -->
+    <div id="tx-progress-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:10000; align-items:center; justify-content:center;">
+        <div style="background:linear-gradient(160deg,rgba(59,130,246,0.1) 0%,rgba(0,0,0,0.97) 100%); border:1px solid rgba(59,130,246,0.28); box-shadow:0 0 60px rgba(59,130,246,0.12),0 8px 40px rgba(0,0,0,0.7); border-radius:20px; padding:40px; max-width:500px; width:90%; text-align:center;">
+            <h2 id="tx-progress-title" style="margin:0 0 8px;">Creating DexHero</h2>
+            <p style="color:var(--text-muted); margin:0 0 24px;">Please don't close this window</p>
+
+            <div style="margin-top:24px;">
+                <div id="step-fee" class="progress-step" style="padding:12px; margin:8px 0; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; gap:12px;">
+                    <div class="step-spinner" style="width:20px; height:20px; border:2px solid rgba(255,255,255,0.2); border-top-color:white; border-radius:50%; animation:spin 0.8s linear infinite; flex-shrink:0;"></div>
+                    <span>Sending fee &amp; verifying transaction...</span>
+                </div>
+                <div id="step-deploy" class="progress-step" style="padding:12px; margin:8px 0; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; gap:12px;">
+                    <div class="step-spinner" style="visibility:hidden; width:20px; height:20px; border:2px solid rgba(255,255,255,0.2); border-top-color:white; border-radius:50%; animation:spin 0.8s linear infinite; flex-shrink:0;"></div>
+                    <span>Deploying manager &amp; SBT contracts...</span>
+                </div>
+                <div id="step-upload" class="progress-step" style="padding:12px; margin:8px 0; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; gap:12px;">
+                    <div class="step-spinner" style="visibility:hidden; width:20px; height:20px; border:2px solid rgba(255,255,255,0.2); border-top-color:white; border-radius:50%; animation:spin 0.8s linear infinite; flex-shrink:0;"></div>
+                    <span>Uploading image &amp; 3D model...</span>
+                </div>
+                <div id="step-database" class="progress-step" style="padding:12px; margin:8px 0; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; gap:12px;">
+                    <div class="step-spinner" style="visibility:hidden; width:20px; height:20px; border:2px solid rgba(255,255,255,0.2); border-top-color:white; border-radius:50%; animation:spin 0.8s linear infinite; flex-shrink:0;"></div>
+                    <span>Saving to database...</span>
+                </div>
+                <div id="step-complete" class="progress-step" style="padding:12px; margin:8px 0; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; align-items:center; gap:12px;">
+                    <div class="step-spinner" style="visibility:hidden; width:20px; height:20px; border:2px solid rgba(255,255,255,0.2); border-top-color:white; border-radius:50%; animation:spin 0.8s linear infinite; flex-shrink:0;"></div>
+                    <span>Complete!</span>
+                </div>
+            </div>
+
+            <div id="tx-error-message" style="display:none; margin-top:16px; padding:14px 16px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:12px; text-align:left;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                    <span style="flex-shrink:0;"></span>
+                    <span id="tx-error-title" style="font-size:14px; font-weight:600; color:#f87171;"></span>
+                </div>
+                <p id="tx-error-body" style="margin:0; font-size:13px; color:rgba(255,255,255,0.6); line-height:1.6; padding-left:28px;"></p>
+            </div>
+
+            <div id="tx-progress-actions" style="display:none; margin-top:24px; flex-direction:column; gap:10px;">
+                <button id="tx-view-token-btn" style="width:100%; padding:12px; background:var(--accent-cyan,#00d4ff); color:#000; border:none; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer;">View My DexHero</button>
+                <button onclick="document.getElementById('tx-progress-overlay').style.display='none'" style="width:100%; padding:10px; background:transparent; color:rgba(255,255,255,0.5); border:1px solid rgba(255,255,255,0.1); border-radius:10px; font-size:13px; cursor:pointer;">Close</button>
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .progress-step.active { background: rgba(59, 130, 246,0.2) !important; border: 1px solid rgba(59, 130, 246,0.4); }
+        .progress-step.complete { background: rgba(34,197,94,0.2) !important; border: 1px solid rgba(34,197,94,0.4); }
+        .progress-step.error { background: rgba(239,68,68,0.15) !important; border: 1px solid rgba(239,68,68,0.4); }
+    </style>
+
+    <div id="modals-placeholder"></div>
+
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="../js/security.js"></script>
+    <script src="../js/contract-scanner.js"></script>
+    <script src="../model-upload.js?v=4"></script>
+    <script src="../js/token-creation.js"></script>
+    <script src="../js/fee-calculator.js"></script>
+    <script>
+        function updateTaxDisplay(val) {
+            document.getElementById('tax-value-display').innerText = val + '%';
+        }
+
+        //  Network pre-flight 
+        // Industry-standard EIP-3326 / EIP-3085 flow:
+        //   1. wallet_switchEthereumChain  — switch to a network the wallet already knows
+        //   2. wallet_addEthereumChain     — add it first if error code 4902 (unknown chain)
+        const REQUIRED_NETWORK = {
+            name: 'Sepolia Testnet',
+            chainId: 11155111,
+            hex: '0xaa36a7',
+            rpcUrl: 'https://rpc.sepolia.org',
+            explorerUrl: 'https://sepolia.etherscan.io'
+        };
+
+        async function ensureCorrectNetwork() {
+            try {
+                if (!window.ethereum) return true; // non-EVM path, skip
+                const hexChainId = await window.ethereum.request({ method: 'eth_chainId' });
+                const currentChainId = parseInt(hexChainId, 16);
+                if (currentChainId === REQUIRED_NETWORK.chainId) return true;
+
+                // Wrong network — try to switch
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: REQUIRED_NETWORK.hex }]
+                    });
+                    // Rebuild provider+signer so ethers reflects the new network
+                    if (window.DexHeroBlockchain) {
+                        window.DexHeroBlockchain.provider = new ethers.providers.Web3Provider(window.ethereum);
+                        window.DexHeroBlockchain.signer   = window.DexHeroBlockchain.provider.getSigner();
+                        window.DexHeroBlockchain.updateNetworkState(REQUIRED_NETWORK.chainId);
+                    }
+                    return true;
+                } catch (switchErr) {
+                    if (switchErr.code === 4902 || switchErr.code === -32603) {
+                        // Chain not in wallet yet — add it, then switch
+                        try {
+                            await window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: REQUIRED_NETWORK.hex,
+                                    chainName: REQUIRED_NETWORK.name,
+                                    nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                                    rpcUrls: [REQUIRED_NETWORK.rpcUrl],
+                                    blockExplorerUrls: [REQUIRED_NETWORK.explorerUrl]
+                                }]
+                            });
+                            if (window.DexHeroBlockchain) {
+                                window.DexHeroBlockchain.provider = new ethers.providers.Web3Provider(window.ethereum);
+                                window.DexHeroBlockchain.signer   = window.DexHeroBlockchain.provider.getSigner();
+                                window.DexHeroBlockchain.updateNetworkState(REQUIRED_NETWORK.chainId);
+                            }
+                            return true;
+                        } catch (addErr) {
+                            showNetworkError(`Could not add ${REQUIRED_NETWORK.name} to your wallet. Please add it manually and try again.`);
+                            return false;
+                        }
+                    }
+                    // User rejected the switch request
+                    showNetworkError(`Wrong network detected. Please switch to ${REQUIRED_NETWORK.name} in your wallet to continue.`);
+                    return false;
+                }
+            } catch (e) {
+                console.warn('Network pre-flight check failed:', e);
+                return true; // Non-blocking — let the transaction attempt surface the real error
+            }
+        }
+
+        function showNetworkError(msg) {
+            const btn = document.getElementById('create-btn');
+            let el = document.getElementById('network-error-banner');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'network-error-banner';
+                el.style.cssText = 'margin-top:12px; padding:12px 14px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:10px; color:#fca5a5; font-size:13px; line-height:1.5; display:flex; align-items:flex-start; gap:10px;';
+                btn?.parentElement?.after(el);
+            }
+            el.innerHTML = `<span>${msg} <a href="#" onclick="retryNetworkSwitch(event)" style="color:#f87171;text-decoration:underline;">Try switching again</a></span>`;
+            el.style.display = 'flex';
+        }
+
+        function clearNetworkError() {
+            const el = document.getElementById('network-error-banner');
+            if (el) el.style.display = 'none';
+        }
+
+        async function retryNetworkSwitch(e) {
+            e.preventDefault();
+            clearNetworkError();
+            const ok = await ensureCorrectNetwork();
+            if (ok) handleCreate();
+        }
+
+        //  Friendly error mapper 
+        function friendlyError(raw) {
+            const m = (raw || '').toLowerCase();
+
+            if (m.includes('user denied') || m.includes('user rejected') || m.includes('rejected the request') || m.includes('cancel'))
+                return { title: 'Transaction Cancelled', body: 'You declined the request in your wallet. Hit Try Again whenever you\'re ready.' };
+
+            if (m.includes('wrong network') || m.includes('switch your wallet') || m.includes('switch to') || m.includes('no usdc address configured'))
+                return { title: 'Wrong Network', body: 'Your wallet is on the wrong network. Close this, switch to Sepolia in your wallet, and try again.' };
+
+            if (m.includes('insufficient funds for gas') || m.includes('insufficient funds for intrinsic') || m.includes('code=insufficient_funds'))
+                return { title: 'Platform Temporarily Unavailable', body: 'Your USDC payment went through, but our deployment system hit a temporary issue. No funds were lost. Please contact support and we\'ll get your DexHero launched right away.' };
+
+            if (m.includes('insufficient') || m.includes('transfer amount exceeds') || m.includes('exceeds balance'))
+                return { title: 'Not Enough USDC', body: 'Your wallet doesn\'t have enough USDC to cover the creation fee. Top up and try again.' };
+
+            if (m.includes('insufficient token') || m.includes('do not own any tokens'))
+                return { title: 'Not Enough Tokens', body: 'You don\'t have enough of your token in your wallet to meet the 1% treasury requirement.' };
+
+            if (m.includes('no wallet') || m.includes('wallet not connected') || m.includes('metamask not connected') || m.includes('please connect') || m.includes('not connected'))
+                return { title: 'Wallet Disconnected', body: 'Your wallet disconnected during the process. Reconnect your wallet and try again.' };
+
+            if (m.includes('execution reverted') || m.includes('out of gas') || m.includes('gas'))
+                return { title: 'Transaction Rejected', body: 'The transaction was rejected by the network. Make sure you have enough ETH in your wallet for gas fees.' };
+
+            if (m.includes('manager contract') || m.includes('deployment failed') || m.includes('server-side deployment'))
+                return { title: 'Deployment Failed', body: 'The server ran into a problem setting up your DexHero. Please wait a moment and try again.' };
+
+            if (m.includes('database') || m.includes('save failed') || m.includes('supabase'))
+                return { title: 'Save Failed', body: 'Your DexHero was created on-chain but we had trouble saving it. Contact support with your transaction hash.' };
+
+            if (m.includes('timeout') || m.includes('network error') || m.includes('failed to fetch') || m.includes('connection'))
+                return { title: 'Connection Issue', body: 'The request timed out. Check your internet connection and try again.' };
+
+            return { title: 'Something Went Wrong', body: 'An unexpected error occurred. Please try again — if it keeps happening, reach out to support.' };
+        }
+
+
+        function getInitialBuyCost() {
+            const launchType = document.querySelector('input[name="launch-type"]:checked')?.value || 'new';
+            if (launchType !== 'new') return 0;
+            const pct = parseFloat(document.getElementById('initial-buy-slider')?.value) || 0;
+            if (pct <= 0) return 0;
+            const tokensOut = Math.floor(10000000 * (pct / 100));
+            return tokensOut * 0.001;
+        }
+
+        // Cached live platform fee (from /api/config → V3 factory). 100 is the
+        // pre-V3 default; the actual value is fetched once on page init and
+        // re-rendered into the fee-summary UI. Updates when the user toggles
+        // referral on/off.
+        window._livePlatformFeeUSDC = 100;
+        async function refreshLivePlatformFee() {
+            try {
+                const cfg = await (window._configPromise ||= fetch('/api/config').then(r => r.ok ? r.json() : null));
+                if (cfg?.v3?.platformFeeUSDC != null) {
+                    window._livePlatformFeeUSDC = Number(cfg.v3.platformFeeUSDC) / 1e6;
+                }
+            } catch {}
+            // Re-render the static "100 USDC" text in the fee-summary panel.
+            const feeEl = document.getElementById('fee-usdc-amount');
+            if (feeEl) feeEl.textContent = `${window._livePlatformFeeUSDC} USDC`;
+            updateFeeSummaryTotal();
+        }
+        if (document.readyState !== 'loading') refreshLivePlatformFee();
+        else document.addEventListener('DOMContentLoaded', refreshLivePlatformFee);
+
+        function updateFeeSummaryTotal() {
+            const launchType = document.querySelector('input[name="launch-type"]:checked')?.value || 'new';
+            const discountRow = document.getElementById('referral-discount-row');
+            const hasReferral = discountRow && discountRow.style.display !== 'none';
+            const liveFee = window._livePlatformFeeUSDC || 100;
+            const baseFee = hasReferral ? +(liveFee * 0.9).toFixed(2) : liveFee;
+            const initialBuyCost = getInitialBuyCost();
+            const totalUSDC = baseFee + initialBuyCost;
+
+            const initialBuyRow = document.getElementById('initial-buy-row');
+            const initialBuyFeeAmountEl = document.getElementById('initial-buy-fee-amount');
+            if (initialBuyRow && initialBuyFeeAmountEl) {
+                if (initialBuyCost > 0) {
+                    initialBuyFeeAmountEl.textContent = Number.isInteger(initialBuyCost)
+                        ? initialBuyCost + ' USDC'
+                        : initialBuyCost.toFixed(2) + ' USDC';
+                    initialBuyRow.style.display = '';
+                } else {
+                    initialBuyRow.style.display = 'none';
+                }
+            }
+
+            const feeUsdcEl = document.getElementById('fee-usdc-amount');
+            if (feeUsdcEl) feeUsdcEl.textContent = `${Number.isInteger(baseFee) ? baseFee : baseFee.toFixed(2)} USDC`;
+
+            const totalEl = document.getElementById('summary-total');
+            if (totalEl) {
+                const totalStr = Number.isInteger(totalUSDC) ? String(totalUSDC) : totalUSDC.toFixed(2);
+                totalEl.textContent = `${totalStr} USDC`;
+            }
+        }
+
+        function updateInitialBuyQuote() {
+            const pct = parseFloat(document.getElementById('initial-buy-slider').value) || 0;
+            document.getElementById('initial-buy-display').textContent = pct.toFixed(1) + '%';
+            const quoteEl = document.getElementById('initial-buy-quote');
+            if (pct <= 0) {
+                quoteEl.style.display = 'none';
+                updateFeeSummaryTotal();
+                return;
+            }
+            const tokensOut = Math.floor(10000000 * (pct / 100));
+            const costUSDC = tokensOut * 0.001;
+            const costStr = Number.isInteger(costUSDC) ? String(costUSDC) : costUSDC.toFixed(4);
+            document.getElementById('initial-buy-cost').textContent = costStr;
+            document.getElementById('initial-buy-tokens').textContent = tokensOut.toLocaleString();
+            quoteEl.style.display = 'block';
+            updateFeeSummaryTotal();
+        }
+
+
+        // Initialize Model Uploader
+        let modelUploader;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Sync create button label with current wallet state
+            updateCreateBtn();
+
+            // Check for launch type and pre-filled address in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const launchType = urlParams.get('launchType');
+
+            // Back link goes to the type chooser — no draft URLs
+            const backLink = document.getElementById('back-link');
+            if (backLink) {
+                backLink.href = `create-token-type.html?method=upload`;
+            }
+            if (launchType === 'new' || launchType === 'existing') {
+                const radio = document.querySelector(`input[name="launch-type"][value="${launchType}"]`);
+                if (radio) {
+                    radio.checked = true;
+                    updateLaunchUI();
+                }
+                // Hide the launch type selector — choice was already made on create-token-type.html
+                const launchTypeGroup = document.getElementById('launch-type-group');
+                if (launchTypeGroup) launchTypeGroup.style.display = 'none';
+            }
+            // Pre-fill address and auto-scan if redirected from another chain page
+            const prefilledAddress = urlParams.get('address');
+            if (prefilledAddress && launchType === 'existing') {
+                const input = document.getElementById('existing-contract-address');
+                if (input) {
+                    input.value = prefilledAddress;
+                    // Small delay to let the page scripts finish initialising
+                    setTimeout(() => scanContract(), 600);
+                }
+            }
+
+            // Initialize Supabase
+            if (window.DexHeroSupabase) {
+                window.DexHeroSupabase.init();
+            }
+
+            // Initialize model uploader
+            modelUploader = new ModelUploader({
+                dropZoneId: 'model-drop-zone',
+                previewId: 'model-preview',
+                fileInputId: 'model-file-input',
+                previewContainerId: 'model-preview-container',
+                onFileSelect: async function (file, blobUrl) {
+                    console.log(' 3D Model selected:', file.name);
+                    // Upload to Supabase storage IMMEDIATELY (pre-fee) so the
+                    // server has the model URL baked into setupParams when
+                    // deploy fires.  Guarantees that even if the user closes
+                    // the browser the instant after paying, the deploy job
+                    // still has everything it needs to complete the DexHero
+                    // end-to-end (model + sprite generation) server-side.
+                    try {
+                        const supabase = window.DexHeroSupabase?.get?.();
+                        if (!supabase) return;
+                        const wallet = sessionStorage.getItem('walletAddress') || ('draft_' + Date.now());
+                        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+                        const filePath = `drafts/${wallet.toLowerCase()}_${Date.now()}_${safeName}`;
+                        const { error } = await supabase.storage
+                            .from(window.DexHeroSupabase.bucket)
+                            .upload(filePath, file, { upsert: false, contentType: 'model/gltf-binary' });
+                        if (error) { console.warn(' Pre-fee model upload skipped:', error.message); return; }
+                        const { data: urlData } = supabase.storage
+                            .from(window.DexHeroSupabase.bucket)
+                            .getPublicUrl(filePath);
+                        const url = urlData?.publicUrl;
+                        if (url) {
+                            modelUploader.preUploadedUrl = url;
+                            console.log(' Model staged pre-fee:', url);
+                        }
+                    } catch (e) { console.warn(' Pre-fee model upload error (non-fatal):', e.message); }
+                },
+                onUploadComplete: function (data) {
+                    console.log(' Model uploaded:', data.url);
+                },
+                onError: function (error) {
+                    console.error(' Model upload error:', error);
+                }
+            });
+
+            // Auto-fit any model into the preview viewport by computing the
+            // exact camera distance from the model's actual bounding box.
+            // Works identically for tiny (0.3m) or huge (20m) GLBs and for
+            // tall/thin vs. wide/squat proportions — whichever dimension is
+            // the limiting factor drives the distance.
+            //
+            // The handler is re-wired whenever ModelUploader.removeFile()
+            // recycles the <model-viewer> element (to guarantee no residual
+            // scene flashes on the next upload). We listen for the
+            // 'model-viewer-recycled' bubble event and re-attach.
+            (function setupAutoFit() {
+                const FOV_DEG = 32;   // telephoto-ish; feels substantial
+                const MARGIN  = 1.08; // 8% breathing room at the edges
+                let ro = null;
+
+                const fitToModel = (mv) => {
+                    try {
+                        const dim = mv.getDimensions && mv.getDimensions();
+                        const ctr = mv.getBoundingBoxCenter && mv.getBoundingBoxCenter();
+                        if (!dim || !ctr) {
+                            mv.cameraOrbit = '0deg 90deg auto';
+                            mv.fieldOfView = FOV_DEG + 'deg';
+                            return;
+                        }
+                        const rect = mv.getBoundingClientRect();
+                        const aspect = Math.max(0.1, rect.width / rect.height);
+                        const fovRad = FOV_DEG * Math.PI / 180;
+                        const halfFovTan = Math.tan(fovRad / 2);
+
+                        const distH = (dim.y / 2) / halfFovTan;
+                        const distW = (dim.x / 2) / (halfFovTan * aspect);
+                        const distD = (dim.z / 2) / halfFovTan;
+                        const dist = Math.max(distH, distW, distD) * MARGIN;
+
+                        mv.cameraTarget = `${ctr.x}m ${ctr.y}m ${ctr.z}m`;
+                        mv.cameraOrbit  = `0deg 90deg ${dist.toFixed(4)}m`;
+                        mv.fieldOfView  = FOV_DEG + 'deg';
+                        if (typeof mv.jumpCameraToGoal === 'function') mv.jumpCameraToGoal();
+                    } catch (err) {
+                        console.warn('model-viewer auto-fit failed:', err);
+                        mv.cameraOrbit = '0deg 90deg auto';
+                        mv.fieldOfView = FOV_DEG + 'deg';
+                    }
+                };
+
+                const wire = () => {
+                    const mv = document.getElementById('model-preview');
+                    if (!mv) return;
+                    mv.addEventListener('load', () => requestAnimationFrame(() => fitToModel(mv)));
+                    if (ro) { try { ro.disconnect(); } catch {} }
+                    if (window.ResizeObserver) {
+                        ro = new ResizeObserver(() => {
+                            if (mv.getAttribute('src')) fitToModel(mv);
+                        });
+                        ro.observe(mv);
+                    }
+                };
+
+                wire();
+
+                // When the uploader recycles the <model-viewer> element after
+                // a remove, the new fresh element has no listeners — re-wire.
+                const container = document.getElementById('model-preview-container');
+                if (container) {
+                    container.addEventListener('model-viewer-recycled', () => {
+                        requestAnimationFrame(wire);
+                    });
+                }
+            })();
+
+            // PERSISTENCE: Load from Supabase Session
+            async function loadSession(retries = 5) {
+                try {
+                    let wallet = sessionStorage.getItem('walletAddress');
+                    
+                    if (!wallet && window.ethereum) {
+                        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                        if (accounts.length > 0) wallet = accounts[0];
+                    }
+                    
+                    if (!wallet) {
+                        if (retries > 0) {
+                            console.log(`Waiting for wallet/session... (${retries} retries left)`);
+                            setTimeout(() => loadSession(retries - 1), 1000);
+                        }
+                        return;
+                    }
+                    
+                    // Model handoff is URL-driven only. If ?modelUrl=… is present
+                    // (from generate-model.html showFinalModel or a profile draft
+                    // link), load it into the model viewer. No server-side
+                    // session lookup, no sessionStorage cache.
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const modelUrlParam = urlParams.get('modelUrl');
+                    const imageUrlParam = urlParams.get('imageUrl');
+                    if (modelUrlParam) {
+                        console.log(' Loading model from URL param:', modelUrlParam);
+                        if (modelUploader) {
+                            modelUploader.loadFromUrl(modelUrlParam);
+                        } else {
+                            const viewer = document.getElementById('model-preview');
+                            if (viewer) viewer.src = modelUrlParam;
+                            const container = document.getElementById('model-preview-container');
+                            if (container) container.style.display = 'block';
+                            const dropZone = document.getElementById('model-drop-zone');
+                            if (dropZone) dropZone.style.display = 'none';
+                        }
+                    }
+                    // Render the front-view static image (the Tripo input) when
+                    // forwarded from a profile draft. Mirrors the legacy
+                    // session-restore path that populated #image-preview from
+                    // session.front_url.
+                    if (imageUrlParam) {
+                        console.log(' Loading front-view image from URL param:', imageUrlParam);
+                        const imgPreview     = document.getElementById('image-preview');
+                        const imgContainer   = document.getElementById('image-preview-container');
+                        const imgUploadZone  = document.querySelector('.image-upload');
+                        if (imgPreview)    imgPreview.src              = imageUrlParam;
+                        if (imgContainer)  imgContainer.style.display  = 'block';
+                        if (imgUploadZone) imgUploadZone.style.display = 'none';
+                        try { window.sessionImageUrl = imageUrlParam; } catch {}
+                    }
+                } catch (e) { console.warn('Model load from URL failed:', e.message); }
+            }
+            loadSession();
+
+            // Pre-fee form state is intentionally NOT cached. Fresh loads start
+            // with empty fields. Only once the creation fee is paid does a draft
+            // record exist — and that lives server-side in dexhero_paid_drafts,
+            // surfaced on the profile "Drafts" tab. Purge any legacy keys from
+            // prior versions so stale input never rehydrates on load.
+            try {
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                    const k = localStorage.key(i);
+                    if (k && k.startsWith('dexhero_unpaid_draft_v1')) localStorage.removeItem(k);
+                }
+            } catch {}
+            window._clearUnpaidDraft = () => {};
+
+            console.log(' DexHero Token Creator initialized');
+        });
+
+        // Image Handling
+        // Image Handling & Cropper
+        let cropper;
+        let selectedFile;
+
+        function handleImageSelect(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                selectedFile = file;
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const image = document.getElementById('crop-image');
+
+                    document.getElementById('crop-modal').style.display = 'flex';
+
+                    if (cropper) {
+                        cropper.destroy();
+                    }
+
+                    // Set onload handler BEFORE setting src
+                    image.onload = function () {
+                        cropper = new Cropper(image, {
+                            aspectRatio: 1,
+                            viewMode: 1,
+                            dragMode: 'move',
+                            autoCropArea: 1,
+                            restore: false,
+                            guides: true,
+                            center: true,
+                            highlight: false,
+                            cropBoxMovable: false,
+                            cropBoxResizable: false,
+                            toggleDragModeOnDblclick: false
+                        });
+                    };
+
+                    // Set src after onload handler is attached
+                    image.src = e.target.result;
+                }
+
+                reader.readAsDataURL(file);
+            }
+            // Reset input so same file can be selected again if cancelled
+            input.value = '';
+        }
+
+        function closeCropModal() {
+            document.getElementById('crop-modal').style.display = 'none';
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+        }
+
+        function saveCrop() {
+            if (!cropper) return;
+
+            const canvas = cropper.getCroppedCanvas({
+                width: 512,
+                height: 512
+            });
+
+            canvas.toBlob((blob) => {
+                // Update preview
+                document.getElementById('image-preview').src = canvas.toDataURL();
+                document.getElementById('image-preview-container').style.display = 'block';
+                document.querySelector('.image-upload').style.display = 'none';
+
+                // Create a new File object for upload
+                const fileName = selectedFile ? selectedFile.name : 'token-image.png';
+                const croppedFile = new File([blob], fileName, { type: 'image/png' });
+
+                // Update the input file (trickier with security, so we store it in a var for upload)
+                window.croppedImageFile = croppedFile;
+
+                // Close modal
+                closeCropModal();
+            }, 'image/png');
+        }
+
+        function removeImage() {
+            document.getElementById('token-image').value = '';
+            document.getElementById('image-preview-container').style.display = 'none';
+            document.querySelector('.image-upload').style.display = 'flex';
+        }
+
+        function _isValidWalletAddress(v) {
+            if (!v) return false;
+            if (v.startsWith('0x') && v.length === 42) return true; // EVM
+            if (v.length >= 32 && v.length <= 44 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(v)) return true; // Solana
+            return false;
+        }
+
+        function applyReferralCode(value) {
+            const statusEl   = document.getElementById('referral-status');
+            const feeEl      = document.getElementById('fee-usdc-amount');
+            const discountEl = document.getElementById('referral-discount-row');
+            if (!statusEl) return;
+
+            const currentType = document.querySelector('input[name="launch-type"]:checked')?.value || 'new';
+            // Referral discount only applies to new token (which has the $100 flat fee)
+            if (currentType === 'existing') {
+                statusEl.style.display = 'none';
+                return;
+            }
+
+            const liveFee = window._livePlatformFeeUSDC || 100;
+            const fullLabel = `${Number.isInteger(liveFee) ? liveFee : liveFee.toFixed(2)} USDC`;
+            const discFee = +(liveFee * 0.9).toFixed(2);
+            const discLabel = `${Number.isInteger(discFee) ? discFee : discFee.toFixed(2)} USDC`;
+            if (!value) {
+                statusEl.style.display = 'none';
+                if (feeEl) feeEl.textContent = fullLabel;
+                if (discountEl) discountEl.style.display = 'none';
+            } else if (_isValidWalletAddress(value)) {
+                statusEl.style.display = 'block';
+                statusEl.style.color = '#22c55e';
+                statusEl.textContent = `Valid referral — 10% discount applied ($${liveFee} → $${discFee} USDC)`;
+                if (feeEl) feeEl.textContent = discLabel;
+                if (discountEl) discountEl.style.display = 'flex';
+            } else {
+                statusEl.style.display = 'block';
+                statusEl.style.color = '#f87171';
+                statusEl.textContent = 'Invalid — must be a valid EVM (0x…) or Solana wallet address';
+                if (feeEl) feeEl.textContent = fullLabel;
+                if (discountEl) discountEl.style.display = 'none';
+            }
+            updateFeeSummaryTotal();
+        }
+
+        function updateLaunchUI() {
+            const launchType = document.querySelector('input[name="launch-type"]:checked').value;
+            const existingGroup = document.getElementById('existing-token-group');
+            const newGroup = document.getElementById('new-token-settings');
+            const extraSettings = document.getElementById('new-token-extra-settings');
+            const pricingSection = document.querySelector('.pricing-section');
+            const feeSummary = document.querySelector('.fee-summary');
+
+            const pricingTitle = document.getElementById('pricing-title');
+            // The token symbol comes from the on-chain token for existing-token
+            // DexHeros, so the manual input is hidden. The DexHero Name field
+            // expands to fill the row.
+            const symbolGroup = document.getElementById('symbol-group');
+            const nameGroup   = document.getElementById('name-group');
+            if (launchType === 'existing') {
+                existingGroup.style.display = 'block';
+                newGroup.style.display = 'none';
+                if (extraSettings) extraSettings.style.display = 'none';
+                if (pricingSection) pricingSection.style.display = 'none';
+                if (pricingTitle) pricingTitle.style.display = 'none';
+                if (symbolGroup) symbolGroup.style.display = 'none';
+                if (nameGroup) nameGroup.style.gridColumn = '1 / -1';
+
+                // Update Fee Summary for Existing — no flat USDC fee.
+                // Also wipe any stale "wrong network" banner left over from
+                // a prior new-token Create attempt so the user doesn't see
+                // it after switching launch types.
+                clearNetworkError();
+                feeSummary.innerHTML = `
+                    <div class="fee-row"><span>Token Integration Fee</span><span>No flat fee</span></div>
+                    <div class="fee-row"><span>Supply Requirement</span><span id="summary-supply-req">1 Token → Treasury</span></div>
+                    <div class="fee-row total"><span>Total Due</span><span class="gradient-text" id="summary-total">1 Token</span></div>
+                `;
+            } else {
+                existingGroup.style.display = 'none';
+                newGroup.style.display = 'block';
+                if (extraSettings) extraSettings.style.display = 'block';
+                if (pricingSection) pricingSection.style.display = 'block';
+                if (pricingTitle) pricingTitle.style.display = '';
+                if (symbolGroup) symbolGroup.style.display = '';
+                if (nameGroup) nameGroup.style.gridColumn = '';
+
+                // Update Fee Summary for New
+                feeSummary.innerHTML = `
+                    <div class="fee-row"><span>Token Creation Fee</span><span id="fee-usdc-amount">100 USDC</span></div>
+                    <div class="fee-row"><span>Treasury Supply Mint</span><span>1% of Supply</span></div>
+                    <div class="fee-row"><span>Setup &amp; Deployment</span><span>Included</span></div>
+                    <div class="fee-row" id="initial-buy-row" style="display:none;"><span>Initial Buy</span><span id="initial-buy-fee-amount">0 USDC</span></div>
+                    <div class="fee-row" id="referral-discount-row" style="display:none; color:#22c55e;"><span>Referral Discount (10%)</span><span>-10 USDC</span></div>
+                    <div class="fee-row total"><span>Total Due</span><span class="gradient-text" id="summary-total">100 USDC</span></div>
+                `;
+                // Re-apply referral discount if a code is already entered, then sync total
+                const existingCode = document.getElementById('referral-code')?.value.trim();
+                if (existingCode) applyReferralCode(existingCode);
+                else updateFeeSummaryTotal();
+            }
+
+            // Update option styles
+            document.querySelectorAll('.launch-option').forEach(opt => {
+                opt.style.background = 'rgba(255, 255, 255, 0.05)';
+                opt.style.border = '1px solid var(--border-color)';
+            });
+            const activeOpt = document.querySelector('input[name="launch-type"]:checked').nextElementSibling;
+            activeOpt.style.background = 'rgba(59, 130, 246, 0.2)';
+            activeOpt.style.border = '2px solid var(--accent-cyan)';
+
+            // Re-evaluate the Create gate so the button reflects whichever
+            // flow the user is now on (existing → blocked until clean scan).
+            try { updateCreateBtn(); } catch {}
+        }
+
+        // Renders the Creation Fee panel from the market data already fetched
+        // by /api/security (no extra round-trip). Uses the shared math from
+        // js/fee-calculator.js so the % displayed matches what the server
+        // signs.
+        async function renderScanFeePreview(address, result) {
+            const el = document.getElementById('scan-fee-preview');
+            if (!el || !window.SovereignFeeCalc) return;
+
+            const market = result.market || null;
+            if (!market || !Number.isFinite(market.mcUsd) || market.mcUsd <= 0) {
+                el.innerHTML = `<span style="color: var(--text-muted);">Creation Fee:</span> <span style="color:#f59e9e;">unavailable (no DEX market data)</span>`;
+                return;
+            }
+
+            const { mcUsd, liquidityUsd, source } = market;
+            const bps = window.SovereignFeeCalc.calcDynamicFeeBps(mcUsd, liquidityUsd);
+            const pct = (bps / 100).toFixed(2);
+            const supplyNum = parseFloat(result.totalSupply) || 0;
+            const feeTokens = supplyNum > 0 ? (supplyNum * bps / 10_000) : null;
+            const fmt = n => '$' + Number(n || 0).toLocaleString();
+
+            el.innerHTML = `
+                <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+                    <div>
+                        <div style="color: var(--text-muted); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;">Creation Fee</div>
+                        <div style="font-size: 22px; font-weight: 600; color: #8ab6ff;">${pct}% of supply</div>
+                    </div>
+                    <div style="text-align: right; font-size: 11px; color: var(--text-muted);">
+                        <div>MC: <strong style="color: #e6eaf2;">${fmt(mcUsd)}</strong></div>
+                        <div>Liquidity: <strong style="color: #e6eaf2;">${fmt(liquidityUsd)}</strong></div>
+                        <div>Source: ${source || '—'}</div>
+                    </div>
+                </div>
+                ${feeTokens !== null ? `<div style="margin-top: 6px; font-size: 11px; color: var(--text-muted);">≈ ${feeTokens.toLocaleString(undefined, { maximumFractionDigits: 4 })} ${result.symbol || 'tokens'} locked in the 10-year vault</div>` : ''}
+            `;
+        }
+
+        // Map DexScreener's per-pair chainId slugs to numeric chainIds.
+        // Only chains we actually support for safety scanning + market data.
+        // Unsupported slugs (e.g. pulsechain) are excluded so the chain picker
+        // never lands us on a chain where /api/security would fail-closed.
+        const DEXSCREENER_CHAIN_TO_ID = {
+            ethereum: 1, base: 8453, bsc: 56, polygon: 137, arbitrum: 42161,
+            optimism: 10, avalanche: 43114, fantom: 250, cronos: 25,
+            linea: 59144, scroll: 534352, blast: 81457, mantle: 5000,
+            manta: 169, celo: 42220, polygonzkevm: 1101, zksync: 324,
+            klaytn: 8217, zora: 7777777, unichain: 130, gnosis: 100,
+        };
+        const CHAIN_ID_TO_NAME = {
+            1: 'Ethereum', 10: 'Optimism', 25: 'Cronos', 56: 'BNB Smart Chain',
+            100: 'Gnosis', 137: 'Polygon', 169: 'Manta Pacific', 250: 'Fantom',
+            324: 'zkSync Era', 1101: 'Polygon zkEVM', 5000: 'Mantle',
+            8453: 'Base', 42161: 'Arbitrum One', 42220: 'Celo',
+            43114: 'Avalanche', 59144: 'Linea', 81457: 'Blast',
+            534352: 'Scroll', 8217: 'Klaytn', 7777777: 'Zora', 130: 'Unichain',
+        };
+        function chainNameForId(id) { return CHAIN_ID_TO_NAME[id] || `chainId ${id}`; }
+
+        // Auto-detect the chain a token actually lives on by asking DexScreener
+        // which chain has the most DEX liquidity for the address. Returns
+        // { chainId, chainName, liquidityUsd } or null if no market is found
+        // on any supported chain.
+        async function detectTokenChain(address) {
+            try {
+                const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(address)}`);
+                if (!res.ok) return null;
+                const j = await res.json();
+                const pairs = Array.isArray(j?.pairs) ? j.pairs : [];
+                if (!pairs.length) return null;
+
+                // Sum liquidity per chain slug, only counting chains we support.
+                const byChain = new Map();
+                for (const p of pairs) {
+                    const slug = (p.chainId || '').toLowerCase();
+                    const id = DEXSCREENER_CHAIN_TO_ID[slug];
+                    if (!id) continue;
+                    const liq = Number(p?.liquidity?.usd || 0);
+                    byChain.set(id, (byChain.get(id) || 0) + liq);
+                }
+                if (!byChain.size) return null;
+
+                // Pick the chain with the most liquidity.
+                let best = null;
+                for (const [id, liq] of byChain) {
+                    if (!best || liq > best.liquidityUsd) {
+                        best = { chainId: id, chainName: chainNameForId(id), liquidityUsd: liq };
+                    }
+                }
+                return best;
+            } catch (e) {
+                console.warn('[chain-detect] DexScreener failed:', e.message);
+                return null;
+            }
+        }
+
+        async function scanContract() {
+            const address = document.getElementById('existing-contract-address').value.trim();
+            if (!address) {
+                alert('Please enter a contract address');
+                return;
+            }
+
+            // Reset any previously scanned token data. Don't wipe the
+            // DexHero Name the creator already typed — that's the character
+            // name (e.g. "Aquaman"), not the underlying token's on-chain
+            // name. Just defensively clear any readonly lock left over from
+            // a prior scan path. Symbol is auto-filled from the scanner so
+            // it's safe to clear.
+            window.scannedToken = null;
+            const nameEl   = document.getElementById('token-name');
+            const symbolEl = document.getElementById('token-symbol');
+            if (nameEl)   { nameEl.readOnly = false; nameEl.style.opacity = ''; }
+            if (symbolEl) { symbolEl.value = ''; symbolEl.readOnly = false; symbolEl.style.opacity = ''; }
+
+            const resultsDiv = document.getElementById('scan-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div style="text-align:center; padding: 20px;">Scanning token...</div>';
+
+            try {
+                let result;
+                if (window.DexHeroScanner.isSolanaAddress(address)) {
+                    // Solana Scan — chain is unambiguous from address format.
+                    const rpcEndpoint = `${window.location.origin}/api/rpc?network=solana`;
+                    const connection = new solanaWeb3.Connection(rpcEndpoint, {
+                        commitment: 'confirmed',
+                        wsEndpoint: '',
+                        webSocketFactory: () => ({ on: () => {}, off: () => {}, close: () => {}, send: () => {}, terminate: () => {}, readyState: 3, addEventListener: () => {}, removeEventListener: () => {} })
+                    });
+                    result = await window.DexHeroScanner.scanSolana(address, connection);
+                } else if (window.DexHeroScanner.isEVMAddress(address)) {
+                    // EVM Scan — auto-detect which chain the token actually
+                    // lives on (DexScreener has every chain with DEX
+                    // liquidity for the address). The user's wallet chain
+                    // is irrelevant for reading the token's state — we only
+                    // need the wallet on the right chain at *creation* time.
+                    const detected = await detectTokenChain(address);
+                    if (!detected) {
+                        throw new Error(`No DEX market found for ${address} on any supported chain. The token may not have liquidity, or the address is wrong.`);
+                    }
+                    const provider = new ethers.providers.JsonRpcProvider(
+                        `${window.location.origin}/api/rpc?chainId=${detected.chainId}`
+                    );
+                    result = await window.DexHeroScanner.scanEVM(address, provider, detected.chainId);
+                    if (result && result.success) {
+                        result.detectedChain = detected;  // surface to UI / Create-time wallet check
+                    }
+                } else {
+                    throw new Error("Invalid address format. Must be Solana (Base58) or EVM (0x).");
+                }
+
+                if (result.success) {
+                    window.scannedToken = result;
+
+                    // Symbol comes from the underlying token (on-chain
+                    // identity) — autofill + lock. Name is the DexHero's
+                    // CHARACTER name, which the creator types themselves
+                    // (e.g. "Aquaman" wrapping a $PUMP token). Suggest
+                    // the token's name as a placeholder ONLY if the user
+                    // hasn't typed anything yet, but never lock the field.
+                    const nameEl   = document.getElementById('token-name');
+                    const symbolEl = document.getElementById('token-symbol');
+                    if (nameEl) {
+                        if (!nameEl.value.trim() && result.name) {
+                            nameEl.placeholder = `e.g. ${result.name} (or any character name)`;
+                        }
+                        // Explicitly clear any prior lock from a previous scan.
+                        nameEl.readOnly = false;
+                        nameEl.style.opacity = '';
+                    }
+                    if (symbolEl) { symbolEl.value = result.symbol || ''; symbolEl.readOnly = true; symbolEl.style.opacity = '0.7'; }
+
+                    const chainColor = result.type === 'Solana' ? '#9945FF' : '#627EEA';
+                    let redFlagsHtml = '';
+                    if (result.redFlags && result.redFlags.length > 0) {
+                        redFlagsHtml = `
+                            <div style="margin-top: 12px; padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; border-left: 4px solid #ef4444;">
+                                <strong style="color: #ef4444; font-size: 13px;">Red Flags Detected:</strong>
+                                <ul style="margin: 4px 0 0 16px; font-size: 12px; color: #fca5a5;">
+                                    ${result.redFlags.map(f => `<li>${f}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+
+                    const hasRedFlags = result.redFlags && result.redFlags.length > 0;
+
+                    // When the scan rejects a token, give the creator an
+                    // escape hatch: request a manual review with written
+                    // justification. The button only renders on rejection;
+                    // clean tokens just see the green approval state.
+                    const reviewRequestHtml = hasRedFlags ? `
+                        <button type="button" class="btn-submit" onclick="openManualReviewModal()"
+                                style="margin-top: 10px; width: 100%; background: rgba(138, 182, 255, 0.12); border: 1px solid rgba(138, 182, 255, 0.4); color: #cfd7ea; font-size: 13px;">
+                            Request Manual Review →
+                        </button>
+                        <div style="margin-top: 6px; font-size: 11px; color: var(--text-muted); text-align: center;">
+                            Think this rejection is wrong? Submit your project for human review.
+                        </div>
+                    ` : '';
+
+                    resultsDiv.innerHTML = `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px; margin-bottom: 4px;">
+                            <div><span style="color: var(--text-muted);">Name:</span> <strong>${result.name || '—'}</strong></div>
+                            <div><span style="color: var(--text-muted);">Symbol:</span> <strong>${result.symbol || '—'}</strong></div>
+                            <div><span style="color: var(--text-muted);">Decimals:</span> ${result.decimals}</div>
+                            <div><span style="color: var(--text-muted);">Supply:</span> ${parseFloat(result.totalSupply).toLocaleString()}</div>
+                        </div>
+                        ${redFlagsHtml}
+                        ${reviewRequestHtml}
+                        <div id="scan-fee-preview" style="margin-top: 12px; padding: 12px; background: rgba(138, 182, 255, 0.08); border: 1px solid rgba(138, 182, 255, 0.22); border-radius: 8px; font-size: 12px; color: #cfd7ea;">
+                            <span style="color: var(--text-muted);">Creation Fee:</span>
+                            <strong style="color: #8ab6ff;">Calculating…</strong>
+                        </div>
+                        <div style="margin-top: 12px; padding: 8px; background: rgba(34, 197, 94, 0.1); border-radius: 6px; color: #4ade80; font-size: 12px; text-align: center;">
+                            Token verified on <strong style="color: ${chainColor}">${result.detectedChain?.chainName || result.type}</strong>. Name &amp; symbol filled above.
+                        </div>
+                        ${result.detectedChain ? `
+                        <div style="margin-top: 8px; padding: 8px 10px; background: rgba(138, 182, 255, 0.06); border-left: 3px solid #8ab6ff; border-radius: 4px; color: #cfd7ea; font-size: 11px;">
+                            Detected on <strong>${result.detectedChain.chainName}</strong> ($${Math.floor(result.detectedChain.liquidityUsd).toLocaleString()} DEX liquidity). Switch your wallet to ${result.detectedChain.chainName} before clicking Create.
+                        </div>` : ''}
+                        ${(() => {
+                            const t = result.market?.oldestPairCreatedAt;
+                            if (!t || !Number.isFinite(t)) return '';
+                            const days = Math.floor((Date.now() - t) / 86400000);
+                            const label = days >= 730 ? `${(days / 365).toFixed(1)} years`
+                                         : days >= 60  ? `${Math.floor(days / 30)} months`
+                                         : `${days} days`;
+                            const date = new Date(t).toISOString().slice(0, 10);
+                            return `<div style="margin-top: 6px; padding: 6px 10px; background: rgba(255,255,255,0.03); border-left: 3px solid #6b7280; border-radius: 4px; color: #9ca3af; font-size: 11px;">Token age: <strong style="color: #e6eaf2;">${label}</strong> (earliest DEX pair: ${date})</div>`;
+                        })()}
+                    `;
+
+                    document.getElementById('summary-supply-req').textContent = `1 Token`;
+
+                    // Render the dynamic fee from the market data the unified
+                    // scan already fetched. Works for both EVM and Solana —
+                    // the same SovereignFeeCalc math applies (Solana path
+                    // settles via SPL transfer, but the % calculation is
+                    // identical).
+                    renderScanFeePreview(address, result).catch(err => {
+                        const el = document.getElementById('scan-fee-preview');
+                        if (el) el.innerHTML = `<span style="color: var(--text-muted);">Creation Fee:</span> <span style="color:#f59e9e;">unavailable (${err.message})</span>`;
+                    });
+
+                    // Re-evaluate the Create button now that the scan decision
+                    // is in. updateCreateBtn() reads window.scannedToken.decision
+                    // to gate on safety + $10M MC + clean cluster check.
+                    updateCreateBtn();
+
+                } else {
+                    resultsDiv.innerHTML = `<div style="color: #ef4444; text-align:center; padding: 10px;">Scan failed: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div style="color: #ef4444; text-align:center; padding: 10px;">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Returns true if any wallet is considered connected
+        function _isWalletConnected() {
+            // Only trust sessionStorage — set explicitly on connect, cleared on disconnect
+            return sessionStorage.getItem('walletConnected') === 'true';
+        }
+
+        // Keep the create button label in sync with wallet state
+        function updateCreateBtn() {
+            const btn = document.getElementById('create-btn');
+            if (!btn) return;
+
+            // Existing-token flow: block until the safety scan returns a
+            // clean decision. The server's evaluate() gates on $10M MC,
+            // honeypot, mint not renounced, LP locked, top holder, cluster,
+            // etc. — using the same threshold table the server uses to gate
+            // /api/dexhero/quote-fee. (See lib/security.js.)
+            const launchType = document.querySelector('input[name="launch-type"]:checked')?.value || 'new';
+            if (launchType === 'existing') {
+                const scanned = window.scannedToken;
+                if (!scanned) {
+                    btn.disabled = true;
+                    btn.title = 'Scan an existing token to continue';
+                    btn.textContent = 'Scan Token First';
+                    btn.style.opacity = '0.55';
+                    btn.style.cursor = 'not-allowed';
+                    return;
+                }
+                const decision = scanned.decision;
+                if (!decision || !decision.ok) {
+                    const firstFlag = decision?.hardFlags?.[0] || 'Token does not qualify';
+                    btn.disabled = true;
+                    btn.title = decision?.hardFlags?.join(' • ') || firstFlag;
+                    btn.textContent = `Blocked: ${firstFlag}`;
+                    btn.style.opacity = '0.55';
+                    btn.style.cursor = 'not-allowed';
+                    return;
+                }
+            }
+
+            // Wallet gate (applies to both flows).
+            btn.disabled = false;
+            btn.title = '';
+            btn.style.opacity = '';
+            btn.style.cursor = '';
+            if (_isWalletConnected()) {
+                btn.textContent = 'Create DexHero';
+            } else {
+                btn.textContent = 'Connect Wallet';
+            }
+        }
+
+        // After wallet connects, auto-trigger creation if user had clicked the button
+        window.addEventListener('walletChanged', () => {
+            updateCreateBtn();
+            if (window._pendingCreate) {
+                window._pendingCreate = false;
+                handleCreate();
+            }
+        });
+
+        // Handle Create Button Click
+        async function handleCreate() {
+            // Wipe any leftover network-error banner from a prior new-token
+            // attempt — existing-token doesn't go through ensureCorrectNetwork
+            // at all, but a stale banner from before the user switched launch
+            // types would otherwise sit on the page reading "Wrong network".
+            clearNetworkError();
+
+            // 1. Check Wallet Connection — open modal and queue auto-create if not connected
+            if (!_isWalletConnected()) {
+                window._pendingCreate = true;
+                if (typeof window.openConnectModal === 'function') window.openConnectModal();
+                else alert('Please connect a wallet first');
+                return;
+            }
+
+            const launchType = document.querySelector('input[name="launch-type"]:checked')?.value || 'new';
+            const existingAddress = document.getElementById('existing-contract-address').value.trim();
+            const connectedChain = sessionStorage.getItem('walletChain');
+
+            if (launchType === 'new') {
+                // New-token still needs an EVM signer — the creator pays the
+                // USDC creation fee + initial buy on Sepolia.
+                if (!window.DexHeroBlockchain || !window.DexHeroBlockchain.signer) {
+                    window._pendingCreate = true;
+                    const msg = 'Connect MetaMask (or another EVM wallet) on Sepolia to pay the USDC creation fee.';
+                    if (typeof window.openConnectModal === 'function') {
+                        alert(msg);
+                        window.openConnectModal();
+                    } else {
+                        alert(msg);
+                    }
+                    return;
+                }
+            } else {
+                // Existing-token: the creator's EVM wallet is RECEIVE-ONLY.
+                // The platform's keeper wallet signs the factory call and
+                // mints the DexHero NFT directly to whatever EVM address we
+                // pass as evmCollector. We just need an address — no signer,
+                // no gas, no chain switch, no network prompts. Works with
+                // Phantom (which exposes both window.solana and
+                // window.ethereum), MetaMask, Coinbase Wallet, anything.
+                // Resolution order: connected signer → eth_accounts → prompt.
+                let evmDest = null;
+                try {
+                    if (window.DexHeroBlockchain?.signer) {
+                        evmDest = await window.DexHeroBlockchain.signer.getAddress();
+                    }
+                } catch {}
+                if (!evmDest && typeof window.ethereum !== 'undefined') {
+                    try {
+                        const accs = await window.ethereum.request({ method: 'eth_accounts' });
+                        if (accs && accs[0]) evmDest = accs[0];
+                    } catch {}
+                }
+                if (!evmDest) {
+                    const pasted = prompt(
+                        'Paste an EVM address (any chain — your DexHero NFT will arrive here).\n\n' +
+                        'You will NOT be asked to switch networks or sign anything on EVM. The platform mints the NFT for you.'
+                    );
+                    if (!pasted || !/^0x[a-fA-F0-9]{40}$/.test(pasted.trim())) {
+                        alert('Need a valid 0x… address to receive your DexHero NFT.');
+                        return;
+                    }
+                    evmDest = pasted.trim();
+                }
+                // Stashed so launchHeroExistingServer reads it before falling
+                // back to the signer / eth_accounts chain.
+                window._existingEvmCollector = evmDest;
+            }
+
+            // 2. Validate Form Fields
+            const nameEl = document.getElementById('token-name');
+            const symbolEl = document.getElementById('token-symbol');
+            const descEl = document.querySelector('textarea[placeholder="Describe your token..."]');
+            
+            const tokenName = nameEl ? nameEl.value.trim() : "";
+            const tokenSymbol = symbolEl ? symbolEl.value.trim() : "";
+            const tokenDescription = descEl ? descEl.value.trim() : "";
+            
+            const initialSupply = 10000000; // fixed supply for all DexHero tokens
+
+            const submitBtn = document.querySelector('.btn-submit');
+            if (submitBtn && submitBtn.disabled) return;
+
+            // Both paths require a DexHero name typed into the same
+            // #token-name input at the top of the form. New-token also
+            // requires a token symbol (it's launching its own token);
+            // existing-token reuses the underlying token's symbol from
+            // the scanner.
+            if (!tokenName) {
+                alert('Please name your DexHero.');
+                if (nameEl) nameEl.focus();
+                return;
+            }
+            if (launchType === 'new' && !tokenSymbol) {
+                alert('Please fill in the token symbol.');
+                if (symbolEl) symbolEl.focus();
+                return;
+            }
+
+            const originalText = submitBtn ? submitBtn.innerText : "Create DexHero";
+            if (submitBtn) {
+                submitBtn.innerText = launchType === 'new' ? 'Checking network...' : 'Creating (1/5)...';
+                submitBtn.disabled = true;
+            }
+
+            // Network pre-flight runs for new-token only — that path pays
+            // USDC + initial buy on Sepolia and the creator's signer must be
+            // there. Existing-token DexHeros don't have the creator sign
+            // anything on Sepolia (the platform's keeper wallet mints the
+            // SBT), so forcing a chain switch is unnecessary and trips the
+            // "trying to use mainnet/testnet" prompts users see.
+            if (launchType === 'new') {
+                clearNetworkError();
+                const networkOk = await ensureCorrectNetwork();
+                if (!networkOk) {
+                    if (submitBtn) { submitBtn.innerText = originalText; submitBtn.disabled = false; }
+                    return;
+                }
+            }
+
+            if (submitBtn) submitBtn.innerText = 'Creating (1/5)...';
+
+            // Show progress overlay
+            const overlay = document.getElementById('tx-progress-overlay');
+            if (overlay) overlay.style.display = 'flex';
+            // Reset error message from any previous attempt
+            const txErrorEl = document.getElementById('tx-error-message');
+            if (txErrorEl) { txErrorEl.textContent = ''; txErrorEl.style.display = 'none'; }
+            const progressTitle = document.getElementById('tx-progress-title');
+            if (progressTitle) progressTitle.textContent = launchType === 'new' ? 'Creating DexHero' : 'Integrating Token';
+
+            // Reset all steps to pending
+            ['step-fee','step-deploy','step-upload','step-database','step-complete'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.className = 'progress-step'; const s = el.querySelector('.step-spinner'); if(s) s.style.visibility='hidden'; }
+            });
+
+            function updateStep(stepId, status) {
+                const step = document.getElementById(stepId);
+                if (!step) return;
+                step.className = 'progress-step ' + status;
+                const spinner = step.querySelector('.step-spinner');
+                if (!spinner) return;
+                if (status === 'active') {
+                    spinner.style.visibility = 'visible';
+                    spinner.style.border = '2px solid rgba(255,255,255,0.2)';
+                    spinner.style.borderTopColor = 'white';
+                    spinner.style.animation = 'spin 0.8s linear infinite';
+                    spinner.textContent = '';
+                } else if (status === 'complete') {
+                    spinner.style.visibility = 'visible';
+                    spinner.style.border = 'none';
+                    spinner.style.animation = 'none';
+                    spinner.style.color = '#22c55e';
+                    spinner.style.fontSize = '18px';
+                    spinner.textContent = '';
+                } else if (status === 'error') {
+                    spinner.style.visibility = 'visible';
+                    spinner.style.border = 'none';
+                    spinner.style.animation = 'none';
+                    spinner.style.color = '#ef4444';
+                    spinner.style.fontSize = '18px';
+                    spinner.textContent = '';
+                }
+            }
+
+            // addLog drives console output, step transitions, and paid draft status updates
+            const addLog = (msg) => {
+                console.log('[DexHero]', msg);
+                if (typeof msg !== 'string') return;
+                // Fee confirmed — save paid draft immediately so we can recover if anything fails
+                if (msg.includes('Payment confirmed')) {
+                    savePaidDraft({
+                        fee_tx_hash: '_pending_', // will be overwritten once we have the real hash
+                        fee_amount_usdc: creationFeeUSDC || 100,
+                        status: 'paid',
+                        params: setupParams || {}
+                    });
+                    // Pre-fee localStorage draft is no longer the source of
+                    // truth — the server's paid_draft record takes over.
+                    try { window._clearUnpaidDraft && window._clearUnpaidDraft(); } catch {}
+                }
+                // Deployment starting — green-check fee step, activate deploy step, update draft
+                if (msg.includes('Deploying contracts on-chain')) {
+                    updateStep('step-fee', 'complete');
+                    updateStep('step-deploy', 'active');
+                    savePaidDraft({ status: 'deploying' });
+                }
+            };
+
+            addLog(' Starting token creation process...');
+
+            // Paid draft tracking — saves progress so creation can be resumed if interrupted
+            let _paidDraftId = null;
+            let creationFeeUSDC = 0;  // hoisted so addLog can reference it
+            let setupParams = null;   // hoisted so addLog can reference it
+            async function savePaidDraft(patch) {
+                try {
+                    const res = await fetch('/api/dexhero/paid-draft', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: _paidDraftId, creator_wallet: activeWallet, ...patch })
+                    });
+                    const data = await res.json();
+                    if (data.id) _paidDraftId = data.id;
+                } catch (e) { /* non-fatal */ }
+            }
+
+            try {
+                // 3. Handle Launch Type Specific Validation
+                let existingTokenAddress = null;
+
+                // Read referral code and determine discount
+                const referralInput = document.getElementById('referral-code');
+                const referralRaw = referralInput ? referralInput.value.trim() : '';
+                const referralWallet = _isValidWalletAddress(referralRaw) ? referralRaw : null;
+                creationFeeUSDC = referralWallet ? 90 : 100;
+
+                if (launchType === 'existing') {
+                    if (!window.scannedToken) {
+                        alert('Please scan the contract address first');
+                        submitBtn.innerText = originalText;
+                        submitBtn.disabled = false;
+                        return;
+                    }
+                    existingTokenAddress = document.getElementById('existing-contract-address').value.trim();
+                }
+
+                // 4. Upload Image (if selected)
+                let imageUrl = window.sessionImageUrl || null; 
+                const imageInput = document.getElementById('token-image');
+                const fileToUpload = window.croppedImageFile || (imageInput.files ? imageInput.files[0] : null);
+
+                if (fileToUpload) {
+                    addLog(' Uploading image...');
+                    try {
+                        const supabase = window.DexHeroSupabase.get();
+                        if (supabase) {
+                            const walletAddress = sessionStorage.getItem('walletAddress') || 'user_' + Date.now();
+                            const cleanFileName = fileToUpload.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+                            const filePath = `tokens/images/${walletAddress}_${Date.now()}_${cleanFileName}`;
+
+                            const { error } = await supabase.storage
+                                .from(window.DexHeroSupabase.bucket)
+                                .upload(filePath, fileToUpload);
+
+                            if (!error) {
+                                const { data: urlData } = supabase.storage
+                                    .from(window.DexHeroSupabase.bucket)
+                                    .getPublicUrl(filePath);
+                                imageUrl = urlData.publicUrl;
+                                console.log(' Image uploaded:', imageUrl);
+                            }
+                        }
+                    } catch (e) { console.error("Image upload error:", e); }
+                }
+
+                const purchasePrice = parseFloat(document.getElementById(launchType === 'existing' ? 'existing-purchase-price' : 'purchase-price')?.value) || 10;
+                const priceIncrement = 0;
+                const rentalPrice = 1;
+                const initialBuyPct = launchType === 'new' ? (parseFloat(document.getElementById('initial-buy-slider')?.value) || 0) : 0;
+                const initialBuyTokens = launchType === 'new' ? Math.floor(initialSupply * (initialBuyPct / 100)) : 0;
+                const INITIAL_TOKEN_PRICE = 0.001; // per-token launch price
+                const initialBuyUSDC = initialBuyTokens > 0 ? (initialBuyTokens * INITIAL_TOKEN_PRICE) : 0;
+
+                // The DexHero name is whatever the user typed into the
+                // #token-name input — same field for both launch types.
+                // The token symbol comes from the typed input for new-token,
+                // or auto-fills from the scanner for existing-token.
+                const finalTokenName = tokenName;
+                const finalTokenSymbol = tokenSymbol || (launchType === 'existing' ? window.scannedToken?.symbol : '');
+                const activeWallet = (window.DexHeroBlockchain?.signer ? await window.DexHeroBlockchain.signer.getAddress() : null)
+                    || sessionStorage.getItem('walletAddress');
+
+                // For existing tokens, detect native blockchain from address format
+                // so the token detail chart shows the correct chain's DEX data
+                const existingNativeChain = launchType === 'existing' && existingTokenAddress
+                    ? (existingTokenAddress.startsWith('0x') ? 'ethereum' : 'solana')
+                    : null;
+
+                // Resolve the model URL BEFORE the fee is paid. Two sources:
+                //   1. Staged uploaded model (onFileSelect pushes it to Supabase immediately)
+                //   2. Generated model from ?modelUrl=… in the URL
+                // Putting it in setupParams guarantees the server has it even
+                // if the user closes the browser the instant they pay.
+                const _modelUrlFromQuery = new URLSearchParams(window.location.search).get('modelUrl');
+                const preUploadedModelUrl =
+                    (modelUploader && modelUploader.preUploadedUrl) ||
+                    _modelUrlFromQuery ||
+                    null;
+
+                setupParams = {
+                    launchType,
+                    name: finalTokenName,
+                    symbol: finalTokenSymbol,
+                    createdBy: activeWallet,
+                    description: tokenDescription,
+                    imageUrl: imageUrl,
+                    modelUrl: preUploadedModelUrl,
+                    existingTokenAddress: existingTokenAddress,
+                    blockchain: existingNativeChain,
+                    purchasePrice: purchasePrice,
+                    priceIncrement: priceIncrement,
+                    rentalPrice: rentalPrice,
+                    initialSupply: launchType === 'new' ? initialSupply : (window.scannedToken?.totalSupply || 0),
+                    taxPercentage: launchType === 'new' ? (parseFloat(document.getElementById('tax-slider')?.value) || 0) : 0,
+                    onePercentRaw: window.scannedToken?.onePercentRaw,
+                    decimals: launchType === 'new' ? 18 : (window.scannedToken?.decimals || 18),
+                    initialBuyPct: initialBuyPct,
+                    initialBuyUSDC: initialBuyUSDC,
+                    initialBuyTokens: initialBuyTokens,
+                    referralWallet: referralWallet,
+                    feeAmountUSDC: creationFeeUSDC
+                };
+
+                // 5. Phase 1: Fee transfer + server deployment
+                updateStep('step-fee', 'active');
+                let finalResult;
+                if (launchType === 'new') {
+                    finalResult = await window.DexHeroTokens.createNewToken(setupParams, addLog);
+                } else {
+                    finalResult = await window.DexHeroTokens.setupExistingToken(setupParams, addLog);
+                }
+
+                // Update paid draft with real tx hash now that we have the result
+                if (finalResult?.signature || finalResult?.paymentSignature) {
+                    savePaidDraft({
+                        fee_tx_hash: finalResult.paymentSignature || finalResult.signature,
+                        fee_amount_usdc: creationFeeUSDC,
+                        status: finalResult.success ? 'deployed' : 'failed',
+                        params: setupParams,
+                        manager_address: finalResult.manager || null,
+                        contract_address: finalResult.contract_address || null,
+                        error_message: finalResult.success ? null : (finalResult.error || 'Unknown error')
+                    });
+                }
+
+                // Check success BEFORE marking steps complete — never show green on failure
+                if (!finalResult || !finalResult.success) {
+                    // If deploy step was already activated, mark it error; otherwise mark fee error
+                    const deployEl = document.getElementById('step-deploy');
+                    if (deployEl && deployEl.classList.contains('active')) {
+                        updateStep('step-deploy', 'error');
+                    } else {
+                        updateStep('step-fee', 'error');
+                    }
+                    throw new Error(finalResult?.error || 'Blockchain phase failed');
+                }
+
+                updateStep('step-fee', 'complete');
+                updateStep('step-deploy', 'complete');
+
+                // txHash = best available creation tx for database records
+                const txHash = finalResult.transactionSignature || finalResult.transactionHash || finalResult.signature;
+
+                // For upload verification, use a tx the user directly signed.
+                // - New tokens: user pays USDC on EVM → paymentSignature
+                // - Existing EVM tokens: user transfers 1% ERC20 → signature
+                // - Existing Solana tokens: user transfers 1% SPL → signature (Solana tx)
+                // Server-side deployment txs are from the Deploy Wallet, so can't verify user ownership.
+                const uploadTxHash = finalResult.paymentSignature || finalResult.signature || null;
+
+                // 6. Upload 3D model using fee tx hash as proof (no extra wallet popup)
+                updateStep('step-upload', 'active');
+                if (modelUploader && modelUploader.currentFile) {
+                    const walletAddress = (window.DexHeroBlockchain?.signer ? await window.DexHeroBlockchain.signer.getAddress() : null)
+                        || sessionStorage.getItem('walletAddress');
+                    const uploadResult = await modelUploader.uploadViaServer(walletAddress, uploadTxHash);
+                    if (uploadResult && uploadResult.url) {
+                        setupParams.modelUrl = uploadResult.url;
+                        addLog(' Model uploaded and verified');
+                    } else {
+                        addLog(' Model upload failed, using session model URL...');
+                    }
+                }
+                if (!setupParams.modelUrl) {
+                    setupParams.modelUrl = new URLSearchParams(window.location.search).get('modelUrl') || null;
+                }
+                // Patch model_url + generate sprites (blocking — fails creation if sprites fail)
+                if (setupParams.modelUrl && finalResult.contract_address) {
+                    addLog('Generating 360° sprite preview...');
+                    const updateRes = await fetch('/api/tokens/update-model', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contract_address: finalResult.contract_address,
+                            model_url: setupParams.modelUrl,
+                            creator_wallet: activeWallet
+                        })
+                    });
+                    const updateData = await updateRes.json();
+                    if (!updateData.success) {
+                        throw new Error(updateData.error || 'Sprite generation failed');
+                    }
+                    // Cache sprite URL so token-detail can show it before its DB query returns
+                    if (updateData.sprite_url && finalResult.dbTokenId) {
+                        sessionStorage.setItem('dexhero_sprite_url_' + finalResult.dbTokenId, updateData.sprite_url);
+                        sessionStorage.setItem('dexhero_sprite_frames_' + finalResult.dbTokenId, String(updateData.sprite_frame_count || 36));
+                    }
+                    addLog(' 360° sprites generated');
+                }
+                updateStep('step-upload', 'complete');
+
+                // 7. Validate on-chain deployment before saving
+                if (!finalResult.manager || finalResult.manager === '0x0000000000000000000000000000000000000000') {
+                    throw new Error('DexHero deployment failed: manager contract address is missing. The creation cannot be completed.');
+                }
+
+                // Save to Database — server already saves during deployment; use that result
+                updateStep('step-database', 'active');
+                let saveResult;
+                if (!finalResult.dbSaveError) {
+                    // Server saved successfully during deployment
+                    saveResult = { success: true, id: finalResult.dbTokenId, data: { id: finalResult.dbTokenId } };
+                } else {
+                    // Server save failed — attempt client-side save as fallback
+                    saveResult = await window.DexHeroTokens.saveTokenToDatabase({
+                        ...setupParams,
+                        transactionSignature: txHash,
+                        mintAddress: finalResult.mintAddress || finalResult.contract_address || finalResult.manager,
+                        total_supply: setupParams.initialSupply || window.scannedToken?.totalSupply || 0,
+                        chain: finalResult.chain || setupParams.blockchain || 'ethereum',
+                        launchType: setupParams.launchType,
+                        initialBuyPct: setupParams.initialBuyPct,
+                        initialBuyUSDC: setupParams.initialBuyUSDC,
+                        manager_address: finalResult.manager || null,
+                        router_address: finalResult.router_address || null,
+                        token_address: finalResult.contract_address || null
+                    });
+                }
+
+                if (!saveResult.success) {
+                    throw new Error(saveResult.error || 'Database save failed');
+                }
+                updateStep('step-database', 'complete');
+
+                // Initial buy trade is recorded server-side during deployment (with the actual router buy tx hash).
+                // Log the outcome from the server result.
+                if (finalResult.initialBuyTokens > 0) {
+                    addLog(` Initial buy complete: ${finalResult.initialBuyTokens.toLocaleString()} tokens sent to your wallet`);
+                } else if (initialBuyUSDC > 0 && finalResult.initialBuyError) {
+                    addLog(` Initial buy failed on-chain: ${finalResult.initialBuyError}`);
+                }
+
+                // 8. Final Success UI
+                updateStep('step-complete', 'complete');
+                savePaidDraft({ status: 'complete' }); // clear from drafts list
+                submitBtn.innerText = 'Success!';
+                if (progressTitle) progressTitle.textContent = 'DexHero Live!';
+
+                // Cache the Supabase model URL so the detail page can start loading
+                // before its own DB query returns (blob URLs die on navigation, so always use the remote URL)
+                if (setupParams.modelUrl) {
+                    sessionStorage.setItem('dexhero_model_blob_' + saveResult.id, setupParams.modelUrl);
+                }
+
+                // Success-path: skip the bottom action buttons — the modal
+                // has an X top-right and we auto-redirect to the detail page
+                // 3s later via postMessage to the SPA shell (see router.js
+                // dexhero:navigate listener). Buttons only render on the
+                // error path below.
+                const detailRoute = `/#/token/${finalResult.manager}`;
+                const go = () => {
+                    try {
+                        if (window.top !== window.self) {
+                            window.parent.postMessage({ type: 'dexhero:navigate', href: detailRoute }, window.location.origin);
+                            return;
+                        }
+                    } catch { /* cross-origin guard tripped — fall through */ }
+                    window.location.href = detailRoute;
+                };
+                setTimeout(go, 3000);
+
+            } catch (error) {
+                console.error(' Token creation failed:', error);
+                if (submitBtn) { submitBtn.innerText = originalText; submitBtn.disabled = false; }
+
+                // Mark the currently active step as failed (if not already marked)
+                const activeStep = document.querySelector('.progress-step.active');
+                if (activeStep) updateStep(activeStep.id, 'error');
+
+                if (progressTitle) progressTitle.textContent = 'Creation Failed';
+
+                // Show a plain-language error so the user knows what went wrong
+                const txErrorEl = document.getElementById('tx-error-message');
+                const txErrorTitle = document.getElementById('tx-error-title');
+                const txErrorBody  = document.getElementById('tx-error-body');
+                if (txErrorEl && txErrorTitle && txErrorBody) {
+                    const { title, body } = friendlyError(error.message);
+                    txErrorTitle.textContent = title;
+                    txErrorBody.textContent  = body;
+                    txErrorEl.style.display = 'block';
+                }
+
+                const actions = document.getElementById('tx-progress-actions');
+                const viewBtn = document.getElementById('tx-view-token-btn');
+                if (actions) actions.style.display = 'flex';
+                if (viewBtn) {
+                    viewBtn.textContent = 'Try Again';
+                    viewBtn.style.background = 'rgba(255,255,255,0.08)';
+                    viewBtn.style.color = '#fff';
+                    viewBtn.onclick = () => {
+                        overlay.style.display = 'none';
+                        if (txErrorEl) {
+                            txErrorEl.style.display = 'none';
+                            document.getElementById('tx-error-title').textContent = '';
+                            document.getElementById('tx-error-body').textContent = '';
+                        }
+                    };
+                }
+            }
+        }
+    </script>
+
+    <!-- Creation Fee Calculator modal -->
+    <div id="fee-calculator-modal"
+         style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 9000; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: #111624; color: #e6eaf2; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; width: 100%; max-width: 480px; padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                <h3 style="margin: 0; font-size: 18px;">Creation Fee Calculator</h3>
+                <button type="button" onclick="closeFeeCalculator()"
+                        style="background: transparent; border: none; color: #8f97a8; font-size: 20px; cursor: pointer;">×</button>
+            </div>
+            <div style="color: #8f97a8; font-size: 12px; margin-bottom: 16px;">
+                Estimate the supply-% fee for an existing token. Accepts values like <code>37M</code>, <code>1.2B</code>, or raw numbers.
+            </div>
+
+            <label style="display: block; font-size: 12px; color: #b9c0cf; margin-bottom: 4px;">Market Cap (USD)</label>
+            <input type="text" id="fcalc-mc" placeholder="e.g. 37M"
+                   style="width: 100%; padding: 10px 12px; background: #0b0f1a; border: 1px solid rgba(255,255,255,0.08); color: #e6eaf2; border-radius: 8px; margin-bottom: 12px; font-size: 14px;">
+
+            <label style="display: block; font-size: 12px; color: #b9c0cf; margin-bottom: 4px;">Liquidity (USD, pool-side)</label>
+            <input type="text" id="fcalc-liq" placeholder="e.g. 5.2M"
+                   style="width: 100%; padding: 10px 12px; background: #0b0f1a; border: 1px solid rgba(255,255,255,0.08); color: #e6eaf2; border-radius: 8px; margin-bottom: 12px; font-size: 14px;">
+
+            <label style="display: block; font-size: 12px; color: #b9c0cf; margin-bottom: 4px;">Total Supply (optional — shows fee in tokens)</label>
+            <input type="number" id="fcalc-supply" placeholder="e.g. 1000000000"
+                   style="width: 100%; padding: 10px 12px; background: #0b0f1a; border: 1px solid rgba(255,255,255,0.08); color: #e6eaf2; border-radius: 8px; margin-bottom: 16px; font-size: 14px;">
+
+            <div id="fcalc-error" style="color: #f59e9e; font-size: 12px; margin-bottom: 8px;"></div>
+
+            <div style="background: #0b0f1a; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 16px; text-align: center;">
+                <div style="font-size: 12px; color: #8f97a8; letter-spacing: 0.04em; text-transform: uppercase;">Creation Fee</div>
+                <div id="fcalc-result-pct" style="font-size: 36px; font-weight: 600; margin: 4px 0; color: #8ab6ff;">—</div>
+                <div id="fcalc-result-amt" style="font-size: 13px; color: #b9c0cf;"></div>
+                <div id="fcalc-result-note" style="font-size: 11px; color: #8f97a8; margin-top: 12px; line-height: 1.5;">
+                    Enter a market cap to see the fee.
+                </div>
+            </div>
+
+            <div style="margin-top: 16px; font-size: 11px; color: #6b7388; line-height: 1.5;">
+                Formula: base = ⌊1×10⁹ ÷ MC⌋ bps. LR = L/MC: &lt;5% → ×1.5; &gt;15% → ×0.8. Clamped 0.01%–1.00%.
+                The live quote used at creation is signed server-side against a 1-hour TWAP and may differ slightly from this preview.
+            </div>
+
+            <div style="margin-top: 16px; text-align: right;">
+                <button type="button" onclick="closeFeeCalculator()"
+                        style="background: rgba(255,255,255,0.06); color: #e6eaf2; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 8px 16px; cursor: pointer;">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Review Request modal — opens when the automated scan rejects
+         a token and the creator wants to plead their case. -->
+    <div id="manual-review-modal"
+         style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.72); z-index: 9000; align-items: center; justify-content: center; padding: 20px; overflow-y: auto;">
+        <div style="background: #111624; color: #e6eaf2; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; width: 100%; max-width: 540px; padding: 24px; max-height: calc(100vh - 40px); overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+                <h3 style="margin: 0; font-size: 18px;">Request Manual Review</h3>
+                <button type="button" onclick="closeManualReviewModal()"
+                        style="background: transparent; border: none; color: #8f97a8; font-size: 20px; cursor: pointer;">×</button>
+            </div>
+            <div style="color: #8f97a8; font-size: 12px; margin-bottom: 16px; line-height: 1.5;">
+                Tell us why this token deserves to be approved. We'll review and email you within 48 hours.
+            </div>
+
+            <!-- Pre-filled context (read-only) -->
+            <div id="mreview-context"
+                 style="background: #0b0f1a; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; font-size: 12px; color: #b9c0cf; line-height: 1.6;">
+                <!-- Filled by openManualReviewModal() -->
+            </div>
+
+            <label style="display: block; font-size: 12px; color: #b9c0cf; margin-bottom: 4px;">Project name</label>
+            <input type="text" id="mreview-project-name" maxlength="80"
+                   style="width: 100%; padding: 10px 12px; background: #0b0f1a; border: 1px solid rgba(255,255,255,0.08); color: #e6eaf2; border-radius: 8px; margin-bottom: 12px; font-size: 14px;">
+
+            <label style="display: block; font-size: 12px; color: #b9c0cf; margin-bottom: 4px;">Contact email</label>
+            <input type="email" id="mreview-email" placeholder="you@example.com"
+                   style="width: 100%; padding: 10px 12px; background: #0b0f1a; border: 1px solid rgba(255,255,255,0.08); color: #e6eaf2; border-radius: 8px; margin-bottom: 12px; font-size: 14px;">
+
+            <label style="display: block; font-size: 12px; color: #b9c0cf; margin-bottom: 4px;">Project links (website, docs, X / Discord)</label>
+            <textarea id="mreview-links" maxlength="1000" rows="2" placeholder="https://..."
+                      style="width: 100%; padding: 10px 12px; background: #0b0f1a; border: 1px solid rgba(255,255,255,0.08); color: #e6eaf2; border-radius: 8px; margin-bottom: 12px; font-size: 14px; resize: vertical; font-family: inherit;"></textarea>
+
+            <label style="display: block; font-size: 12px; color: #b9c0cf; margin-bottom: 4px;">Why should we accept this token? <span style="color: #6b7388;">(50–2000 characters)</span></label>
+            <textarea id="mreview-justification" maxlength="2000" rows="6" placeholder="Explain the project's history, why the flagged characteristics aren't a concern, audit links, etc."
+                      style="width: 100%; padding: 10px 12px; background: #0b0f1a; border: 1px solid rgba(255,255,255,0.08); color: #e6eaf2; border-radius: 8px; margin-bottom: 12px; font-size: 14px; resize: vertical; font-family: inherit;"></textarea>
+
+            <div id="mreview-error" style="color: #f59e9e; font-size: 12px; margin-bottom: 8px;"></div>
+            <div id="mreview-success" style="display: none; padding: 12px; background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 8px; color: #4ade80; font-size: 13px; margin-bottom: 12px;"></div>
+
+            <div style="margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="closeManualReviewModal()"
+                        style="background: rgba(255,255,255,0.06); color: #e6eaf2; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 8px 16px; cursor: pointer;">
+                    Cancel
+                </button>
+                <button type="button" id="mreview-submit-btn" onclick="submitManualReview()"
+                        style="background: rgba(138, 182, 255, 0.18); color: #e6eaf2; border: 1px solid rgba(138, 182, 255, 0.5); border-radius: 8px; padding: 8px 16px; cursor: pointer;">
+                    Submit for Review
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Manual review request — opens with the current scanned-token context
+        // pre-filled so the reviewer (and the creator) can see exactly what
+        // tripped the automated check.
+        function openManualReviewModal() {
+            const modal = document.getElementById('manual-review-modal');
+            if (!modal) return;
+            const r = window.scannedToken;
+            if (!r) { alert('Scan a token first.'); return; }
+
+            const ctx = document.getElementById('mreview-context');
+            const flagsList = (r.redFlags || []).map(f => `<li>${f}</li>`).join('') || '<li><em>(no flags recorded)</em></li>';
+            const chainName = r.detectedChain?.chainName || r.type || '—';
+            const fmtUsd = n => '$' + Number(n || 0).toLocaleString();
+            ctx.innerHTML = `
+                <div><strong>${r.name || '—'} (${r.symbol || '—'})</strong></div>
+                <div style="font-family: monospace; word-break: break-all; font-size: 11px; color: #8f97a8; margin: 4px 0;">${r.address}</div>
+                <div>Chain: <strong>${chainName}</strong> · MC: <strong>${fmtUsd(r.market?.mcUsd)}</strong> · Liquidity: <strong>${fmtUsd(r.market?.liquidityUsd)}</strong></div>
+                <div style="margin-top: 8px; font-size: 11px; color: #f59e9e;"><strong>Flags that triggered rejection:</strong></div>
+                <ul style="margin: 4px 0 0 16px; font-size: 11px; color: #fca5a5;">${flagsList}</ul>
+            `;
+
+            // Pre-fill email if we know it (from a previously connected wallet's profile, future).
+            document.getElementById('mreview-project-name').value = '';
+            document.getElementById('mreview-email').value = '';
+            document.getElementById('mreview-links').value = '';
+            document.getElementById('mreview-justification').value = '';
+            document.getElementById('mreview-error').textContent = '';
+            const successEl = document.getElementById('mreview-success');
+            if (successEl) { successEl.style.display = 'none'; successEl.textContent = ''; }
+            const btn = document.getElementById('mreview-submit-btn');
+            if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
+
+            modal.style.display = 'flex';
+            document.getElementById('mreview-project-name').focus();
+        }
+
+        function closeManualReviewModal() {
+            const modal = document.getElementById('manual-review-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function submitManualReview() {
+            const errEl = document.getElementById('mreview-error');
+            const successEl = document.getElementById('mreview-success');
+            const btn = document.getElementById('mreview-submit-btn');
+            errEl.textContent = '';
+
+            const r = window.scannedToken;
+            if (!r) { errEl.textContent = 'No scanned token in context.'; return; }
+            const projectName   = document.getElementById('mreview-project-name').value.trim();
+            const contactEmail  = document.getElementById('mreview-email').value.trim();
+            const projectLinks  = document.getElementById('mreview-links').value.trim();
+            const justification = document.getElementById('mreview-justification').value.trim();
+
+            if (projectName.length < 2 || projectName.length > 80) {
+                errEl.textContent = 'Project name must be 2–80 characters.'; return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+                errEl.textContent = 'Please provide a valid email address.'; return;
+            }
+            if (justification.length < 50 || justification.length > 2000) {
+                errEl.textContent = `Justification must be 50–2000 characters (currently ${justification.length}).`; return;
+            }
+
+            const creatorWallet = sessionStorage.getItem('walletAddress') || '';
+            if (!/^0x[a-fA-F0-9]{40}$/.test(creatorWallet)) {
+                errEl.textContent = 'Connect an EVM wallet first so we can attach your address to the request.'; return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Submitting…';
+
+            try {
+                const res = await fetch('/api/dexhero/request-review', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tokenAddress: r.address,
+                        chain: String(r.chainId || (r.type === 'Solana' ? 'solana' : '')),
+                        creatorWallet,
+                        contactEmail,
+                        projectName,
+                        projectLinks: projectLinks || null,
+                        justification,
+                        scanSnapshot: {
+                            mcUsd: r.market?.mcUsd ?? null,
+                            liquidityUsd: r.market?.liquidityUsd ?? null,
+                            hardFlags: r.redFlags || [],
+                            detectedChainName: r.detectedChain?.chainName || r.type,
+                            tokenName: r.name,
+                            tokenSymbol: r.symbol,
+                        },
+                    }),
+                });
+                const body = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    errEl.textContent = body?.error || `Submission failed (HTTP ${res.status}).`;
+                    btn.disabled = false;
+                    btn.textContent = 'Submit for Review';
+                    return;
+                }
+                successEl.textContent = body.message || "Submitted — we'll review and email you within 48 hours.";
+                successEl.style.display = 'block';
+                btn.textContent = 'Submitted ✓';
+                // Auto-close after a moment so user knows it landed.
+                setTimeout(closeManualReviewModal, 2500);
+            } catch (e) {
+                errEl.textContent = `Network error: ${e.message}`;
+                btn.disabled = false;
+                btn.textContent = 'Submit for Review';
+            }
+        }
+
+        // Close on overlay click + Escape
+        document.addEventListener('DOMContentLoaded', () => {
+            const m = document.getElementById('manual-review-modal');
+            if (m) m.addEventListener('click', (e) => { if (e.target === m) closeManualReviewModal(); });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeManualReviewModal();
+            });
+        });
+
+        // Shared model-viewer animation toggle — toggles between ⏸ and ▶ on the
+        // top-right overlay button. Reveals the button once the model has loaded.
+        (function () {
+            const viewer = document.getElementById('model-preview');
+            const btn    = document.getElementById('btn-toggle-animation');
+            if (!viewer || !btn) return;
+            let playing = true;
+            window.toggleModelAnimation = function () {
+                if (playing) { try { viewer.pause(); } catch {} btn.textContent = '▶'; playing = false; }
+                else         { try { viewer.play();  } catch {} btn.textContent = '⏸'; playing = true;  }
+            };
+            viewer.addEventListener('load', () => { btn.style.display = 'inline-flex'; });
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,368 @@
+/* V3Labs HUD grammar — typography, badges, brackets, rules.
+   Utilities consumed by every panel and the shell chrome. */
+
+/* ═══ Reset scope for shell ═══ */
+.lobby-root *,
+.lobby-root *::before,
+.lobby-root *::after {
+    box-sizing: border-box;
+}
+
+.lobby-root {
+    color: var(--ink-0);
+    font-family: var(--font-display);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ═══ Typography utilities ═══ */
+.hud-display {
+    font-family: var(--font-display);
+    font-size: var(--fs-hero);
+    font-weight: 700;
+    letter-spacing: var(--ls-hero);
+    text-transform: uppercase;
+    line-height: 1.02;
+    color: #ffffff;
+    word-break: break-word;
+}
+
+.hud-h1 {
+    font-family: var(--font-display);
+    font-size: var(--fs-h1);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+    color: var(--ink-0);
+}
+
+.hud-h2 {
+    font-family: var(--font-display);
+    font-size: var(--fs-h2);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--ink-0);
+}
+
+.hud-label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    font-weight: 600;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--ink-2);
+}
+
+.hud-nav-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: var(--ls-nav);
+    text-transform: uppercase;
+    color: var(--ink-2);
+}
+
+.hud-mono {
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-1);
+}
+
+.hud-body {
+    font-family: var(--font-display);
+    font-size: var(--fs-body);
+    line-height: 1.55;
+    color: var(--ink-1);
+}
+
+.hud-muted { color: var(--ink-3); }
+.hud-dim   { color: var(--ink-2); }
+
+/* ═══ Corner brackets — the signature container-without-walls ═══ */
+.hud-brackets {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+.hud-brackets i {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-color: rgba(6, 182, 212, 0.45);
+    border-style: solid;
+    border-width: 0;
+}
+.hud-brackets i.tl { top: 0;    left: 0;    border-top-width: 1px; border-left-width: 1px; }
+.hud-brackets i.tr { top: 0;    right: 0;   border-top-width: 1px; border-right-width: 1px; }
+.hud-brackets i.bl { bottom: 0; left: 0;    border-bottom-width: 1px; border-left-width: 1px; }
+.hud-brackets i.br { bottom: 0; right: 0;   border-bottom-width: 1px; border-right-width: 1px; }
+
+.hud-brackets--dim i { border-color: rgba(255, 255, 255, 0.14); }
+.hud-brackets--tight i { width: 12px; height: 12px; }
+
+/* ═══ Badges ═══ */
+.hud-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: var(--r-1);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: var(--ls-chip);
+    text-transform: uppercase;
+    border: 1px solid currentColor;
+    background: transparent;
+    line-height: 1;
+    white-space: nowrap;
+}
+.hud-badge--live    { color: var(--ok); box-shadow: 0 0 14px rgba(34, 197, 94, 0.18); }
+.hud-badge--pending { color: var(--acc-cyan); }
+.hud-badge--blocked { color: var(--err); }
+.hud-badge--gold    { color: var(--tier-gold); }
+.hud-badge--silver  { color: var(--tier-silver); }
+.hud-badge--bronze  { color: var(--tier-bronze); }
+
+.hud-badge--solid {
+    border: 0;
+    background: var(--acc-soft);
+    color: var(--acc-cyan);
+}
+
+/* Status dot */
+.hud-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ok);
+    box-shadow: 0 0 10px currentColor;
+    color: var(--ok);
+    flex-shrink: 0;
+}
+.hud-dot--idle  { color: var(--ink-3); background: var(--ink-3); box-shadow: none; }
+.hud-dot--warn  { color: var(--warn); background: var(--warn); }
+.hud-dot--err   { color: var(--err); background: var(--err); }
+.hud-dot--live  { animation: hud-dot-pulse 2.4s ease-in-out infinite; }
+
+@keyframes hud-dot-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+}
+
+/* ═══ Rules & dividers ═══ */
+.hud-rule {
+    height: 1px;
+    background: var(--rule);
+    border: 0;
+}
+.hud-rule--strong { background: var(--rule-strong); }
+.hud-rule--accent { background: rgba(6, 182, 212, 0.2); }
+
+/* ═══ Key-value metric line ═══ */
+.hud-metric {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--font-mono);
+}
+.hud-metric:last-child { border-bottom: 0; }
+.hud-metric__label {
+    font-size: var(--fs-mono-sm);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--ink-3);
+}
+.hud-metric__val {
+    font-size: 20px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-0);
+}
+
+/* ═══ Button kit ═══ */
+.hud-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 22px;
+    border-radius: var(--r-1);
+    background: transparent;
+    border: 1px solid var(--ink-4);
+    color: var(--ink-1);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: var(--ls-chip);
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color var(--dur-sm) var(--ease-out),
+                border-color var(--dur-sm) var(--ease-out),
+                box-shadow var(--dur-sm) var(--ease-out),
+                background var(--dur-sm) var(--ease-out),
+                transform var(--dur-sm) var(--ease-out);
+    white-space: nowrap;
+    user-select: none;
+    line-height: 1;
+}
+.hud-btn:hover:not(:disabled) {
+    color: var(--acc-cyan);
+    border-color: rgba(6, 182, 212, 0.55);
+    box-shadow: var(--glow-cyan-sm);
+}
+.hud-btn:active:not(:disabled) { transform: translateY(1px); }
+.hud-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.hud-btn:focus-visible {
+    outline: none;
+    border-color: var(--acc-cyan);
+    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.3);
+}
+
+.hud-btn--primary {
+    color: var(--acc-cyan);
+    border-color: rgba(6, 182, 212, 0.55);
+}
+.hud-btn--primary:hover:not(:disabled) {
+    color: var(--ink-0);
+    background: var(--acc-soft);
+    box-shadow: var(--glow-cyan-md);
+}
+
+.hud-btn--ghost { border-color: transparent; }
+.hud-btn--ghost:hover:not(:disabled) { border-color: rgba(6, 182, 212, 0.55); }
+
+.hud-btn--danger { color: var(--err); border-color: rgba(239, 68, 68, 0.55); }
+.hud-btn--danger:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.08);
+    box-shadow: 0 0 18px rgba(239, 68, 68, 0.18);
+    border-color: var(--err);
+}
+
+.hud-btn--sm  { padding: 6px 14px; font-size: 10px; }
+.hud-btn--lg  { padding: 14px 32px; font-size: 12px; letter-spacing: 0.3em; }
+.hud-btn--block { display: flex; width: 100%; }
+
+/* ═══ Input kit ═══ */
+.hud-input {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--surf-1);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-2);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--ink-0);
+    transition: border-color var(--dur-sm) var(--ease-out),
+                box-shadow var(--dur-sm) var(--ease-out);
+}
+.hud-input::placeholder { color: var(--ink-3); letter-spacing: 0.04em; }
+.hud-input:focus {
+    outline: none;
+    border-color: var(--acc-cyan);
+    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.18);
+}
+
+.hud-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.hud-field__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    font-weight: 600;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--ink-2);
+}
+.hud-field__help {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    color: var(--ink-3);
+}
+
+/* ═══ Breath animation (subtle ambient motion for floating HUD) ═══ */
+@keyframes hud-breath {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-2px); }
+}
+.hud-breath       { animation: hud-breath 7s ease-in-out infinite; }
+.hud-breath--slow { animation: hud-breath 9s ease-in-out infinite; }
+
+/* Entrance rise */
+@keyframes hud-rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.hud-rise { animation: hud-rise 500ms var(--ease-out) both; }
+
+/* ═══ Loading skeleton ═══ */
+.hud-skel {
+    display: inline-block;
+    background: linear-gradient(90deg, var(--surf-1) 0%, var(--surf-2) 50%, var(--surf-1) 100%);
+    background-size: 200% 100%;
+    animation: hud-skel 1.4s linear infinite;
+    border-radius: var(--r-2);
+}
+@keyframes hud-skel {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+}
+
+/* ═══ Spinner ═══ */
+.hud-spin {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border-top-color: var(--acc-cyan);
+    animation: hud-spin 0.9s linear infinite;
+}
+@keyframes hud-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ═══ Scrollbar minimal ═══ */
+.lobby-root ::-webkit-scrollbar       { width: 6px; height: 6px; }
+.lobby-root ::-webkit-scrollbar-track { background: transparent; }
+.lobby-root ::-webkit-scrollbar-thumb { background: var(--rule-strong); border-radius: 3px; }
+.lobby-root ::-webkit-scrollbar-thumb:hover { background: rgba(6, 182, 212, 0.4); }
+
+/* ═══ Screen-reader helper ═══ */
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ═══ Mobile scale-down (3-tier contract; see tokens.css) ═══
+ * .hud-* primitives are used throughout the panels and shell; nudging
+ * their density here cascades. nowrap on badges/buttons is intentional
+ * (pills + CTAs shouldn't wrap), so we don't touch it. */
+@media (max-width: 640px) {
+    .hud-badge { padding: 3px 9px; font-size: 9.5px; letter-spacing: 0.18em; }
+    .hud-btn { padding: 9px 16px; font-size: 10.5px; }
+    .hud-metric { padding: 10px 0; gap: var(--sp-2); }
+    .hud-metric__val { font-size: 17px; }
+    .hud-metric__label { font-size: 9.5px; letter-spacing: 0.18em; }
+}
+
+@media (max-width: 360px) {
+    .hud-btn { padding: 8px 12px; font-size: 10px; letter-spacing: 0.16em; }
+    .hud-metric__val { font-size: 16px; }
+}

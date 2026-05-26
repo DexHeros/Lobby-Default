@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Metadata | DexHero</title>
+    <meta name="description" content="Update your DexHero token's metadata — name, description, image, and social links.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <style>
+        .meta-container { max-width: 680px; margin: 0 auto; }
+
+        .page-header-block { text-align: center; margin-bottom: 40px; }
+        .page-header-block .page-badge { margin-bottom: 16px; }
+        .page-header-block h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .page-header-block p  { font-size: 15px; color: var(--text-secondary); }
+
+        .connect-prompt {
+            text-align: center;
+            padding: 72px 24px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+        }
+        .connect-prompt svg { color: var(--accent-cyan); margin-bottom: 20px; }
+        .connect-prompt h2  { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+        .connect-prompt p   { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+
+        .meta-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+        }
+
+        .token-selector-section { margin-bottom: 32px; }
+        .token-selector-section h3 {
+            font-size: 11px; font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.1em;
+            margin-bottom: 10px;
+        }
+
+        .image-upload-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            border: 1px dashed var(--border-color);
+            border-radius: 14px;
+            margin-bottom: 24px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .image-upload-section:hover { border-color: var(--accent-cyan); }
+
+        .image-preview-circle {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: rgba(6,182,212,0.1);
+            border: 2px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; overflow: hidden;
+        }
+        .image-preview-circle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .image-upload-text strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .image-upload-text span   { font-size: 12px; color: var(--text-muted); }
+
+        .form-section-divider {
+            font-size: 11px; font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.1em;
+            margin: 24px 0 16px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .form-section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border-color); }
+
+        .submit-area { margin-top: 28px; }
+        .btn-submit-full {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            border: none; border-radius: 12px;
+            color: #fff; font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: opacity 0.2s;
+        }
+        .btn-submit-full:hover:not(:disabled) { opacity: 0.88; }
+        .btn-submit-full:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        .status-msg {
+            text-align: center; font-size: 13px;
+            padding: 10px 16px; border-radius: 8px;
+            margin-top: 14px; display: none;
+        }
+        .status-msg.success { background: rgba(34,197,94,0.12); color: var(--success); border: 1px solid rgba(34,197,94,0.25); display: block; }
+        .status-msg.error   { background: rgba(239,68,68,0.12);  color: var(--danger);  border: 1px solid rgba(239,68,68,0.25);  display: block; }
+        .status-msg.info    { background: rgba(6,182,212,0.08);  color: var(--accent-cyan); border: 1px solid rgba(6,182,212,0.2); display: block; }
+
+        .spinner-inline {
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+            border-radius: 50%; animation: spin 0.7s linear infinite;
+            vertical-align: -3px; margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .token-loading-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; display: none; }
+
+        @media (max-width: 640px) {
+            .meta-card { padding: 20px; }
+            .page-header-block h1 { font-size: 26px; }
+            .image-upload-section { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <div class="meta-container">
+
+            <div class="page-header-block">
+                <div class="page-badge">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px;vertical-align:-2px">
+                        <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                    </svg>
+                    Update Metadata
+                </div>
+                <h1>Update Token <span class="gradient-text">Metadata</span></h1>
+                <p>Change your token's name, description, image, and social links</p>
+            </div>
+
+            <!-- Disconnected -->
+            <div id="connect-prompt" class="connect-prompt" style="display:none">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <h2>Connect Your Wallet</h2>
+                <p>Connect your wallet to load and update your token metadata.</p>
+                <button class="btn-primary" onclick="openConnectModal()">Connect Wallet</button>
+            </div>
+
+            <!-- Form card -->
+            <div class="meta-card" id="meta-form-card" style="display:none">
+
+                <!-- Token picker -->
+                <div class="token-selector-section">
+                    <h3>Select Token</h3>
+                    <select class="form-input" id="token-select" onchange="handleTokenSelect()">
+                        <option value="">— Select a token to update —</option>
+                    </select>
+                    <div class="token-loading-hint" id="token-loading-hint">Loading your tokens...</div>
+                </div>
+
+                <!-- Fields (hidden until token selected) -->
+                <div id="meta-fields" style="display:none">
+
+                    <!-- Image upload -->
+                    <div class="image-upload-section" onclick="document.getElementById('token-image-input').click()">
+                        <div class="image-preview-circle" id="image-preview-circle">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-muted)" id="img-placeholder-icon">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <polyline points="21 15 16 10 5 21"/>
+                            </svg>
+                            <img id="image-preview-img" src="" alt="" style="display:none">
+                        </div>
+                        <div class="image-upload-text">
+                            <strong>Upload New Image</strong>
+                            <span>PNG, JPG, GIF, WEBP &middot; 512&times;512 recommended &middot; max 5MB</span>
+                        </div>
+                        <input type="file" id="token-image-input" accept="image/*" style="display:none" onchange="handleImageChange(this)">
+                    </div>
+
+                    <!-- Name & Symbol -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="token-name">Token Name</label>
+                            <input type="text" class="form-input" id="token-name" maxlength="100" placeholder="Token name">
+                        </div>
+                        <div class="form-group">
+                            <label for="token-symbol">Symbol</label>
+                            <input class="form-input" id="token-symbol" disabled style="opacity:0.45;cursor:not-allowed" placeholder="Symbol">
+                            <div class="form-hint">Symbol cannot be changed after deploy</div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label for="token-description">Description</label>
+                        <textarea class="form-input" id="token-description" rows="3" maxlength="1000" placeholder="Describe your token..."></textarea>
+                    </div>
+
+                    <!-- Social links -->
+                    <div class="form-section-divider">Social Links</div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="token-website">Website</label>
+                            <input type="url" class="form-input" id="token-website" placeholder="https://...">
+                        </div>
+                        <div class="form-group">
+                            <label for="token-twitter">Twitter / X</label>
+                            <input type="url" class="form-input" id="token-twitter" placeholder="https://x.com/...">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="token-telegram">Telegram</label>
+                        <input type="url" class="form-input" id="token-telegram" placeholder="https://t.me/...">
+                    </div>
+
+                </div>
+
+                <!-- Submit -->
+                <div class="submit-area">
+                    <button class="btn-submit-full" id="submit-btn" onclick="handleSubmit()" disabled>
+                        Select a Token to Update
+                    </button>
+                    <div class="status-msg" id="status-msg"></div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="../js/token-creation.js"></script>
+    <script src="../js/blockchain-integration.js"></script>
+    <script src="../js/unified-wallet.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+
+    <script>
+    let _selectedToken = null;
+    let _pendingImageFile = null;
+
+    function initPage() {
+        if (window.DexHeroSupabase && !window.DexHeroSupabase.get()) window.DexHeroSupabase.init();
+        checkWalletAndLoad();
+    }
+
+    function checkWalletAndLoad() {
+        const connected = sessionStorage.getItem('walletConnected') === 'true';
+        document.getElementById('connect-prompt').style.display = connected ? 'none'  : 'block';
+        document.getElementById('meta-form-card').style.display = connected ? 'block' : 'none';
+        if (connected) loadUserTokens();
+    }
+
+    async function loadUserTokens() {
+        const wallet = sessionStorage.getItem('walletAddress');
+        if (!wallet) { checkWalletAndLoad(); return; }
+
+        const hint = document.getElementById('token-loading-hint');
+        const sel  = document.getElementById('token-select');
+        hint.style.display = 'block';
+        sel.disabled = true;
+
+        try {
+            const result = await window.DexHeroTokens.getUserTokens(wallet);
+            const tokens = Array.isArray(result) ? result : (result?.tokens || []);
+            sel.innerHTML = '<option value="">— Select a token to update —</option>';
+            tokens.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = `${t.name || 'Unnamed'} (${t.symbol || '?'}) — ${t.chain || '?'}`;
+                opt.dataset.token = JSON.stringify(t);
+                sel.appendChild(opt);
+            });
+            // Auto-select via URL param
+            const urlId = new URLSearchParams(window.location.search).get('tokenId');
+            if (urlId) {
+                const opt = sel.querySelector(`option[value="${urlId}"]`);
+                if (opt) { sel.value = urlId; handleTokenSelect(); }
+            }
+        } catch (err) {
+            console.error('loadUserTokens:', err);
+        } finally {
+            hint.style.display = 'none';
+            sel.disabled = false;
+        }
+    }
+
+    function handleTokenSelect() {
+        const sel = document.getElementById('token-select');
+        const opt = sel.selectedOptions[0];
+        const btn = document.getElementById('submit-btn');
+        if (!opt?.dataset?.token) {
+            _selectedToken = null;
+            document.getElementById('meta-fields').style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = 'Select a Token to Update';
+            return;
+        }
+        _selectedToken = JSON.parse(opt.dataset.token);
+        populateForm(_selectedToken);
+        document.getElementById('meta-fields').style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Save Metadata';
+    }
+
+    function populateForm(t) {
+        document.getElementById('token-name').value        = t.name        || '';
+        document.getElementById('token-symbol').value      = t.symbol      || '';
+        document.getElementById('token-description').value = t.description || '';
+        document.getElementById('token-website').value     = t.website_url  || t.metadata?.website  || '';
+        document.getElementById('token-twitter').value     = t.twitter_url  || t.metadata?.twitter  || '';
+        document.getElementById('token-telegram').value    = t.telegram_url || t.metadata?.telegram || '';
+
+        const src = t.image_url || t.thumbnail_url || '';
+        const img = document.getElementById('image-preview-img');
+        const ico = document.getElementById('img-placeholder-icon');
+        if (src) {
+            img.src = src; img.style.display = 'block'; ico.style.display = 'none';
+        } else {
+            img.src = ''; img.style.display = 'none'; ico.style.display = 'block';
+        }
+        _pendingImageFile = null;
+    }
+
+    function handleImageChange(input) {
+        const file = input.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { alert('Please select an image file'); input.value = ''; return; }
+        if (file.size > 5 * 1024 * 1024) { alert('Image must be under 5MB'); input.value = ''; return; }
+        _pendingImageFile = file;
+        const img = document.getElementById('image-preview-img');
+        const ico = document.getElementById('img-placeholder-icon');
+        img.src = URL.createObjectURL(file);
+        img.style.display = 'block';
+        ico.style.display = 'none';
+    }
+
+    function validate() {
+        const name     = document.getElementById('token-name').value.trim();
+        const website  = document.getElementById('token-website').value.trim();
+        const twitter  = document.getElementById('token-twitter').value.trim();
+        const telegram = document.getElementById('token-telegram').value.trim();
+        if (!name) return 'Token name is required';
+        for (const [label, val] of [['Website', website], ['Twitter', twitter], ['Telegram', telegram]]) {
+            if (val && !val.startsWith('https://')) return `${label} URL must start with https://`;
+        }
+        return null;
+    }
+
+    async function handleSubmit() {
+        if (!_selectedToken) return;
+        const err = validate();
+        if (err) { showStatus('error', err); return; }
+
+        const btn    = document.getElementById('submit-btn');
+        const wallet = sessionStorage.getItem('walletAddress');
+        btn.disabled = true;
+
+        const name     = document.getElementById('token-name').value.trim();
+        const desc     = document.getElementById('token-description').value.trim();
+        const website  = document.getElementById('token-website').value.trim();
+        const twitter  = document.getElementById('token-twitter').value.trim();
+        const telegram = document.getElementById('token-telegram').value.trim();
+
+        try {
+            let imageUrl = _selectedToken.image_url;
+
+            if (_pendingImageFile) {
+                btn.innerHTML = '<span class="spinner-inline"></span>Uploading image...';
+                const supabase  = window.DexHeroSupabase.get();
+                const file      = _pendingImageFile;
+                const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                const filePath  = `tokens/images/${wallet}_${Date.now()}_${cleanName}`;
+                const { error: upErr } = await supabase.storage.from(window.DexHeroSupabase.bucket).upload(filePath, file);
+                if (upErr) throw new Error('Image upload failed: ' + upErr.message);
+                const { data: urlData } = supabase.storage.from(window.DexHeroSupabase.bucket).getPublicUrl(filePath);
+                imageUrl = urlData.publicUrl;
+            }
+
+            btn.innerHTML = '<span class="spinner-inline"></span>Saving metadata...';
+            showStatus('info', 'Saving...');
+
+            const res = await fetch('/api/tokens/update-metadata', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contract_address: _selectedToken.contract_address,
+                    creator_wallet: wallet,
+                    name, description: desc, image_url: imageUrl,
+                    website_url: website, twitter_url: twitter, telegram_url: telegram
+                })
+            });
+            const result = await res.json();
+            if (!result.success) throw new Error(result.error);
+
+            // Update local cache
+            Object.assign(_selectedToken, { name, description: desc, image_url: imageUrl, website_url: website, twitter_url: twitter, telegram_url: telegram });
+            _pendingImageFile = null;
+            showStatus('success', ' Metadata updated successfully');
+        } catch (err) {
+            showStatus('error', err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Save Metadata';
+        }
+    }
+
+    function showStatus(type, msg) {
+        const el = document.getElementById('status-msg');
+        el.className = `status-msg ${type}`;
+        el.textContent = msg;
+        if (type === 'success') setTimeout(() => { el.className = 'status-msg'; el.textContent = ''; }, 6000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const _orig = window.updateConnectButton;
+        window.updateConnectButton = function () { if (_orig) _orig(); checkWalletAndLoad(); };
+        initPage();
+    });
+    </script>
+</body>
+</html>

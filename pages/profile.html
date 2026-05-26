@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | DexHero</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <style>
+        .profile-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 32px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            margin-bottom: 32px;
+        }
+
+        .profile-avatar {
+            width: 96px;
+            height: 96px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+
+        .profile-info h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .profile-address {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-family: monospace;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .profile-address button {
+            background: none;
+            border: none;
+            color: var(--accent-cyan);
+            cursor: pointer;
+        }
+
+        .profile-stats {
+            display: flex;
+            gap: 32px;
+            margin-top: 16px;
+        }
+
+        .profile-stat {
+            text-align: center;
+        }
+
+        .profile-stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .profile-stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .tabs-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            color: white;
+        }
+
+        .tab-content {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+        }
+
+        .tokens-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .token-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+        }
+
+        .token-row-logo {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border-radius: 50%;
+        }
+
+        .token-row-info {
+            flex: 1;
+        }
+
+        .token-row-info h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .token-row-info p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .token-row-value {
+            text-align: right;
+        }
+
+        .token-row-value .value {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .token-row-value .usd {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .connect-prompt {
+            text-align: center;
+            padding: 64px;
+        }
+
+        .connect-prompt h2 {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        .connect-prompt p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .btn-connect-large {
+            padding: 16px 32px;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /*  Profile Responsive  */
+        @media (max-width: 768px) {
+            .profile-container {
+                max-width: 100%;
+            }
+
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+                gap: 16px;
+            }
+
+            .profile-avatar {
+                width: 72px;
+                height: 72px;
+                font-size: 28px;
+            }
+
+            .profile-info h1 {
+                font-size: 20px;
+            }
+
+            .profile-address {
+                justify-content: center;
+                font-size: 12px;
+            }
+
+            .profile-stats {
+                justify-content: center;
+                gap: 20px;
+            }
+
+            .profile-stat-value {
+                font-size: 17px;
+            }
+
+            .tabs-row {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                flex-wrap: nowrap;
+                gap: 6px;
+                padding-bottom: 4px;
+            }
+
+            .tab-btn {
+                white-space: nowrap;
+                padding: 10px 16px;
+                font-size: 13px;
+                flex-shrink: 0;
+            }
+
+            .tab-content {
+                padding: 16px;
+            }
+
+            .token-row {
+                flex-wrap: wrap;
+                gap: 10px;
+                padding: 12px;
+            }
+
+            .token-row-info h4 {
+                font-size: 14px;
+            }
+
+            .empty-state {
+                padding: 32px 16px;
+            }
+
+            .connect-prompt {
+                padding: 40px 16px;
+            }
+
+            .connect-prompt h2 {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .profile-header {
+                padding: 16px;
+            }
+
+            .profile-stats {
+                gap: 14px;
+            }
+
+            .profile-stat-value {
+                font-size: 15px;
+            }
+
+            .profile-stat-label {
+                font-size: 11px;
+            }
+
+            .tab-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+
+        /* Game Cards (Registered Games tab) */
+        .games-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .game-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 12px 30px rgba(6, 182, 212, 0.15);
+        }
+
+        .game-card-media-container {
+            height: 280px;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(59, 130, 246, 0.1));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card-cover {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .game-card:hover .game-card-cover {
+            transform: scale(1.05);
+        }
+
+        .game-card-icon-overlay {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid var(--bg-secondary);
+            object-fit: cover;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            background: var(--bg-card);
+            z-index: 3;
+        }
+
+        .game-card-fallback-cover {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            opacity: 0.2;
+        }
+
+        .game-card-fallback {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            border: 2px solid var(--border-color);
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            z-index: 3;
+        }
+
+        .game-card-tier {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            color: white;
+            z-index: 2;
+        }
+
+        .tier-gold { border: 1px solid #fbbf24; color: #fbbf24; }
+        .tier-silver { border: 1px solid #94a3b8; color: #cbd5e1; }
+        .tier-bronze { border: 1px solid #b45309; color: #f59e0b; }
+
+        .game-card-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .game-card-owner {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+            font-family: monospace;
+        }
+
+        .btn-dev-portal {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59, 130, 246,0.2));
+            border: 1px solid rgba(59,130,246,0.4);
+            color: #93c5fd;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: auto;
+            text-decoration: none;
+        }
+
+        .btn-dev-portal:hover {
+            background: linear-gradient(135deg, rgba(59,130,246,0.35), rgba(59, 130, 246,0.35));
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+        }
+
+        .game-card-status {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 2;
+        }
+
+        @media (max-width: 480px) {
+            .game-card-media-container { height: 200px; }
+            .game-card-content { padding: 14px; }
+            .game-card-title { font-size: 16px; }
+        }
+
+        /* ── Server Host Tab ── */
+        .play-pass-banner {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        .play-pass-banner.active {
+            background: rgba(74, 222, 128, 0.06);
+            border: 1px solid rgba(74, 222, 128, 0.25);
+        }
+        .play-pass-banner.inactive {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+        }
+        .play-pass-icon {
+            width: 48px; height: 48px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+        .play-pass-banner.active .play-pass-icon { background: rgba(74, 222, 128, 0.15); }
+        .play-pass-banner.inactive .play-pass-icon { background: rgba(255,255,255,0.06); }
+        .play-pass-meta { flex: 1; }
+        .play-pass-meta h4 { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+        .play-pass-meta p { font-size: 13px; color: var(--text-muted); margin: 0; }
+        .play-pass-badge {
+            padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .play-pass-badge.active { background: rgba(74,222,128,0.15); color: #4ade80; }
+        .play-pass-badge.inactive { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+
+        .node-networks-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .node-networks-header h3 { font-size: 16px; font-weight: 700; }
+        .node-network-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 14px;
+        }
+        .node-network-top {
+            display: flex; align-items: center; gap: 14px; margin-bottom: 16px;
+        }
+        .node-network-top h4 { font-size: 15px; font-weight: 700; flex: 1; }
+        .node-network-top .rarity-tag {
+            padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .rarity-common { background: rgba(148,163,184,0.15); color: #94a3b8; }
+        .rarity-uncommon { background: rgba(74,222,128,0.15); color: #4ade80; }
+        .rarity-rare { background: rgba(96,165,250,0.15); color: #60a5fa; }
+        .rarity-legendary { background: rgba(251,191,36,0.15); color: #fbbf24; }
+
+        .compute-progress-bar {
+            height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px;
+            overflow: hidden; margin-bottom: 8px;
+        }
+        .compute-progress-fill {
+            height: 100%; border-radius: 4px; transition: width 0.4s ease;
+            min-width: 6px; /* always render a visible sliver, even at 0% */
+            background: linear-gradient(90deg, #06b6d4, #0891b2);
+            box-shadow: 0 0 10px rgba(6,182,212,0.45);
+        }
+        .compute-stats-row {
+            display: flex; gap: 24px; flex-wrap: wrap;
+        }
+        .compute-stat { font-size: 13px; color: var(--text-muted); }
+        .compute-stat strong { color: var(--text-primary); font-weight: 600; }
+
+        /* ── Unlocked DexHeros ── */
+        .unlocked-nfts-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px;
+        }
+        .unlocked-nft-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .unlocked-nft-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-4px);
+        }
+        .unlocked-nft-rarity {
+            width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+        }
+        .unlocked-nft-rarity.common { background: rgba(148,163,184,0.12); }
+        .unlocked-nft-rarity.uncommon { background: rgba(74,222,128,0.12); }
+        .unlocked-nft-rarity.rare { background: rgba(96,165,250,0.12); }
+        .unlocked-nft-rarity.legendary { background: rgba(251,191,36,0.12); }
+        .unlocked-nft-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+        .unlocked-nft-card .rarity-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        @media (max-width: 480px) {
+            .play-pass-banner { flex-direction: column; text-align: center; gap: 12px; }
+            .compute-stats-row { gap: 12px; }
+            .unlocked-nfts-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+    <main class="main-content page-content">
+        <div class="profile-container">
+            <div class="connect-prompt" id="connect-prompt">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    style="margin-bottom:16px;opacity:0.5">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+                <h2>Connect Your Wallet</h2>
+                <p>Connect your wallet to view your profile, tokens, and activity</p>
+                <button class="btn-connect-large" onclick="openConnectModal()">Connect Wallet</button>
+            </div>
+
+            <div class="profile-content" id="profile-content" style="display:none;">
+                <div class="profile-header">
+                    <div class="profile-avatar"></div>
+                    <div class="profile-info">
+                        <h1>Your Profile</h1>
+                        <div class="profile-address">
+                            <span>7xKXt...4fNm</span>
+                            <button onclick="copyAddress()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                </svg></button>
+                        </div>
+                        <div id="gamedev-badge" style="display:none;margin-top:8px">
+                            <a href="developer-portal.html" style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:#2563eb22;color:#60a5fa;border:1px solid #2563eb44;border-radius:20px;font-size:12px;font-weight:600;text-decoration:none">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="2" y="6" width="20" height="12" rx="2"/>
+                                    <path d="M6 12h4M8 10v4"/>
+                                    <circle cx="16" cy="11" r="1" fill="currentColor" stroke="none"/>
+                                    <circle cx="18" cy="13" r="1" fill="currentColor" stroke="none"/>
+                                </svg>
+                                Game Developer
+                            </a>
+                        </div>
+                        <div class="profile-stats">
+                            <div class="profile-stat">
+                                <div class="profile-stat-value">0</div>
+                                <div class="profile-stat-label">Created</div>
+                            </div>
+                            <div class="profile-stat">
+                                <div class="profile-stat-value">0</div>
+                                <div class="profile-stat-label">Holdings</div>
+                            </div>
+                            <div class="profile-stat">
+                                <div class="profile-stat-value">$0</div>
+                                <div class="profile-stat-label">Earned</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tabs-row">
+                    <button class="tab-btn active" onclick="switchTab('tokens')">My Tokens</button>
+                    <button class="tab-btn" onclick="switchTab('models')">My Models</button>
+                    <button class="tab-btn" onclick="switchTab('nodes')">My Servers</button>
+                    <button class="tab-btn" onclick="switchTab('play-passes')">My Play Passes</button>
+                    <button class="tab-btn" onclick="switchTab('liquidity')">Liquidity</button>
+                    <button class="tab-btn" onclick="switchTab('holdings')">Holdings</button>
+                    <button class="tab-btn" onclick="switchTab('drafts')">Drafts</button>
+                    <button class="tab-btn" onclick="switchTab('activity')">Activity</button>
+                    <button class="tab-btn" onclick="switchTab('games')" id="tab-btn-games">Registered Games</button>
+                </div>
+
+                <div class="tab-content" id="my-tokens-content">
+                    <div class="empty-state" id="tokens-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                        <div>No tokens created yet</div>
+                        <div style="font-size:12px;margin-top:8px"><a href="create-dexhero.html"
+                                style="color:var(--accent-cyan);text-decoration:none">Create your first token →</a>
+                        </div>
+                    </div>
+                    <div class="tokens-list" id="my-tokens-list" style="display:none"></div>
+                </div>
+
+                <div class="tab-content" id="my-models-content" style="display:none">
+                    <h3 style="font-size: 16px; margin-bottom: 16px; font-weight: 600;">Purchased Models</h3>
+                    <div class="empty-state" id="purchased-models-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path
+                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                            </path>
+                        </svg>
+                        <div>No models purchased yet</div>
+                        <div style="font-size:12px;margin-top:8px"><a href="model-marketplace.html"
+                                style="color:var(--accent-cyan);text-decoration:none">Browse marketplace →</a>
+                        </div>
+                    </div>
+                    <div class="tokens-list" id="purchased-models-list" style="display:none"></div>
+
+                    <h3 style="font-size: 16px; margin: 32px 0 16px; font-weight: 600;">Listed for Sale</h3>
+                    <div class="empty-state" id="listed-models-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path
+                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                            </path>
+                        </svg>
+                        <div>No models listed yet</div>
+                        <div style="font-size:12px;margin-top:8px"><a href="upload-model.html"
+                                style="color:var(--accent-cyan);text-decoration:none">Upload a model →</a>
+                        </div>
+                    </div>
+                    <div class="tokens-list" id="listed-models-list" style="display:none"></div>
+                </div>
+
+                <div class="tab-content" id="my-nodes-content" style="display:none">
+                    <!-- Play Pass Status -->
+                    <div class="play-pass-banner inactive" id="play-pass-banner">
+                        <div class="play-pass-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="1" y="5" width="22" height="14" rx="2"/>
+                                <path d="M1 10h22"/>
+                            </svg>
+                        </div>
+                        <div class="play-pass-meta">
+                            <h4>Platform Play Pass</h4>
+                            <p id="play-pass-status-text">Checking status...</p>
+                        </div>
+                        <span class="play-pass-badge inactive" id="play-pass-badge">Checking</span>
+                    </div>
+
+                    <!-- Registered Networks -->
+                    <div class="node-networks-header">
+                        <h3>Registered Networks</h3>
+                        <a href="node-onboarding.html" style="font-size:13px;color:var(--accent-cyan);text-decoration:none;font-weight:600;">+ Join Network</a>
+                    </div>
+                    <div id="node-networks-list">
+                        <div class="empty-state" id="node-networks-empty">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40">
+                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                            </svg>
+                            <div>Not registered on any DexHero network</div>
+                            <div style="font-size:12px;margin-top:8px">
+                                <a href="node-onboarding.html" style="color:var(--accent-cyan);text-decoration:none">Become a server host →</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Unlocked DexHeros -->
+                    <div style="margin-top:32px">
+                        <h3 style="font-size:16px;font-weight:700;margin-bottom:16px">Unlocked DexHeros</h3>
+                        <div id="unlocked-nfts-container">
+                            <div class="empty-state" id="unlocked-nfts-empty" style="padding:32px">
+                                <div>No unlocked DexHeros yet</div>
+                                <div style="font-size:12px;margin-top:8px;color:var(--text-muted)">Provide compute to DexHero networks to unlock tradeable DexHeros</div>
+                            </div>
+                            <div class="unlocked-nfts-grid" id="unlocked-nfts-grid" style="display:none"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="my-play-passes-content" style="display:none">
+                    <div class="empty-state" id="play-passes-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                        <div>No active Play Passes</div>
+                        <div style="font-size:12px;margin-top:8px"><a href="all-tokens.html"
+                                style="color:var(--accent-cyan);text-decoration:none">Browse DexHeros to get a Play Pass →</a>
+                        </div>
+                    </div>
+                    <div class="tokens-list" id="my-play-passes-list" style="display:none"></div>
+                </div>
+
+                <div class="tab-content" id="liquidity-content" style="display:none">
+                    <div class="empty-state" id="liquidity-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                        <div>No liquidity positions</div>
+                        <div style="font-size:12px;margin-top:8px"><a href="add-liquidity.html"
+                                style="color:var(--accent-cyan);text-decoration:none">Add liquidity →</a>
+                        </div>
+                    </div>
+                    <div class="tokens-list" id="liquidity-positions-list" style="display:none"></div>
+                </div>
+
+                <div class="tab-content" id="holdings-content" style="display:none">
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                        <div>No token holdings</div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="my-drafts-content" style="display:none">
+                    <div class="empty-state" id="drafts-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        <div>No unminted drafts</div>
+                        <div style="font-size:12px;margin-top:8px"><a href="generate-model.html"
+                                style="color:var(--accent-cyan);text-decoration:none">Create a new token →</a>
+                        </div>
+                    </div>
+                    <div class="tokens-list" id="my-drafts-list" style="display:none"></div>
+                </div>
+
+                <div class="tab-content" id="activity-content" style="display:none">
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                        </svg>
+                        <div>No recent activity</div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="my-game-content" style="display:none">
+                    <div class="empty-state" id="my-game-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="2" y="6" width="20" height="12" rx="2"/>
+                            <path d="M6 12h4M8 10v4"/>
+                            <circle cx="16" cy="11" r="1" fill="currentColor" stroke="none"/>
+                            <circle cx="18" cy="13" r="1" fill="currentColor" stroke="none"/>
+                        </svg>
+                        <div>No registered games found</div>
+                        <div style="font-size:12px;margin-top:8px">
+                            <a href="register-game-form.html" style="color:var(--accent-cyan);text-decoration:none">Register your game →</a>
+                        </div>
+                    </div>
+                    <div class="games-container" id="my-game-list"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+    <script src="/js/utils.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="../js/token-creation.js"></script>
+    <script src="../js/model-marketplace.js"></script>
+    <script src="../js/unified-wallet.js"></script>
+    <script src="../js/blockchain-integration.js"></script>
+    <script src="../js/rental-manager.js"></script>
+    <script src="../js/monad-integration.js"></script>
+    <script>
+        function copyAddress() {
+            const address = sessionStorage.getItem('walletAddress');
+            if (address) {
+                navigator.clipboard.writeText(address);
+                alert('Address copied!');
+            }
+        }
+
+        function switchTab(tabName) {
+            // Update button states
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            tabBtns.forEach((btn, idx) => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Hide all tab contents
+            document.getElementById('my-tokens-content').style.display = 'none';
+            document.getElementById('my-models-content').style.display = 'none';
+            document.getElementById('my-nodes-content').style.display = 'none';
+            document.getElementById('my-play-passes-content').style.display = 'none';
+            document.getElementById('liquidity-content').style.display = 'none';
+            document.getElementById('holdings-content').style.display = 'none';
+            document.getElementById('my-drafts-content').style.display = 'none';
+            document.getElementById('activity-content').style.display = 'none';
+            document.getElementById('my-game-content').style.display = 'none';
+
+            // Show selected tab
+            if (tabName === 'tokens') {
+                document.getElementById('my-tokens-content').style.display = 'block';
+            } else if (tabName === 'models') {
+                document.getElementById('my-models-content').style.display = 'block';
+                // Load models on first view
+                const wallet = sessionStorage.getItem('walletAddress');
+                if (wallet) loadUserModels(wallet);
+            } else if (tabName === 'nodes') {
+                document.getElementById('my-nodes-content').style.display = 'block';
+                const wallet = sessionStorage.getItem('walletAddress');
+                if (wallet) loadNodeOperatorData(wallet);
+            } else if (tabName === 'play-passes') {
+                document.getElementById('my-play-passes-content').style.display = 'block';
+                // Load play passes on first view
+                loadUserRentals();
+            } else if (tabName === 'liquidity') {
+                document.getElementById('liquidity-content').style.display = 'block';
+                // Load LP positions
+                const wallet = sessionStorage.getItem('walletAddress');
+                if (wallet) loadLPPositions(wallet);
+            } else if (tabName === 'holdings') {
+                document.getElementById('holdings-content').style.display = 'block';
+            } else if (tabName === 'drafts') {
+                document.getElementById('my-drafts-content').style.display = 'block';
+                const wallet = sessionStorage.getItem('walletAddress');
+                if (wallet) loadUserDraft(wallet);
+            } else if (tabName === 'activity') {
+                document.getElementById('activity-content').style.display = 'block';
+            } else if (tabName === 'games') {
+                document.getElementById('my-game-content').style.display = 'block';
+                const wallet = sessionStorage.getItem('walletAddress');
+                if (wallet) loadMyGame(wallet);
+            }
+        }
+
+        async function loadUserDraft(walletAddress) {
+            const draftsEmpty = document.getElementById('drafts-empty');
+            const draftsList = document.getElementById('my-drafts-list');
+
+            try {
+                // Fetch both session drafts (pre-payment) and paid drafts (post-payment, interrupted)
+                const [sessionRes, paidRes] = await Promise.all([
+                    fetch(`/api/dexhero/get-session?wallet=${walletAddress}`),
+                    fetch(`/api/dexhero/paid-drafts?wallet=${walletAddress}`)
+                ]);
+                const sessionData = await sessionRes.json();
+                const paidData = await paidRes.json();
+
+                const sessions = (sessionData.success && sessionData.data) ? sessionData.data : [];
+                const paidDrafts = (paidData.success && paidData.drafts) ? paidData.drafts : [];
+
+                if (sessions.length === 0 && paidDrafts.length === 0) {
+                    draftsEmpty.style.display = 'block';
+                    draftsList.style.display = 'none';
+                    return;
+                }
+
+                draftsEmpty.style.display = 'none';
+                draftsList.style.display = 'flex';
+                draftsList.innerHTML = '';
+
+                // Paid drafts first — these are the most important (money already spent)
+                paidDrafts.forEach(draft => {
+                    const params = typeof draft.params === 'string' ? JSON.parse(draft.params) : (draft.params || {});
+                    const statusLabel = {
+                        paid: 'Fee Paid — Awaiting Deployment',
+                        deploying: 'Deploying Contracts',
+                        deployed: 'Deployed — Awaiting Save',
+                        failed: 'Deployment Failed'
+                    }[draft.status] || draft.status;
+                    const badgeColor = draft.status === 'failed' ? '#ef4444' : '#f59e0b';
+                    const imageUrl = params.imageUrl || '';
+
+                    const draftRow = document.createElement('div');
+                    draftRow.className = 'token-row';
+                    draftRow.innerHTML = `
+                        ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" class="token-row-logo" alt="Draft" style="object-fit:cover;border-radius:8px;" onerror="this.style.display='none'">` : '<div class="token-row-logo" style="background:#1a1a2e;border-radius:8px;"></div>'}
+                        <div class="token-row-info">
+                            <h4 style="display:flex;align-items:center;gap:8px;">
+                                ${escapeHtml(params.name || 'Unnamed DexHero')}
+                                <span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:${badgeColor}22;color:${badgeColor};">PAID DRAFT</span>
+                            </h4>
+                            <p>${escapeHtml(statusLabel)} • ${escapeHtml((draft.fee_amount_usdc || 0) + ' USDC paid')} • ${new Date(draft.created_at).toLocaleDateString()}</p>
+                            ${draft.error_message ? `<p style="color:#ef4444;font-size:12px;">${escapeHtml(draft.error_message)}</p>` : ''}
+                        </div>
+                        <div class="token-row-value">
+                            <a href="create-dexhero.html?resume=${draft.id}"
+                               style="padding:8px 16px;background:#f59e0b;color:#000;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;">
+                                Resume
+                            </a>
+                        </div>
+                    `;
+                    draftsList.appendChild(draftRow);
+                });
+
+                // Session drafts — show:
+                //   1. Completed models (model_url set) → "Use Model" link
+                //   2. In-flight Tripo generations (tripo_task_id present, no
+                //      model_url yet) → "Generating…" with no resume link, so
+                //      the user can see their work isn't lost while the
+                //      server-side worker finishes the job.
+                // Older sessions with neither model_url nor tripo_task_id are
+                // pre-Tripo abandoned drafts — hide them.
+                sessions
+                    .filter(s => !!s.model_url || !!s.tripo_task_id)
+                    .forEach(session => {
+                        const draftRow = document.createElement('div');
+                        draftRow.className = 'token-row';
+                        const isReady = !!session.model_url;
+                        const isFailed = session.status === 'failed' || session.tripo_status === 'failed';
+                        const updated = session.updated_at ? new Date(session.updated_at).toLocaleDateString() : '';
+                        let stage = '3D Model Ready';
+                        if (!isReady) {
+                            stage = isFailed
+                                ? 'Generation failed'
+                                : (session.tripo_status === 'rig' ? 'Auto-rigging…' : 'Generating 3D model…');
+                        }
+                        const right = isReady
+                            ? `<a href="create-dexhero.html?modelUrl=${encodeURIComponent(session.model_url)}&launchType=new" style="padding:8px 16px;background:var(--accent-cyan);color:#000;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px;">Use Model</a>`
+                            : `<span style="padding:8px 16px;border-radius:8px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);font-size:12px;font-weight:500;">${isFailed ? 'Failed' : 'In progress'}</span>`;
+                        draftRow.innerHTML = `
+                            <div class="token-row-logo" style="background:#1a1a2e;border-radius:8px;"></div>
+                            <div class="token-row-info">
+                                <h4>Generated Model</h4>
+                                <p>${escapeHtml(stage)}${updated ? ' • Last updated ' + escapeHtml(updated) : ''}</p>
+                            </div>
+                            <div class="token-row-value">${right}</div>
+                        `;
+                        draftsList.appendChild(draftRow);
+                    });
+
+            } catch (error) {
+                console.error('Error loading drafts:', error);
+                draftsEmpty.style.display = 'block';
+                draftsList.style.display = 'none';
+            }
+        }
+
+        async function loadUserModels(walletAddress) {
+            // Load purchased models
+            try {
+                const purchasedResult = await window.DexHeroMarketplace.getUserPurchases(walletAddress);
+
+                if (purchasedResult.success && purchasedResult.purchases.length > 0) {
+                    document.getElementById('purchased-models-empty').style.display = 'none';
+                    const purchasedList = document.getElementById('purchased-models-list');
+                    purchasedList.style.display = 'flex';
+                    purchasedList.innerHTML = '';
+
+                    purchasedResult.purchases.forEach(purchase => {
+                        const model = purchase.model;
+                        const modelRow = document.createElement('div');
+                        modelRow.className = 'token-row';
+
+                        const previewUrl = model.preview_image_url || 'https://via.placeholder.com/40';
+
+                        modelRow.innerHTML = `
+                            <img src="${sanitizeUrl(previewUrl)}" class="token-row-logo" alt="${escapeHtml(model.name)}" style="object-fit: cover; border-radius: 8px;" onerror="this.src='https://via.placeholder.com/40'">
+                            <div class="token-row-info">
+                                <h4>${escapeHtml(model.name)}</h4>
+                                <p>Purchased ${new Date(purchase.purchased_at).toLocaleDateString()} • ${model.purchase_price} USDC</p>
+                            </div>
+                            <div class="token-row-value">
+                                <a href="${sanitizeUrl(model.model_url)}" download="${escapeHtml(model.name)}.${escapeHtml(model.file_type)}"
+                                   style="padding: 8px 16px; background: var(--accent-cyan); color: #000; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px;">
+                                    Download
+                                </a>
+                            </div>
+                        `;
+
+                        purchasedList.appendChild(modelRow);
+                    });
+
+                    // Update "Holdings" stat
+                    const stats = document.querySelectorAll('.profile-stat-value');
+                    if (stats[1]) stats[1].textContent = purchasedResult.purchases.length;
+                }
+            } catch (error) {
+                console.error('Error loading purchased models:', error);
+            }
+
+            // Load listed models (created by user)
+            try {
+                const listedResult = await window.DexHeroMarketplace.getCreatorModels(walletAddress);
+
+                if (listedResult.success && listedResult.models.length > 0) {
+                    document.getElementById('listed-models-empty').style.display = 'none';
+                    const listedList = document.getElementById('listed-models-list');
+                    listedList.style.display = 'flex';
+                    listedList.innerHTML = '';
+
+                    let totalSales = 0;
+                    listedResult.models.forEach(model => {
+                        const modelRow = document.createElement('div');
+                        modelRow.className = 'token-row';
+                        modelRow.style.cursor = 'pointer';
+                        modelRow.onclick = () => window.location.href = `purchase-model.html?id=${model.id}`;
+
+                        const previewUrl = model.preview_image_url || 'https://via.placeholder.com/40';
+                        const purchaseCount = model.purchases_count || 0;
+                        totalSales += purchaseCount * model.purchase_price;
+
+                        modelRow.innerHTML = `
+                            <img src="${sanitizeUrl(previewUrl)}" class="token-row-logo" alt="${escapeHtml(model.name)}" style="object-fit: cover; border-radius: 8px;" onerror="this.src='https://via.placeholder.com/40'">
+                            <div class="token-row-info">
+                                <h4>${escapeHtml(model.name)}</h4>
+                                <p>${purchaseCount} Sales • ${model.purchase_price} USDC</p>
+                            </div>
+                            <div class="token-row-value">
+                                <div class="value">${purchaseCount}</div>
+                                <div class="usd">Sold</div>
+                            </div>
+                        `;
+
+                        listedList.appendChild(modelRow);
+                    });
+
+                    // Update "Created" stat
+                    const stats = document.querySelectorAll('.profile-stat-value');
+                    if (stats[0]) stats[0].textContent = listedResult.models.length;
+
+                    // Update "Earned" stat (approximate)
+                    if (stats[2]) stats[2].textContent = '$' + totalSales.toFixed(2);
+                }
+            } catch (error) {
+                console.error('Error loading listed models:', error);
+            }
+        }
+
+        async function loadUserRentals() {
+            try {
+                // Check wallet connection
+                const wallet = window.UnifiedWallet;
+                if (!wallet || !wallet.isConnected()) {
+                    // If unified wallet not connected, check session storage (legacy)
+                    const legacyWallet = sessionStorage.getItem('walletAddress');
+                    if (!legacyWallet) return;
+                }
+
+                const address = wallet?.connectedAddress || sessionStorage.getItem('walletAddress');
+
+                // Use Rental Manager to get rentals
+                const rentalManager = window.DexHeroRental;
+                if (!rentalManager) {
+                    console.error('Rental manager not loaded');
+                    return;
+                }
+
+                document.getElementById('play-passes-empty').style.display = 'block';
+                document.getElementById('my-play-passes-list').style.display = 'none';
+
+                const passes = await rentalManager.getUserRentals(address);
+
+                if (passes && passes.length > 0) {
+                    document.getElementById('play-passes-empty').style.display = 'none';
+                    const passesList = document.getElementById('my-play-passes-list');
+                    passesList.style.display = 'flex';
+                    passesList.innerHTML = '';
+
+                    passes.forEach(pass => {
+                        const model = pass.model;
+                        const passRow = document.createElement('div');
+                        passRow.className = 'token-row';
+
+                        const previewUrl = model?.thumbnail_url || 'https://via.placeholder.com/40';
+
+                        passRow.innerHTML = `
+                             <img src="${sanitizeUrl(previewUrl)}" class="token-row-logo" alt="${escapeHtml(model?.name || 'Character')}" style="object-fit: cover; border-radius: 8px;" onerror="this.src='https://via.placeholder.com/40'">
+                             <div class="token-row-info">
+                                 <h4>${escapeHtml(model?.name || 'Unknown Character')}</h4>
+                                 <p>Minted on ${new Date(pass.startedAt).toLocaleDateString()} • Token ID #${escapeHtml(pass.tokenId)}</p>
+                             </div>
+                             <div class="token-row-value" style="display: flex; gap: 12px; align-items: center;">
+                                 <div class="value" style="font-size: 14px; color: #34d399;">Active</div>
+                             </div>
+                         `;
+
+                        passesList.appendChild(passRow);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading rentals:', error);
+            }
+        }
+
+        async function loadLPPositions(walletAddress) {
+            try {
+                const result = await window.DexHeroLiquidity.getUserLPPositions(walletAddress);
+
+                if (result.success && result.positions.length > 0) {
+                    document.getElementById('liquidity-empty').style.display = 'none';
+                    const list = document.getElementById('liquidity-positions-list');
+                    list.style.display = 'flex';
+                    list.innerHTML = '';
+
+                    result.positions.forEach(position => {
+                        const posRow = document.createElement('div');
+                        posRow.className = 'token-row';
+                        posRow.style.cursor = 'pointer';
+
+                        const tokenName = position.token_name || 'Token';
+                        const tokenSymbol = position.token_symbol || 'TKN';
+                        const lpAmount = parseFloat(position.lp_amount || 0).toFixed(4);
+                        const solDeposited = parseFloat(position.sol_deposited || 0).toFixed(4);
+                        const dexName = (position.dex_name || 'raydium').toUpperCase();
+
+                        posRow.innerHTML = `
+                            <div class="token-row-logo" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #000;">
+                                LP
+                            </div>
+                            <div class="token-row-info">
+                                <h4>${escapeHtml(tokenName)} / SOL <span style="font-size: 11px; padding: 2px 6px; background: rgba(6,182,212,0.2); border-radius: 4px; color: var(--accent-cyan); margin-left: 8px;">${escapeHtml(dexName)}</span></h4>
+                                <p>LP Tokens: ${lpAmount} • Deposited: ${solDeposited}</p>
+                            </div>
+                            <div class="token-row-value">
+                                <div style="display: flex; gap: 8px;">
+                                    <a href="add-liquidity.html"
+                                       style="padding: 8px 14px; background: var(--accent-cyan); color: #000; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px;">
+                                        Add More
+                                    </a>
+                                    <a href="remove-liquidity.html"
+                                       style="padding: 8px 14px; background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid rgba(239,68,68,0.4); border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px;">
+                                        Remove
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+
+                        list.appendChild(posRow);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading LP positions:', error);
+            }
+        }
+
+        async function loadProfile() {
+            const isConnected = sessionStorage.getItem('walletConnected') === 'true';
+            const walletAddress = sessionStorage.getItem('walletAddress');
+
+            const prompt = document.getElementById('connect-prompt');
+            const content = document.getElementById('profile-content');
+
+            if (isConnected && walletAddress) {
+                prompt.style.display = 'none';
+                content.style.display = 'block';
+
+                // Update basic UI from local storage first
+                document.querySelector('.profile-address span').textContent = walletAddress;
+
+                // Add Disconnect Button to header if not present
+                const profileHeader = document.querySelector('.profile-header');
+                if (!document.getElementById('btn-disconnect')) {
+                    const disconnectBtn = document.createElement('button');
+                    disconnectBtn.id = 'btn-disconnect';
+                    disconnectBtn.className = 'btn-disconnect';
+                    disconnectBtn.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        Disconnect
+                    `;
+                    disconnectBtn.onclick = disconnectWallet;
+                    // Style it
+                    disconnectBtn.style.cssText = 'margin-left: auto; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 16px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 500; transition: all 0.2s;';
+                    disconnectBtn.onmouseover = () => disconnectBtn.style.background = 'rgba(239, 68, 68, 0.2)';
+                    disconnectBtn.onmouseout = () => disconnectBtn.style.background = 'rgba(239, 68, 68, 0.1)';
+
+                    profileHeader.appendChild(disconnectBtn);
+                }
+
+                // Fetch full profile from Supabase
+                const supabase = window.DexHeroSupabase.get();
+                if (supabase) {
+                    const { data, error } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('wallet_address', walletAddress)
+                        .single();
+
+                    if (data) {
+                        if (data.username) document.querySelector('.profile-info h1').textContent = data.username;
+                        // if (data.avatar_url) ... update avatar
+                        // if (data.bio) ... update bio
+                    }
+
+                    // Show Game Developer badge if wallet has a live or pending game
+                    const now = new Date().toISOString();
+                    const { data: gameData } = await supabase
+                        .from('registered_games')
+                        .select('id')
+                        .eq('owner_wallet', walletAddress.toLowerCase())
+                        .or(`status.eq.active,and(status.eq.pending,goes_live_at.lte.${now})`)
+                        .limit(1);
+                    if (gameData && gameData.length) {
+                        document.getElementById('gamedev-badge').style.display = 'block';
+                    }
+                }
+
+                // Fetch user's created tokens
+                await loadUserTokens(walletAddress);
+            } else {
+                prompt.style.display = 'block';
+                content.style.display = 'none';
+            }
+        }
+
+        async function loadUserTokens(walletAddress) {
+            const tokensEmpty = document.getElementById('tokens-empty');
+            const tokensList = document.getElementById('my-tokens-list');
+
+            try {
+                // Fetch tokens created by this wallet
+                const result = await window.DexHeroTokens.getUserTokens(walletAddress);
+
+                if (result.success && result.tokens.length > 0) {
+                    // Hide empty state, show list
+                    tokensEmpty.style.display = 'none';
+                    tokensList.style.display = 'flex';
+
+                    // Clear existing content
+                    tokensList.innerHTML = '';
+
+                    // Create token rows
+                    result.tokens.forEach(token => {
+                        const tokenRow = document.createElement('div');
+                        tokenRow.className = 'token-row';
+                        tokenRow.style.cursor = 'pointer';
+                        tokenRow.onclick = () => {
+                            // Navigate to token detail page (to be implemented)
+                            window.location.href = `token-detail.html?id=${token.id}`;
+                        };
+
+                        const logoUrl = sanitizeUrl(token.image_url) || 'https://via.placeholder.com/40';
+                        const chainBadge = (token.chain || 'ETH').toUpperCase();
+
+                        tokenRow.innerHTML = `
+                            <img src="${logoUrl}" class="token-row-logo" alt="${escapeHtml(token.name)}" style="object-fit: cover;" onerror="this.src='https://via.placeholder.com/40'">
+                            <div class="token-row-info">
+                                <h4>${escapeHtml(token.name)} <span style="color: var(--text-muted); font-weight: 400;">$${escapeHtml(token.symbol)}</span></h4>
+                                <p>${escapeHtml(chainBadge)} • Created ${new Date(token.created_at).toLocaleDateString()}</p>
+                            </div>
+                            <div class="token-row-value">
+                                <div class="value">${token.total_supply ? token.total_supply.toLocaleString() : 'N/A'}</div>
+                                <div class="usd">Total Supply</div>
+                            </div>
+                        `;
+
+                        tokensList.appendChild(tokenRow);
+                    });
+
+                    // Update "Created" stat in profile header
+                    const createdStat = document.querySelector('.profile-stat-value');
+                    if (createdStat) {
+                        createdStat.textContent = result.tokens.length;
+                    }
+
+                } else {
+                    // No tokens, show empty state
+                    tokensEmpty.style.display = 'block';
+                    tokensList.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading user tokens:', error);
+                // Show empty state on error
+                tokensEmpty.style.display = 'block';
+                tokensList.style.display = 'none';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.DexHeroSupabase) window.DexHeroSupabase.init();
+
+            // Load immediately — sessionStorage is already set from the connecting page
+            loadProfile();
+
+            // Re-run when wallet connects or changes (e.g. user connects on this page)
+            window.addEventListener('walletConnected', () => loadProfile());
+            window.addEventListener('walletChanged', () => {
+                const nowConnected = sessionStorage.getItem('walletConnected') === 'true';
+                const promptShowing = document.getElementById('connect-prompt').style.display !== 'none';
+                // Only re-run if connection state changed what's visible
+                if (nowConnected && promptShowing) { loadProfile(); }
+                if (!nowConnected && !promptShowing) { myGameLoaded = false; loadProfile(); }
+            });
+        });
+
+        // ── Server Host Tab ──
+        let nodeDataLoaded = false;
+
+        async function loadNodeOperatorData(wallet) {
+            if (nodeDataLoaded) return;
+            nodeDataLoaded = true;
+
+            const banner = document.getElementById('play-pass-banner');
+            const badge = document.getElementById('play-pass-badge');
+            const statusText = document.getElementById('play-pass-status-text');
+
+            // Check Play Pass status
+            let hasPass = false;
+            try {
+                if (window.MonadIntegration) {
+                    hasPass = await window.MonadIntegration.hasPlayPass(wallet);
+                }
+            } catch (e) { console.error('Play Pass check error:', e); }
+
+            if (hasPass) {
+                banner.className = 'play-pass-banner active';
+                badge.className = 'play-pass-badge active';
+                badge.textContent = 'Active';
+                statusText.textContent = 'Permanent license — valid across all DexHero networks';
+            } else {
+                banner.className = 'play-pass-banner inactive';
+                badge.className = 'play-pass-badge inactive';
+                badge.textContent = 'Not Purchased';
+                statusText.innerHTML = 'One-time $100 USDC — <a href="node-onboarding.html" style="color:var(--accent-cyan);text-decoration:none">Get yours →</a>';
+            }
+
+            // Load registered networks + compute progress
+            try {
+                const resp = await fetch(`/api/compute/progress?wallet=${encodeURIComponent(wallet)}`);
+                if (resp.ok) {
+                    const result = await resp.json();
+                    const networks = result.data || result.networks || [];
+                    if (networks.length > 0) {
+                        document.getElementById('node-networks-empty').style.display = 'none';
+                        const listEl = document.getElementById('node-networks-list');
+                        networks.forEach(net => {
+                            const pct = net.compute_minutes && net.threshold
+                                ? Math.min(100, (net.compute_minutes / net.threshold * 100)).toFixed(1)
+                                : 0;
+                            const rarity = determineCurrentRarity(net.compute_minutes || 0);
+                            const card = document.createElement('div');
+                            card.className = 'node-network-card';
+                            card.innerHTML = `
+                                <div class="node-network-top">
+                                    <h4>${escapeHtml(net.dexhero_name || 'DexHero Network')}</h4>
+                                    <span class="rarity-tag rarity-${rarity.toLowerCase()}">${rarity}</span>
+                                </div>
+                                <div class="compute-progress-bar">
+                                    <div class="compute-progress-fill" style="width:${pct}%"></div>
+                                </div>
+                                <div class="compute-stats-row">
+                                    <div class="compute-stat"><strong>${formatHours(net.compute_minutes || 0)}</strong> / ${formatHours(net.threshold || 18000)} hrs</div>
+                                    <div class="compute-stat">Legitimacy: <strong>${net.legitimacy_score ?? '--'}/100</strong></div>
+                                </div>
+                            `;
+                            listEl.appendChild(card);
+                        });
+                    }
+                }
+            } catch (e) { console.error('Compute progress error:', e); }
+
+            // Load unlocked DexHeros
+            try {
+                const supabase = window.DexHeroSupabase.get();
+                if (supabase) {
+                    const { data: unlocked } = await supabase
+                        .from('compute_progress')
+                        .select('*, tokens(name, symbol, image_url)')
+                        .eq('wallet_address', wallet.toLowerCase())
+                        .gt('compute_minutes', 18000);
+
+                    if (unlocked && unlocked.length > 0) {
+                        document.getElementById('unlocked-nfts-empty').style.display = 'none';
+                        const grid = document.getElementById('unlocked-nfts-grid');
+                        grid.style.display = 'grid';
+                        grid.innerHTML = '';
+
+                        unlocked.forEach(nft => {
+                            const rarity = determineCurrentRarity(nft.compute_minutes || 0);
+                            const icons = { Common: '🔵', Uncommon: '🟢', Rare: '💎', Legendary: '🏆' };
+                            const colors = { Common: '#94a3b8', Uncommon: '#4ade80', Rare: '#60a5fa', Legendary: '#fbbf24' };
+                            const tokenName = nft.tokens?.name || 'DexHero';
+
+                            const card = document.createElement('div');
+                            card.className = 'unlocked-nft-card';
+                            card.innerHTML = `
+                                <div class="unlocked-nft-rarity ${rarity.toLowerCase()}">${icons[rarity]}</div>
+                                <h4>${escapeHtml(tokenName)}</h4>
+                                <div class="rarity-label" style="color:${colors[rarity]}">${rarity}</div>
+                                <div style="font-size:12px;color:var(--text-muted);margin-top:6px">${formatHours(nft.compute_minutes)} compute-hrs</div>
+                            `;
+                            grid.appendChild(card);
+                        });
+                    }
+                }
+            } catch (e) { console.error('Unlocked DexHeros error:', e); }
+        }
+
+        function determineCurrentRarity(minutes) {
+            if (minutes >= 54000) return 'Legendary';
+            if (minutes >= 36000) return 'Rare';
+            if (minutes >= 27000) return 'Uncommon';
+            return 'Common';
+        }
+
+        function formatMinutes(min) {
+            if (min >= 1000) return (min / 1000).toFixed(1) + 'K';
+            return Math.round(min).toLocaleString();
+        }
+
+        function formatHours(min) {
+            const hrs = (min || 0) / 60;
+            if (hrs >= 1000) return (hrs / 1000).toFixed(1) + 'K';
+            return hrs.toFixed(1);
+        }
+
+        //  My Game tab
+        let myGameLoaded = false;
+
+        async function loadMyGame(wallet) {
+            if (myGameLoaded) return;
+            myGameLoaded = true;
+
+            const emptyEl = document.getElementById('my-game-empty');
+            const listEl  = document.getElementById('my-game-list');
+
+            try {
+                const supabase = window.DexHeroSupabase.get();
+                if (!supabase) return;
+
+                const { data, error } = await supabase
+                    .from('registered_games')
+                    .select('*')
+                    .eq('owner_wallet', wallet.toLowerCase())
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                if (!data || !data.length) return; // stays on empty state
+
+                emptyEl.style.display = 'none';
+                listEl.innerHTML = data.map(g => renderGameCard(g)).join('');
+            } catch (err) {
+                console.error('[My Game] Load error:', err.message);
+            }
+        }
+
+        function renderGameCard(g) {
+            const tierTitle = (g.tier || 'bronze').charAt(0).toUpperCase() + (g.tier || 'bronze').slice(1);
+            const shortWallet = `${escapeHtml(g.owner_wallet.slice(0, 6))}...${escapeHtml(g.owner_wallet.slice(-4))}`;
+
+            const statusColors = {
+                active:      { color: '#4ade80', label: 'Live' },
+                pending:     { color: '#60a5fa', label: 'Pending' },
+                blocked:     { color: '#f87171', label: 'Blocked' },
+                deactivated: { color: '#94a3b8', label: 'Inactive' }
+            };
+            const s = statusColors[g.status] || statusColors.pending;
+
+            const mediaContent = g.cover_url
+                ? `<img src="${sanitizeUrl(g.cover_url)}" class="game-card-cover" alt="${escapeHtml(g.title)} Cover">`
+                : `<div class="game-card-fallback-cover">${escapeHtml(g.title.charAt(0))}</div>`;
+
+            const iconOverlay = g.icon_url
+                ? `<img src="${sanitizeUrl(g.icon_url)}" class="game-card-icon-overlay" alt="${escapeHtml(g.title)} Icon">`
+                : `<div class="game-card-fallback">${escapeHtml(g.title.charAt(0))}</div>`;
+
+            return `
+                <div class="game-card">
+                    <div class="game-card-media-container">
+                        <span class="game-card-tier tier-${escapeHtml(g.tier || 'bronze')}">${escapeHtml(tierTitle)}</span>
+                        <span class="game-card-status" style="border:1px solid ${s.color}88;color:${s.color}">${s.label}</span>
+                        ${mediaContent}
+                        ${iconOverlay}
+                    </div>
+                    <div class="game-card-content">
+                        <h3 class="game-card-title">${escapeHtml(g.title)}</h3>
+                        <div class="game-card-owner">Developer: ${shortWallet}</div>
+                        <a href="game-dashboard.html?gameId=${encodeURIComponent(g.id)}" class="btn-dev-portal">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                <polyline points="9 22 9 12 15 12 15 22"/>
+                            </svg>
+                            Manage
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+
+</html>

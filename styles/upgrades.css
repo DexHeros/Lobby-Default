@@ -1,0 +1,3249 @@
+/* upgrades.css — Stage A styling for the community-built everything-avatar
+ * surfaces. Scoped with the .upgrade-* / .upgrades-* / .creator-* / .credits-*
+ * / .profile-upgrades-* / .cap-consent-* prefixes to avoid colliding with the
+ * rest of the lobby.
+ *
+ * Plan: /Users/mojo/.claude/plans/i-want-you-to-twinkly-phoenix.md
+ */
+
+/* ── Main · genesis header button ────────────── */
+/* Sits next to the "Start here" button in lobby-nav__end. Matches
+ * .lobby-connect chrome but with a softer accent (this is not a CTA,
+ * it's a navigation affordance to the platform's main branch). */
+.lobby-connect.lobby-connect--main {
+    background: rgba(120, 220, 255, 0.06);
+    border-color: rgba(120, 220, 255, 0.32);
+    color: #6ff5ff;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-right: 6px;
+}
+.lobby-connect.lobby-connect--main:hover {
+    background: rgba(120, 220, 255, 0.14);
+    border-color: rgba(120, 220, 255, 0.55);
+    color: #6ff5ff;
+}
+.lobby-connect.lobby-connect--main .lobby-connect__label {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    letter-spacing: 0.06em;
+    font-size: 11px;
+}
+
+/* ── Branch-status chip (lobby chrome) ────────── */
+.lobby-branch-chip {
+    position: absolute;
+    top: 6px;
+    right: 16px;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(8, 10, 14, 0.85);
+    border: 1px solid rgba(120, 220, 255, 0.4);
+    border-radius: 999px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--ink-1, #d0d0d0);
+    text-decoration: none;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
+}
+.lobby-branch-chip:hover {
+    border-color: rgba(120, 220, 255, 0.75);
+    background: rgba(120, 220, 255, 0.12);
+    color: #6ff5ff;
+}
+.lobby-branch-chip__icon { color: #6ff5ff; font-size: 12px; line-height: 1; }
+.lobby-branch-chip__label { font-weight: 600; }
+.lobby-branch-chip__count {
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(120, 220, 255, 0.18);
+    color: #6ff5ff;
+    font-weight: 700;
+    font-feature-settings: "tnum";
+}
+.lobby-branch-chip__hash {
+    color: var(--ink-3, #8a8c8e);
+    font-size: 9px;
+    letter-spacing: 0.04em;
+}
+.lobby-branch-chip__tag {
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(255, 200, 80, 0.16);
+    color: #ffd97a;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+.lobby-branch-chip.is-clean {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+.lobby-branch-chip.is-clean .lobby-branch-chip__icon {
+    color: var(--ink-3, #8a8c8e);
+}
+.lobby-branch-chip.is-rewound {
+    border-color: rgba(255, 200, 80, 0.6);
+}
+
+/* ── Header ticker — creator-attribution treatment ────────── */
+.lobby-ticker__item--promoted strong {
+    color: #ffd97a !important;
+    text-shadow: 0 0 8px rgba(255, 217, 122, 0.45);
+}
+.lobby-ticker__item--promoted::before {
+    content: '★';
+    color: #ffd97a;
+    margin-right: 4px;
+    text-shadow: 0 0 6px rgba(255, 217, 122, 0.6);
+}
+.lobby-ticker__item[data-creator] {
+    cursor: pointer;
+    transition: opacity 120ms ease;
+}
+.lobby-ticker__item[data-creator]:hover {
+    opacity: 0.7;
+}
+
+/* ── Floating preview toolbar ────────── */
+.upgrade-toolbar {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translate(-50%, -12px);
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    background: rgba(8, 10, 14, 0.94);
+    border: 1px solid rgba(120, 220, 255, 0.32);
+    border-radius: 12px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--ink-0, #f0f0f0);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 220ms ease, transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.upgrade-toolbar.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, 0);
+}
+.upgrade-toolbar__dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #6ff5ff;
+    box-shadow: 0 0 10px rgba(111, 245, 255, 0.6);
+    animation: upgrade-toolbar-pulse 1.4s ease-in-out infinite;
+}
+@keyframes upgrade-toolbar-pulse {
+    0%, 100% { transform: scale(1);   opacity: 0.85; }
+    50%      { transform: scale(1.4); opacity: 1; }
+}
+.upgrade-toolbar__label {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+}
+.upgrade-toolbar__prefix { color: var(--ink-3, #8a8c8e); text-transform: uppercase; }
+.upgrade-toolbar__label strong { color: var(--ink-0, #f0f0f0); font-weight: 600; letter-spacing: 0.02em; }
+.upgrade-toolbar__btn {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: transparent;
+    color: var(--ink-1, #d0d0d0);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font: inherit;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 11px;
+    transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.upgrade-toolbar__btn--save {
+    border-color: rgba(120, 220, 255, 0.5);
+    color: #6ff5ff;
+}
+.upgrade-toolbar__btn--save:hover {
+    background: rgba(120, 220, 255, 0.1);
+}
+.upgrade-toolbar__btn--discard:hover {
+    background: rgba(255, 110, 110, 0.1);
+    border-color: rgba(255, 110, 110, 0.5);
+    color: #ff8a8a;
+}
+
+/* ── Dexhero-recorded demo video ────────── */
+.upgrade-demo-video {
+    --demo-slider-ratio: 0.5;
+    display: flex;
+    flex-direction: column;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #06090d;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    color: var(--ink-1, #d0d0d0);
+}
+.upgrade-demo-video__chrome {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.55);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--ink-3, #8a8c8e);
+    text-transform: uppercase;
+}
+.upgrade-demo-video__rec {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #ff6a6a;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+}
+.upgrade-demo-video__rec-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #ff5050;
+    box-shadow: 0 0 8px rgba(255, 80, 80, 0.65);
+    animation: demo-rec-pulse 1s ease-in-out infinite;
+}
+@keyframes demo-rec-pulse {
+    0%, 100% { opacity: 0.6; transform: scale(0.85); }
+    50%      { opacity: 1;   transform: scale(1.1);  }
+}
+.upgrade-demo-video__author {
+    flex: 1;
+    color: var(--ink-2, #b8b8b8);
+    text-transform: none;
+    letter-spacing: 0.04em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.upgrade-demo-video__timer {
+    color: var(--ink-3, #8a8c8e);
+    font-feature-settings: "tnum";
+}
+.upgrade-demo-video__modes {
+    display: inline-flex;
+    gap: 2px;
+    margin-left: 4px;
+    padding: 2px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+}
+.upgrade-demo-video__mode {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--ink-3, #8a8c8e);
+    font-size: 12px;
+    line-height: 1;
+    width: 22px; height: 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+}
+.upgrade-demo-video__mode:hover { color: var(--ink-1, #d0d0d0); }
+.upgrade-demo-video__mode.is-active {
+    background: rgba(120, 220, 255, 0.18);
+    color: #6ff5ff;
+}
+.upgrade-demo-video__stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #04060a;
+}
+.upgrade-demo-video__pane {
+    position: absolute;
+    inset: 0;
+    transition: opacity 220ms ease, clip-path 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.upgrade-demo-video__svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+/* Real recorded WebM clip (canvas.captureStream + MediaRecorder output).
+ * Swapped in at runtime when the dexhero actually finished capturing —
+ * see _upgradePanesToVideo in upgrade-demo-video.js. */
+.upgrade-demo-video__media {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    background: #02060c;
+}
+.upgrade-demo-video__media-label {
+    position: absolute;
+    left: 8px;
+    bottom: 6px;
+    font-family: ui-monospace, monospace;
+    font-size: 7px;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.78);
+    pointer-events: none;
+}
+/* "RECORDED" indicator on the chrome when we're showing real video */
+.upgrade-demo-video[data-demo-source="recorded"] .upgrade-demo-video__rec-dot {
+    background: #ff5252;
+    box-shadow: 0 0 6px rgba(255, 82, 82, 0.7);
+}
+.upgrade-demo-video__wipe {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(120, 220, 255, 0.18), transparent);
+    transform: translateX(-100%);
+    pointer-events: none;
+    transition: transform 220ms ease;
+}
+.upgrade-demo-video__wipe.is-active { transform: translateX(100%); }
+.upgrade-demo-video__split-divider,
+.upgrade-demo-video__slider-handle { display: none; }
+
+/* Mode: cycle — opacity drives the alternation (panes overlap) */
+.upgrade-demo-video__stage[data-mode="cycle"] .upgrade-demo-video__pane--before { opacity: 1; }
+.upgrade-demo-video__stage[data-mode="cycle"] .upgrade-demo-video__pane--after  { opacity: 0; }
+
+/* Mode: split — both panes visible side-by-side */
+.upgrade-demo-video__stage[data-mode="split"] .upgrade-demo-video__pane--before {
+    right: 50%;
+    border-right: 1px solid rgba(120, 220, 255, 0.4);
+    opacity: 1 !important;
+}
+.upgrade-demo-video__stage[data-mode="split"] .upgrade-demo-video__pane--after {
+    left: 50%;
+    opacity: 1 !important;
+}
+.upgrade-demo-video__stage[data-mode="split"] .upgrade-demo-video__split-divider {
+    display: block;
+    position: absolute;
+    top: 8px; bottom: 8px;
+    left: 50%;
+    width: 2px;
+    background: linear-gradient(180deg, rgba(120, 220, 255, 0.85), rgba(120, 220, 255, 0.3));
+    transform: translateX(-50%);
+    pointer-events: none;
+    box-shadow: 0 0 12px rgba(120, 220, 255, 0.6);
+}
+
+/* Mode: slider — both panes stacked, the "after" pane is clipped by the
+   slider ratio so dragging the handle reveals more of it. */
+.upgrade-demo-video__stage[data-mode="slider"] .upgrade-demo-video__pane--before {
+    opacity: 1 !important;
+}
+.upgrade-demo-video__stage[data-mode="slider"] .upgrade-demo-video__pane--after {
+    opacity: 1 !important;
+    clip-path: inset(0 0 0 calc(var(--demo-slider-ratio) * 100%));
+}
+.upgrade-demo-video__stage[data-mode="slider"] .upgrade-demo-video__slider-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(120, 220, 255, 0.95);
+    color: #06090d;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    cursor: ew-resize;
+    box-shadow: 0 0 14px rgba(120, 220, 255, 0.6);
+    z-index: 4;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1;
+    touch-action: none;
+    transition: transform 120ms ease;
+    user-select: none;
+}
+.upgrade-demo-video__stage[data-mode="slider"] .upgrade-demo-video__slider-handle:active {
+    transform: translate(-50%, -50%) scale(1.08);
+}
+.upgrade-demo-video__stage[data-mode="slider"] .upgrade-demo-video__slider-handle::before,
+.upgrade-demo-video__stage[data-mode="slider"] .upgrade-demo-video__slider-handle::after {
+    content: '';
+    position: absolute;
+    top: -200px; bottom: -200px;
+    width: 2px;
+    background: rgba(120, 220, 255, 0.85);
+    box-shadow: 0 0 8px rgba(120, 220, 255, 0.5);
+    pointer-events: none;
+}
+.upgrade-demo-video__stage[data-mode="slider"] .upgrade-demo-video__slider-handle::before { left: -2px; }
+.upgrade-demo-video__stage[data-mode="slider"] .upgrade-demo-video__slider-handle::after  { right: -2px; }
+
+.upgrade-demo-video__caption {
+    padding: 8px 12px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--ink-2, #b8b8b8);
+    background: rgba(0, 0, 0, 0.4);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Compact sizing — used in feed cards + manage rows */
+.upgrade-demo-video--compact .upgrade-demo-video__chrome {
+    padding: 4px 8px;
+    font-size: 9px;
+    gap: 6px;
+}
+.upgrade-demo-video--compact .upgrade-demo-video__author { font-size: 9px; }
+.upgrade-demo-video--compact .upgrade-demo-video__timer  { font-size: 9px; }
+.upgrade-demo-video--compact .upgrade-demo-video__mode   { width: 18px; height: 14px; font-size: 10px; }
+.upgrade-demo-video--compact .upgrade-demo-video__stage  { aspect-ratio: 16 / 9; }
+
+/* REC overlay on the lobby model — shown during the BEFORE/AFTER capture
+ * phases of the dexhero's normal review-and-answer cycle. The phase
+ * accent shifts subtly between phases so the user reads the transition:
+ *   BEFORE = red (capturing the starting frame)
+ *   AFTER  = cyan-leaning (capturing the patched frame; the lobby is
+ *            actually being changed under the overlay) */
+#lobby-stage-subject {
+    position: relative;
+}
+.dexhero-rec-overlay {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.78);
+    border: 1px solid rgba(255, 80, 80, 0.6);
+    border-radius: 999px;
+    color: #ff6a6a;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity 260ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 320ms ease, color 320ms ease;
+    pointer-events: none;
+}
+.dexhero-rec-overlay.is-active {
+    opacity: 1;
+    transform: translateY(0);
+}
+.dexhero-rec-overlay__dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 12px currentColor;
+    animation: demo-rec-pulse 1s ease-in-out infinite;
+    color: #ff5050;
+}
+.dexhero-rec-overlay__label { font-weight: 700; }
+.dexhero-rec-overlay__sub {
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.04em;
+    text-transform: none;
+    font-size: 10px;
+}
+/* Phase-specific overlay tint */
+body[data-dexhero-rec-phase="after"] .dexhero-rec-overlay {
+    border-color: rgba(120, 220, 255, 0.65);
+    color: #6ff5ff;
+}
+body[data-dexhero-rec-phase="after"] .dexhero-rec-overlay__dot {
+    color: #6ff5ff;
+}
+/* Slight scrim on the model when recording so the overlay reads cleanly.
+ * Color matches the phase. */
+body[data-dexhero-recording="true"] #lobby-stage-subject::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 80, 80, 0.04);
+    pointer-events: none;
+    z-index: 4;
+    border-radius: inherit;
+    animation: demo-rec-scrim-before 1s ease-in-out infinite;
+}
+body[data-dexhero-rec-phase="after"] #lobby-stage-subject::before {
+    animation: demo-rec-scrim-after 1s ease-in-out infinite;
+}
+@keyframes demo-rec-scrim-before {
+    0%, 100% { background: rgba(255, 80, 80, 0.04); }
+    50%      { background: rgba(255, 80, 80, 0.1);  }
+}
+@keyframes demo-rec-scrim-after {
+    0%, 100% { background: rgba(120, 220, 255, 0.05); }
+    50%      { background: rgba(120, 220, 255, 0.11); }
+}
+
+/* ── Chat-log proposal card (in-chat) ────────── */
+.chat-log__row--proposal {
+    /* The row chrome stays as a normal assistant row; the card lives in
+       the body slot and provides its own styling. */
+}
+.chat-log__body--proposal {
+    padding: 0 !important;
+}
+.upgrade-proposal-card {
+    border: 1px solid rgba(120, 220, 255, 0.28);
+    background: linear-gradient(180deg, rgba(10, 14, 18, 0.92), rgba(6, 10, 14, 0.92));
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+.upgrade-proposal-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(120, 220, 255, 0.06);
+    border-bottom: 1px solid rgba(120, 220, 255, 0.16);
+}
+.upgrade-proposal-card__video {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.upgrade-proposal-card__video .upgrade-demo-video {
+    border-radius: 0;
+    border: 0;
+}
+.upgrade-proposal-card__role {
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #6ff5ff;
+}
+.upgrade-proposal-card__badges { display: inline-flex; gap: 6px; }
+.upgrade-proposal-card__badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--ink-2, #b8b8b8);
+    letter-spacing: 0.04em;
+}
+.upgrade-proposal-card__badge--behaviors { color: #f0b85a; background: rgba(240, 184, 90, 0.1); }
+.upgrade-proposal-card__badge--fork      { color: #c2b8f0; background: rgba(194, 184, 240, 0.1); }
+.upgrade-proposal-card__body {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.upgrade-proposal-card__title {
+    font-family: var(--font-display, var(--font-mono, monospace));
+    font-weight: 600;
+    color: var(--ink-0, #f0f0f0);
+    font-size: 14px;
+}
+.upgrade-proposal-card__desc {
+    color: var(--ink-1, #c8c8c8);
+    font-size: 13px;
+    line-height: 1.45;
+}
+.upgrade-proposal-card__diff {
+    margin-top: 4px;
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    color: var(--ink-3, #8a8c8e);
+    padding-top: 6px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+.upgrade-proposal-card__diff strong { color: var(--ink-2, #b8b8b8); margin-right: 6px; }
+.upgrade-proposal-card__actions {
+    display: flex;
+    gap: 8px;
+    padding: 10px 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(0, 0, 0, 0.2);
+}
+.upgrade-proposal-card__btn {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: transparent;
+    color: var(--ink-1, #d0d0d0);
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.upgrade-proposal-card__btn--preview {
+    border-color: rgba(120, 220, 255, 0.45);
+    color: #6ff5ff;
+}
+.upgrade-proposal-card__btn--preview:hover { background: rgba(120, 220, 255, 0.1); }
+.upgrade-proposal-card__btn--save {
+    border-color: rgba(180, 255, 180, 0.45);
+    color: #b8ffb8;
+}
+.upgrade-proposal-card__btn--save:hover { background: rgba(180, 255, 180, 0.1); }
+.upgrade-proposal-card__btn--discard:hover {
+    background: rgba(255, 110, 110, 0.1);
+    border-color: rgba(255, 110, 110, 0.45);
+    color: #ff8a8a;
+}
+.upgrade-proposal-card.is-resolved {
+    opacity: 0.65;
+}
+.upgrade-proposal-card__status {
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    color: var(--ink-3, #8a8c8e);
+    letter-spacing: 0.06em;
+}
+
+/* ── Community feed / detail / creator / credits / profile-upgrades ── */
+.upgrades-feed,
+.upgrade-detail,
+.creator-profile,
+.profile-upgrades,
+.credits {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    color: var(--ink-1, #d0d0d0);
+    font-family: var(--font-mono, ui-monospace, monospace);
+}
+.upgrades-feed__head,
+.creator-profile__head,
+.profile-upgrades__head,
+.credits__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+.upgrades-feed__filters { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+.upgrades-feed__chips { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.upgrades-feed__chip {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: transparent;
+    color: var(--ink-2, #b8b8b8);
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.upgrades-feed__chip:hover { color: var(--ink-0, #f0f0f0); }
+.upgrades-feed__chip.is-active {
+    background: rgba(120, 220, 255, 0.14);
+    border-color: rgba(120, 220, 255, 0.5);
+    color: #6ff5ff;
+}
+.upgrades-feed__chip--quiet { font-size: 10px; opacity: 0.85; }
+.upgrades-feed__grid,
+.creator-profile__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+}
+
+/* Upgrade card — reused on the feed, detail-page sibling list, and creator profile */
+.upgrade-card {
+    display: flex;
+    flex-direction: column;
+    background: rgba(10, 14, 18, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 160ms ease, transform 160ms ease;
+    text-decoration: none;
+    color: inherit;
+}
+.upgrade-card:hover {
+    border-color: rgba(120, 220, 255, 0.42);
+    transform: translateY(-1px);
+}
+.upgrade-card__preview {
+    position: relative;
+    min-height: 88px;
+    background: linear-gradient(180deg, rgba(15, 18, 22, 0.7), rgba(8, 10, 14, 0.95));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.upgrade-card__preview .upgrade-demo-video {
+    border: 0;
+    border-radius: 0;
+}
+.upgrade-card__preview-thumb {
+    font-size: 26px;
+    letter-spacing: 0.06em;
+    color: var(--ink-0, #f0f0f0);
+    text-shadow: 0 0 12px rgba(120, 220, 255, 0.25);
+}
+.upgrade-card__promoted-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: rgba(255, 217, 122, 0.16);
+    color: #ffd97a;
+    border: 1px solid rgba(255, 217, 122, 0.3);
+    letter-spacing: 0.05em;
+}
+.upgrade-card__body {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+.upgrade-card__title {
+    font-family: var(--font-display, monospace);
+    font-weight: 600;
+    color: var(--ink-0, #f0f0f0);
+    font-size: 14px;
+}
+.upgrade-card__desc {
+    font-size: 12px;
+    color: var(--ink-2, #b8b8b8);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.upgrade-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--ink-3, #8a8c8e);
+}
+.upgrade-card__author {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--ink-1, #d0d0d0);
+    font: inherit;
+    font-size: 11px;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.upgrade-card__author:hover { color: #6ff5ff; }
+.upgrade-card__author-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(120, 220, 255, 0.6);
+}
+.upgrade-card__surface,
+.upgrade-card__badge {
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+}
+.upgrade-card__badge { color: #f0b85a; background: rgba(240, 184, 90, 0.1); }
+.upgrade-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.18);
+}
+.upgrade-card__count {
+    font-size: 11px;
+    color: var(--ink-2, #b8b8b8);
+    letter-spacing: 0.04em;
+}
+.upgrade-card__btn {
+    appearance: none;
+    border: 1px solid rgba(120, 220, 255, 0.5);
+    background: rgba(120, 220, 255, 0.12);
+    color: #6ff5ff;
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 120ms ease;
+}
+.upgrade-card__btn:hover { background: rgba(120, 220, 255, 0.22); }
+.upgrade-card__btn--ghost {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.18);
+    color: var(--ink-1, #d0d0d0);
+}
+.upgrade-card__btn--ghost:hover { border-color: rgba(255, 255, 255, 0.35); color: var(--ink-0, #f0f0f0); }
+.upgrade-card__btn--adopted {
+    background: rgba(180, 255, 180, 0.08);
+    border-color: rgba(180, 255, 180, 0.5);
+    color: #b8ffb8;
+}
+.upgrade-card__btn--adopted:hover { background: rgba(180, 255, 180, 0.15); }
+
+/* Detail panel */
+.upgrade-detail__head {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+.upgrade-detail__hero {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 30% 30%, rgba(120, 220, 255, 0.18), rgba(0, 0, 0, 0) 60%),
+                linear-gradient(180deg, rgba(15, 18, 22, 0.7), rgba(8, 10, 14, 0.95));
+}
+.upgrade-detail__thumb { font-size: 38px; }
+.upgrade-detail__title-block { flex: 1; }
+.upgrade-detail__byline { font-size: 12px; color: var(--ink-3, #8a8c8e); margin-top: 6px; }
+.upgrade-detail__desc { line-height: 1.5; }
+.upgrade-detail__parent {
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    padding: 10px 14px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+}
+.upgrade-detail__parent-label { color: var(--ink-3, #8a8c8e); letter-spacing: 0.06em; }
+.upgrade-detail__parent-link {
+    color: var(--ink-1, #d0d0d0);
+    text-decoration: none;
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.2);
+}
+.upgrade-detail__section { display: flex; flex-direction: column; gap: 10px; }
+.upgrade-detail__section-title {
+    font-family: var(--font-display, monospace);
+    font-weight: 600;
+    color: var(--ink-0, #f0f0f0);
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0;
+}
+.upgrade-detail__caps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.upgrade-detail__caps li {
+    font-size: 12px;
+    line-height: 1.45;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+}
+.upgrade-detail__caps strong {
+    color: #f0b85a;
+    margin-right: 4px;
+}
+.upgrade-detail__sparkline {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.upgrade-detail__actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    align-items: center;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    flex-wrap: wrap;
+}
+.upgrade-detail__admin-divider {
+    color: rgba(255, 255, 255, 0.2);
+    margin: 0 4px;
+}
+.upgrade-card__btn--admin {
+    border-color: rgba(255, 217, 122, 0.55) !important;
+    color: #ffd97a !important;
+    background: rgba(255, 217, 122, 0.08) !important;
+}
+.upgrade-card__btn--admin:hover {
+    background: rgba(255, 217, 122, 0.18) !important;
+}
+
+/* Creator profile */
+.creator-profile__avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(120, 220, 255, 0.32), rgba(240, 120, 255, 0.18));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    color: var(--ink-0, #f0f0f0);
+    border: 1px solid rgba(120, 220, 255, 0.3);
+}
+.creator-profile__head-meta { flex: 1; }
+.creator-profile__name {
+    font-family: var(--font-display, monospace);
+    font-weight: 600;
+    color: var(--ink-0, #f0f0f0);
+    font-size: 22px;
+    letter-spacing: 0.06em;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+.creator-profile__promoted-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(255, 217, 122, 0.16);
+    color: #ffd97a;
+    border: 1px solid rgba(255, 217, 122, 0.3);
+    letter-spacing: 0.05em;
+}
+.creator-profile__stats { display: inline-flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 6px; font-size: 12px; }
+.creator-profile__stats-dot { color: rgba(255, 255, 255, 0.18); }
+.creator-profile__card { cursor: pointer; }
+
+/* ── Main · DNA replication infographic HUD ────────────────────
+ * On-brand textbook style. Black surface, cyan/blue brand, white inks
+ * at canonical opacities, illustrative flat colors. No bloom, no neon,
+ * no sci-fi glow — reads like a high-quality biology diagram.
+ *
+ * Layout: top controls bar → SVG canvas + minimap → legend + stats. */
+
+.dna {
+    /* Outer container — `.dna__strip` below is the new grid wrapper that
+     * holds the two panes (chart + feed). We do that one extra level of
+     * nesting so the expand-to-fullscreen + mobile-swipe states can
+     * transform the strip without dragging the overflow:hidden, the
+     * relative-positioning anchor for absolutes, or the swipe-hint
+     * along with it. */
+    position: relative;
+    height: calc(100vh - 200px);
+    min-height: 600px;
+    color: var(--ink-1);
+    font-family: var(--font-display);
+    overflow: hidden;
+}
+.dna__strip {
+    /* Used to be a two-column grid (chart + 340px social-feed rail).
+       The social feed moved to the right wing, so this is now single-
+       column — the chart fills the whole page width. */
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+.dna__main {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: var(--sp-4);
+    min-width: 0;           /* allow the SVG column to shrink */
+    min-height: 0;
+    transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Desktop "expand feed" mode ───────────────────────────────────
+ * The chart pane slides off-screen via transform (still in DOM so the
+ * SVG doesn't reflow). The feed pane takes the absolute-position route
+ * to center itself at Instagram width over the (now empty) chart cell. */
+.dna.is-feed-fullscreen .dna__main {
+    transform: translateX(-110%);
+    opacity: 0.0;
+    pointer-events: none;
+}
+.dna.is-feed-fullscreen .dna__feed {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: clamp(320px, 92vw, 480px);
+    max-width: 480px;
+    height: 100%;
+    transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1),
+                width 360ms cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 5;
+}
+
+/* Expand button — top-right of the feed pane. Toggles
+ * `is-feed-fullscreen` via the handler in main-branch.js#_wireFeedExpand. */
+.dna__feed { position: relative; }
+.dna__feed-expand {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 6;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid rgba(110, 231, 255, 0.22);
+    background: rgba(0, 0, 0, 0.5);
+    color: rgba(255, 255, 255, 0.78);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 160ms ease, border-color 160ms ease,
+                background-color 160ms ease, transform 120ms ease;
+}
+.dna__feed-expand:hover {
+    color: var(--acc-cyan, #6ee7ff);
+    border-color: var(--acc-cyan, #6ee7ff);
+    background: rgba(0, 0, 0, 0.7);
+}
+.dna__feed-expand:active { transform: scale(0.94); }
+.dna__feed-expand svg { display: block; }
+/* The button holds TWO SVGs (expand-state + collapse-state) and toggles
+ * them via the `hidden` attribute. `display: block` above would defeat
+ * `hidden`, so force display:none on hidden SVGs explicitly. */
+.dna__feed-expand svg[hidden] { display: none; }
+
+/* ── Mobile (≤640px) ──────────────────────────────────────────────
+ * The strip becomes a 200vw horizontal carrier with both panes side-
+ * by-side. Pointer-Events swipe (wired in main-branch.js#_wireMobileSwipe)
+ * shifts `--mobile-strip-x` between 0vw (feed visible) and -100vw
+ * (chart visible). touch-action: pan-y means vertical scroll inside
+ * the feed list still works — only horizontal sweeps are intercepted. */
+@media (max-width: 640px) {
+    .dna {
+        height: calc(100vh - 140px);
+        min-height: 480px;
+    }
+    .dna__strip {
+        display: flex;
+        flex-direction: row;
+        grid-template-columns: none;
+        gap: 0;
+        width: 200vw;
+        --mobile-strip-x: 0vw;
+        transform: translateX(var(--mobile-strip-x));
+        transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+        touch-action: pan-y;
+    }
+    .dna__main, .dna__feed {
+        flex: 0 0 100vw;
+        width: 100vw;
+        max-width: none;
+        min-width: 0;
+    }
+    .dna__feed { padding-bottom: 24px; }
+    /* The expand button is desktop-only on small screens — swipe replaces it. */
+    .dna__feed-expand { display: none; }
+    /* If fullscreen state somehow lingers when crossing to mobile, undo it. */
+    .dna.is-feed-fullscreen .dna__main { transform: none; opacity: 1; pointer-events: auto; }
+    .dna.is-feed-fullscreen .dna__feed { position: static; transform: none; width: 100vw; max-width: none; }
+    /* Controls strip stacks (search above filters above sort) instead of
+       the desktop `220px 1fr auto` 3-column grid, which overflows the
+       viewport at <640px because the 220px search input alone is wider
+       than a phone after gutters. */
+    .dna__controls-body {
+        grid-template-columns: 1fr;
+        gap: var(--sp-2);
+    }
+    .dna__search { width: 100%; }
+}
+
+/* Swipe-hint pill — mobile only, shows current-view + opposite-direction
+ * hint. Hidden via the hidden attribute on desktop. */
+.dna__swipe-hint {
+    position: fixed;
+    bottom: 84px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: rgba(255, 255, 255, 0.85);
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(110, 231, 255, 0.18);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    pointer-events: none;
+    z-index: 30;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.dna__swipe-hint[hidden] { display: none; }
+
+/* ── Slim collapsible controls strip ── */
+.dna__controls {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+}
+.dna__controls.is-collapsed .dna__controls-body { display: none; }
+.dna__controls-toggle {
+    appearance: none;
+    border: 1px solid var(--rule);
+    background: var(--surf-1);
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    letter-spacing: var(--ls-chip);
+    padding: 6px 12px;
+    border-radius: var(--r-2);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    transition: background var(--dur-xs) var(--ease-out), color var(--dur-xs) var(--ease-out);
+}
+.dna__controls-toggle:hover {
+    background: var(--surf-2);
+    color: var(--ink-0);
+}
+.dna__controls-toggle svg { color: var(--acc-cyan); flex-shrink: 0; }
+.dna__controls-body {
+    display: grid;
+    grid-template-columns: 220px 1fr auto;
+    gap: var(--sp-4);
+    align-items: center;
+    flex: 1;
+}
+.dna__search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--surf-1);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-2);
+    padding: 0 10px;
+    height: 32px;
+}
+.dna__search:focus-within {
+    border-color: var(--acc-cyan);
+    box-shadow: 0 0 0 3px var(--acc-soft);
+}
+.dna__search-icon { color: var(--ink-3); flex-shrink: 0; }
+.dna__search-input {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--ink-0);
+    font: inherit;
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    padding: 0 8px;
+    width: 100%;
+    outline: none;
+}
+.dna__search-input::placeholder { color: var(--ink-4); }
+
+.dna__filters {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.dna__chip {
+    appearance: none;
+    border: 1px solid var(--rule);
+    background: transparent;
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    letter-spacing: 0.06em;
+    padding: 5px 10px 5px 8px;
+    border-radius: var(--r-full);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background var(--dur-xs) var(--ease-out), border-color var(--dur-xs) var(--ease-out), color var(--dur-xs) var(--ease-out);
+}
+.dna__chip:hover { color: var(--ink-1); border-color: var(--rule-strong); }
+.dna__chip.is-active {
+    background: color-mix(in srgb, var(--c, var(--acc-cyan)) 12%, transparent);
+    border-color: color-mix(in srgb, var(--c, var(--acc-cyan)) 55%, transparent);
+    color: var(--ink-0);
+}
+.dna__chip-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dna__jumps {
+    display: inline-flex;
+    gap: 4px;
+}
+.dna__jump {
+    appearance: none;
+    border: 1px solid var(--rule-strong);
+    background: transparent;
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    letter-spacing: var(--ls-chip);
+    padding: 6px 12px;
+    border-radius: var(--r-2);
+    cursor: pointer;
+    transition: background var(--dur-xs) var(--ease-out), color var(--dur-xs) var(--ease-out);
+}
+.dna__jump:hover { background: var(--surf-2); color: var(--ink-0); }
+.dna__jump--accent {
+    border-color: var(--tier-gold);
+    color: var(--tier-gold);
+}
+.dna__jump--accent:hover {
+    background: rgba(245, 158, 11, 0.12);
+    color: #fff7ed;
+}
+
+/* ── Canvas (SVG + minimap + tooltip overlays) ── */
+.dna__canvas {
+    position: relative;
+    background: #02060c;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-3);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.dna__canvas .hud-brackets {
+    position: absolute;
+    inset: 8px;
+    pointer-events: none;
+    z-index: 2;
+}
+.dna__canvas .hud-brackets i {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-color: rgba(110, 231, 255, 0.5);
+    border-style: solid;
+    border-width: 0;
+}
+.dna__canvas .hud-brackets i.tl { top: 0;    left: 0;    border-top-width: 1.2px; border-left-width: 1.2px; }
+.dna__canvas .hud-brackets i.tr { top: 0;    right: 0;   border-top-width: 1.2px; border-right-width: 1.2px; }
+.dna__canvas .hud-brackets i.bl { bottom: 0; left: 0;    border-bottom-width: 1.2px; border-left-width: 1.2px; }
+.dna__canvas .hud-brackets i.br { bottom: 0; right: 0;   border-bottom-width: 1.2px; border-right-width: 1.2px; }
+.dna__viewport {
+    flex: 1;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    overscroll-behavior: contain;
+}
+.dna__viewport::-webkit-scrollbar { width: 8px; height: 8px; }
+.dna__viewport::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 4px; }
+.dna__svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 360px;
+}
+
+/* Base pairs (clickable) */
+.dna__pair {
+    cursor: pointer;
+    transition: filter var(--dur-xs) var(--ease-out);
+}
+.dna__pair:hover { filter: brightness(1.25); }
+.dna__pair[data-promoted="1"] { filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.4)); }
+.dna__pair[data-promoted="1"]:hover { filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.7)); }
+
+/* Free nucleotides (clickable, drifting) */
+.dna__free {
+    cursor: pointer;
+    transition: filter var(--dur-xs) var(--ease-out);
+    animation: dna-bob 4s ease-in-out infinite;
+    transform-origin: center;
+}
+.dna__free:hover { filter: brightness(1.3); }
+.dna__free:nth-child(odd)  { animation-delay: 0.6s; }
+.dna__free:nth-child(even) { animation-delay: 1.4s; }
+@keyframes dna-bob {
+    0%, 100% { transform: translate(var(--tx, 0), var(--ty, 0)); }
+    50%      { transform: translate(var(--tx, 0), calc(var(--ty, 0) - 4px)); }
+}
+
+/* Anatomy widgets (helicase, polymerase) hover affordance */
+.dna__helicase, .dna__polymerase {
+    transition: filter var(--dur-xs) var(--ease-out);
+}
+.dna__helicase:hover, .dna__polymerase:hover {
+    filter: drop-shadow(0 0 8px rgba(110, 231, 255, 0.45)) brightness(1.1);
+}
+
+/* Minimap strip at the bottom of the canvas */
+.dna__minimap {
+    flex-shrink: 0;
+    height: 32px;
+    border-top: 1px solid var(--rule);
+    background: var(--surf-1);
+    position: relative;
+}
+.dna__minimap svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* LIVE indicator (top-right of canvas) */
+.dna__live {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--glass-bg);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-full);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    letter-spacing: var(--ls-chip);
+    color: var(--ink-2);
+    pointer-events: none;
+    z-index: 4;
+}
+.dna__live-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--ok);
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.7);
+    animation: dna-live-pulse 1.8s ease-in-out infinite;
+}
+@keyframes dna-live-pulse {
+    0%, 100% { opacity: 0.55; transform: scale(0.85); }
+    50%      { opacity: 1;    transform: scale(1.15); }
+}
+.dna__live.is-pinging::after {
+    content: '';
+    position: absolute;
+    top: 7px; left: 14px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    border: 1px solid var(--ok);
+    animation: dna-live-ping 700ms ease-out forwards;
+}
+@keyframes dna-live-ping {
+    from { opacity: 1; transform: scale(0.6); }
+    to   { opacity: 0; transform: scale(3); }
+}
+
+/* Tooltip */
+.dna__tip {
+    position: absolute;
+    z-index: var(--z-overlay);
+    pointer-events: none;
+    padding: 10px 12px;
+    background: rgba(2, 6, 12, 0.96);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-2);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    color: var(--ink-0);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+    min-width: 220px;
+    max-width: 300px;
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+    transition: opacity var(--dur-xs) var(--ease-out), transform var(--dur-xs) var(--ease-out);
+}
+.dna__tip.is-visible { opacity: 1; transform: translateY(0) scale(1); }
+.dna__tip-row { display: flex; align-items: center; gap: 8px; }
+.dna__tip-pin {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: var(--ls-chip);
+    color: var(--tier-gold);
+    background: rgba(245, 158, 11, 0.14);
+    padding: 2px 6px;
+    border-radius: var(--r-2);
+    flex-shrink: 0;
+}
+.dna__tip-zone {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: var(--ls-chip);
+    color: var(--acc-cyan);
+    background: var(--acc-soft);
+    padding: 2px 6px;
+    border-radius: var(--r-2);
+    flex-shrink: 0;
+}
+.dna__tip-title {
+    font-family: var(--font-display);
+    font-size: var(--fs-small);
+    font-weight: 600;
+    color: var(--ink-0);
+    line-height: 1.3;
+}
+.dna__tip-meta {
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-3);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.dna__tip-meta strong { color: var(--ink-0); font-weight: 600; }
+.dna__tip-sep { color: var(--ink-4); }
+
+/* ── Footer: legend + stats (textbook-style) ── */
+.dna__footer {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sp-5);
+    padding: var(--sp-3) var(--sp-2);
+    border-top: 1px solid var(--rule);
+    flex-wrap: wrap;
+}
+.dna__legend {
+    display: flex;
+    gap: var(--sp-5);
+    flex-wrap: wrap;
+}
+.dna__legend-section {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.dna__legend-head {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 4px;
+}
+.dna__legend-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    color: var(--ink-2);
+}
+.dna__legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.dna__legend-icon {
+    width: 16px; height: 10px;
+    flex-shrink: 0;
+}
+.dna__legend-icon--helicase {
+    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+.dna__legend-icon--polymerase {
+    background: var(--warn);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+}
+.dna__legend-icon--free {
+    background: var(--acc-cyan);
+    clip-path: polygon(50% 0, 100% 60%, 75% 100%, 25% 100%, 0 60%);
+}
+
+.dna__stats {
+    display: inline-flex;
+    gap: var(--sp-4);
+}
+.dna__stat {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    font-family: var(--font-mono);
+}
+.dna__stat strong {
+    font-size: 18px;
+    color: var(--ink-0);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.dna__stat span {
+    font-size: 9px;
+    letter-spacing: var(--ls-label);
+    color: var(--ink-3);
+    text-transform: uppercase;
+}
+
+/* ──────────────────────────────────────────────────────────────
+ *  DNA Feed — social-media-style commit feed.
+ *  Vertical scrolling cards; each card wraps the existing
+ *  buildDemoVideo() in slider mode so the reader can sweep
+ *  across before/after right inside the feed. Lives in the
+ *  lobby right-wing as the "feed" pane (mounted by home.js);
+ *  surfaced by the stage right-arrow.
+ * ────────────────────────────────────────────────────────────── */
+.dna__feed {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    border: 0;
+    background: transparent;
+}
+/* (Retired) — a rule used to live here that pinned the wing to the
+   right edge with width: clamp() + left: auto !important whenever
+   the feed pane was active. That rule was hijacking every horizontal
+   drag and resize attempt because !important beat the JS-controlled
+   --wing-right-left / --wing-right-width variables. With the rule
+   gone, the wing is fully draggable + resizable on all 8 edges
+   regardless of which pane is active. */
+.dna__feed-rail {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    /* Frosted backdrop so card text + READMEs stay legible against the
+     * animated lobby background. Translucent dark layer + backdrop blur
+     * gives a subtle "panel" feel without hiding the lobby entirely.
+     * -webkit- prefix for Safari < 18. */
+    background: rgba(12, 16, 22, 0.55);
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
+    backdrop-filter:         blur(14px) saturate(120%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 14px 12px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28);
+}
+/* When the wing is open, flatten the rail's top-left rounded corner so
+ * the folder-tab button (which sits flush against the rail's left edge)
+ * joins it on a straight horizontal top line — no triangular cut-out
+ * where they meet. The button itself carries its own frosted background
+ * (see shell.css) because attempts to extend the rail's box leftward
+ * via margin-left + clip-path were defeated by flex constraints in the
+ * wing's panel hierarchy. Trade-off accepted: tab + rail have separate
+ * backdrop-filter passes (subtle sampling difference where they meet),
+ * but both are clearly visible and read as one piece. */
+.lobby-wing--right:not(.lobby-wing--collapsed) .dna__feed-rail {
+    border-top-left-radius: 0;
+}
+.dna__feed-rail__list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* Hidden scrollbar — content still scrolls but the chrome is invisible. */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.dna__feed-rail__list::-webkit-scrollbar { width: 0; height: 0; display: none; }
+.dna__feed-rail__empty {
+    padding: 24px 16px;
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    line-height: 1.5;
+    text-align: center;
+}
+
+/* ── Drag handle (move the wing) ──────────────────────────── */
+.dna__feed-rail__drag-handle {
+    flex: 0 0 auto;
+    height: 22px;
+    margin: -6px 0 8px;
+    cursor: grab;
+    border-radius: 4px;
+    position: relative;
+    /* Subtle hover plate so users see this is interactive. */
+    background: transparent;
+    transition: background var(--dur-xs) var(--ease-out);
+}
+.dna__feed-rail__drag-handle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px;
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.22);
+    transition: background var(--dur-xs) var(--ease-out);
+}
+.dna__feed-rail__drag-handle:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+.dna__feed-rail__drag-handle:hover::before {
+    background: rgba(255, 255, 255, 0.5);
+}
+.dna__feed-rail__drag-handle:active {
+    cursor: grabbing;
+}
+.dna__feed-rail__drag-handle:active::before {
+    background: rgba(110, 231, 255, 0.8);
+}
+
+/* ── Compose bar (post a GitHub repo) ───────────────────────── */
+/* ── App-style footer (compose at the bottom of the rail) ────────────
+ * Mainstream-app pattern: feed scrolls in the middle, composer docks
+ * at the bottom like X/Bluesky/Threads/iMessage. Negative margins
+ * break the footer out of the rail's 12px H / 14px bottom padding so
+ * the dock chrome spans flush to the rail's outer edge. The matching
+ * border-radius rounds the bottom corners with the parent rail. */
+.dna__feed-rail__footer {
+    margin: 0 -12px -14px;
+    padding: 10px 14px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0 0 14px 14px;
+    background: linear-gradient(180deg, rgba(8, 11, 16, 0.78), rgba(6, 9, 14, 0.92));
+    -webkit-backdrop-filter: blur(14px) saturate(120%);
+    backdrop-filter:         blur(14px) saturate(120%);
+}
+.dna__feed-rail__compose {
+    flex: 0 0 auto;
+}
+.dna__feed-rail__compose-form {
+    position: relative;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.dna__feed-rail__compose-icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.45);
+    pointer-events: none;
+    display: inline-flex;
+}
+.dna__feed-rail__compose-input {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 10px 9px 32px;       /* room for the leading chain icon */
+    border-radius: 999px;             /* pill — matches modern app composers */
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.40);
+    color: var(--ink-0, #eaeef3);
+    font: inherit;
+    font-size: 0.82rem;
+    transition: border-color 120ms ease, background 120ms ease;
+}
+.dna__feed-rail__compose-input::placeholder { color: rgba(255, 255, 255, 0.42); }
+.dna__feed-rail__compose-input:focus {
+    outline: none;
+    border-color: rgba(110, 168, 254, 0.55);
+    background: rgba(0, 0, 0, 0.52);
+}
+.dna__feed-rail__compose-submit {
+    padding: 8px 16px;
+    border-radius: 999px;             /* pill to match the input */
+    border: 1px solid rgba(110, 168, 254, 0.55);
+    background: linear-gradient(180deg, rgba(110, 168, 254, 0.28), rgba(110, 168, 254, 0.10));
+    color: var(--ink-0, #eaeef3);
+    font: inherit;
+    font-size: 0.80rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 120ms ease, background 120ms ease, transform 80ms ease;
+}
+.dna__feed-rail__compose-submit:hover {
+    border-color: rgba(110, 168, 254, 0.85);
+    background: linear-gradient(180deg, rgba(110, 168, 254, 0.36), rgba(110, 168, 254, 0.14));
+}
+.dna__feed-rail__compose-submit:active { transform: scale(0.97); }
+.dna__feed-rail__compose-submit:disabled { opacity: 0.55; cursor: progress; transform: none; }
+
+/* Ultra-narrow override (≤360px): the input + button pill row gets
+ * cramped on iPhone SE-class phones. Stack them vertically so the
+ * input gets full width and the submit button reads as a clear next
+ * step rather than a squeezed chip. */
+@media (max-width: 360px) {
+    .dna__feed-rail__compose-form {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .dna__feed-rail__compose-submit {
+        width: 100%;
+    }
+}
+
+/* ── Search bar (under the compose) ──────────────────────────────────
+ * Same visual language as the compose input — slim, dark, no shadows.
+ * Icon + clear-button float over the input via flex/position tricks.
+ * Hidden until focus / non-empty: visible always for discoverability. */
+.dna__feed-rail__search {
+    padding: 0 0 10px;
+    flex: 0 0 auto;
+}
+.dna__feed-rail__search-form {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.dna__feed-rail__search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.45);
+    pointer-events: none;
+}
+.dna__feed-rail__search-input {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 30px 7px 30px;     /* room for icon (left) + clear (right) */
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(0, 0, 0, 0.28);
+    color: var(--ink-0, #eaeef3);
+    font: inherit;
+    font-size: 0.80rem;
+    line-height: 1.3;
+    transition: border-color 120ms ease, background 120ms ease;
+}
+.dna__feed-rail__search-input::placeholder { color: rgba(255, 255, 255, 0.40); }
+.dna__feed-rail__search-input:focus {
+    outline: none;
+    border-color: rgba(110, 168, 254, 0.45);
+    background: rgba(0, 0, 0, 0.42);
+}
+/* Hide the browser's native clear (Chrome's "X" on type=search) so our
+ * own button is the only one — looks consistent across engines. */
+.dna__feed-rail__search-input::-webkit-search-cancel-button { display: none; }
+.dna__feed-rail__search-input::-webkit-search-decoration   { display: none; }
+
+.dna__feed-rail__search-clear {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 0;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 120ms ease, color 120ms ease;
+}
+.dna__feed-rail__search-clear:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: var(--ink-0, #eaeef3);
+}
+
+/* ── Sentinel (infinite-scroll bottom row) ───────────────────────────
+ * Lives at the END of .dna__feed-rail (sibling to the list) so the
+ * IntersectionObserver root is the list itself and the sentinel sits
+ * in the scrollable area. Multiple visual states selected via
+ * `data-state`: idle (hidden) | loading | end | empty. */
+.dna__feed-rail__sentinel {
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 12px 4px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.50);
+    text-align: center;
+    line-height: 1.45;
+}
+.dna__feed-rail__sentinel[data-state="idle"]    { min-height: 12px; padding: 4px; }
+.dna__feed-rail__sentinel[data-state="idle"] .dna__feed-rail__sentinel-msg { display: none; }
+
+.dna__feed-rail__sentinel[data-state="loading"]::before {
+    content: '';
+    width: 14px;
+    height: 14px;
+    margin-right: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-top-color: rgba(110, 168, 254, 0.85);
+    border-radius: 50%;
+    animation: dna-feed-rail-spin 720ms linear infinite;
+}
+@keyframes dna-feed-rail-spin { to { transform: rotate(360deg); } }
+
+.dna__feed-rail__sentinel[data-state="end"]   { opacity: 0.7; }
+.dna__feed-rail__sentinel[data-state="empty"] {
+    padding: 28px 14px;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.82rem;
+}
+
+/* ── Repo card (Git Feed post type) ─────────────────────────── */
+.dna__feed-card--repo {
+    cursor: default;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.dna__feed-card--repo.is-new { animation: dna-feed-new-pulse 600ms var(--ease-out); }
+.dna__feed-card--repo { cursor: pointer; }              /* whole card is the expand target */
+.dna__feed-card--repo:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.dna__feed-repo__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.dna__feed-repo__avatar {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+.dna__feed-repo__avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.dna__feed-repo__avatar-fallback {
+    color: var(--ink-2, #cfd5dc);
+    font-weight: 700;
+    font-size: 16px;
+}
+.dna__feed-repo__head-text {
+    flex: 1;
+    min-width: 0;
+}
+.dna__feed-repo__name {
+    color: var(--ink-0, #eaeef3);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.92rem;
+    line-height: 1.2;
+    display: block;
+    word-break: break-all;
+}
+.dna__feed-repo__owner {
+    color: var(--ink-3, #8a93a0);
+    font-weight: 400;
+}
+.dna__feed-repo__repo {
+    color: var(--ink-0, #eaeef3);
+}
+.dna__feed-repo__name:hover .dna__feed-repo__repo { text-decoration: underline; }
+.dna__feed-repo__meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 3px;
+    font-size: 0.72rem;
+    color: var(--ink-3, #8a93a0);
+}
+.dna__feed-repo__lang {
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: rgba(110, 168, 254, 0.15);
+    color: rgb(140, 188, 255);
+    font-size: 0.68rem;
+}
+.dna__feed-repo__stars {
+    color: rgb(250, 200, 110);
+}
+.dna__feed-repo__src {
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: rgba(34, 197, 94, 0.14);
+    color: rgb(110, 220, 150);
+    font-size: 0.66rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.dna__feed-repo__summary {
+    margin: 0;
+    color: var(--ink-1, #d8dee5);
+    font-size: 0.86rem;
+    line-height: 1.45;
+}
+.dna__feed-repo__topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.dna__feed-repo__topic {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.7rem;
+    color: var(--ink-2, #cfd5dc);
+}
+.dna__feed-repo__actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 2px;
+}
+.dna__feed-repo__adopt {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+    color: var(--ink-0, #eaeef3);
+    font: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+.dna__feed-repo__adopt.is-adopted {
+    border-color: rgba(244, 114, 182, 0.6);
+    background: linear-gradient(180deg, rgba(244, 114, 182, 0.18), rgba(244, 114, 182, 0.06));
+    color: rgb(252, 180, 220);
+}
+.dna__feed-repo__adopt:disabled { opacity: 0.55; cursor: progress; }
+.dna__feed-repo__open {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: transparent;
+    color: var(--ink-2, #cfd5dc);
+    text-decoration: none;
+    font-size: 0.78rem;
+}
+.dna__feed-repo__open:hover { border-color: rgba(255, 255, 255, 0.22); }
+
+/* ── Click-to-expand README panel inside the repo card ─────── */
+.dna__feed-repo__readme {
+    margin: 4px -4px 0;
+    padding: 12px 8px 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    max-height: 60vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+.dna__feed-repo__readme[hidden] { display: none; }
+.dna__feed-repo__readme-state {
+    color: var(--ink-3, #8a93a0);
+    font-size: 0.8rem;
+    padding: 6px 4px;
+}
+.dna__feed-repo__readme-error {
+    color: rgb(248, 180, 130);
+    font-size: 0.82rem;
+    padding: 6px 4px;
+}
+
+/* Typography for the rendered GitHub README inside our card. Scoped to
+ * the readme-content wrapper so it never bleeds into other UI. */
+.dna__feed-repo__readme-content {
+    color: var(--ink-1, #d8dee5);
+    font-size: 0.84rem;
+    line-height: 1.55;
+}
+.dna__feed-repo__readme-content > *:first-child { margin-top: 0; }
+.dna__feed-repo__readme-content > *:last-child  { margin-bottom: 0; }
+.dna__feed-repo__readme-content h1,
+.dna__feed-repo__readme-content h2,
+.dna__feed-repo__readme-content h3,
+.dna__feed-repo__readme-content h4 {
+    margin: 14px 0 8px;
+    color: var(--ink-0, #eaeef3);
+    font-weight: 600;
+    line-height: 1.25;
+}
+.dna__feed-repo__readme-content h1 { font-size: 1.1rem; }
+.dna__feed-repo__readme-content h2 { font-size: 1rem; }
+.dna__feed-repo__readme-content h3 { font-size: 0.92rem; }
+.dna__feed-repo__readme-content h4 { font-size: 0.85rem; }
+.dna__feed-repo__readme-content p { margin: 8px 0; }
+.dna__feed-repo__readme-content a {
+    color: rgb(140, 188, 255);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.dna__feed-repo__readme-content a:hover { filter: brightness(1.2); }
+.dna__feed-repo__readme-content img,
+.dna__feed-repo__readme-content video {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    display: block;
+    margin: 10px auto;
+    background: rgba(255, 255, 255, 0.02);
+}
+.dna__feed-repo__readme-content code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.78rem;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 1px 5px;
+    border-radius: 4px;
+}
+.dna__feed-repo__readme-content pre {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin: 10px 0;
+    overflow-x: auto;
+    font-size: 0.76rem;
+    line-height: 1.5;
+}
+.dna__feed-repo__readme-content pre code {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+}
+.dna__feed-repo__readme-content blockquote {
+    margin: 10px 0;
+    padding: 4px 12px;
+    border-left: 3px solid rgba(110, 168, 254, 0.5);
+    color: var(--ink-2, #cfd5dc);
+    background: rgba(110, 168, 254, 0.04);
+    border-radius: 0 6px 6px 0;
+}
+.dna__feed-repo__readme-content ul,
+.dna__feed-repo__readme-content ol {
+    margin: 8px 0;
+    padding-left: 22px;
+}
+.dna__feed-repo__readme-content li { margin: 3px 0; }
+.dna__feed-repo__readme-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 0.78rem;
+}
+.dna__feed-repo__readme-content th,
+.dna__feed-repo__readme-content td {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 5px 8px;
+    text-align: left;
+}
+.dna__feed-repo__readme-content th {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--ink-0, #eaeef3);
+    font-weight: 600;
+}
+.dna__feed-repo__readme-content hr {
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    margin: 14px 0;
+}
+
+@keyframes dna-feed-new-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(110, 168, 254, 0.45); }
+    100% { box-shadow: 0 0 0 14px rgba(110, 168, 254, 0); }
+}
+
+/* ── Single feed card — borderless portrait "Instagram Story" tile ──
+ * No card chrome: just the video itself with glass overlays. */
+.dna__feed-card {
+    display: block;
+    cursor: pointer;
+    border: 0;
+    background: transparent;
+    padding: 0;
+}
+
+/* The slider stage gets a portrait 4:5 frame. Rounded corners live
+ * here, not on the card, so the media is the visible shape. */
+.dna__feed-card__video {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #04060a;
+    transition: transform var(--dur-xs) var(--ease-out),
+                box-shadow var(--dur-xs) var(--ease-out);
+}
+.dna__feed-card.is-merged .dna__feed-card__video {
+    box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.55),
+                0 6px 22px rgba(0, 0, 0, 0.55);
+}
+
+/* The embedded demo-video stage takes the full portrait frame.
+ * The underlying SVG is landscape (160×110) and letterboxes
+ * vertically via its own preserveAspectRatio — that gives the
+ * "video clip inside a portrait card" Reels look. */
+.dna__feed-card__video .upgrade-demo-video {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.dna__feed-card__video .upgrade-demo-video__stage {
+    flex: 1;
+    aspect-ratio: auto;
+    height: auto;
+}
+.dna__feed-card__video .upgrade-demo-video__chrome {
+    /* Suppress the REC/timer/mode bar — we want a clean borderless tile. */
+    display: none;
+}
+
+/* ── Glass overlays on the video ── */
+.dna__feed-card__author-pill {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 8px;
+    border-radius: 999px;
+    background: rgba(8, 12, 18, 0.62);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid color-mix(in srgb, var(--c, var(--acc-cyan)) 55%, transparent);
+    color: var(--ink-0);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    z-index: 3;
+    pointer-events: none;
+}
+.dna__feed-card__surface-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.dna__feed-card__merged {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(245, 158, 11, 0.22);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(245, 158, 11, 0.6);
+    color: #f5d896;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    z-index: 3;
+    pointer-events: none;
+}
+.dna__feed-card__adopters {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(8, 12, 18, 0.62);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: var(--ink-1);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    z-index: 3;
+    pointer-events: none;
+}
+
+/* New-commit slide-in pulse — applied to the video frame since
+ * the card itself is borderless and chromeless. */
+.dna__feed-card.is-new .dna__feed-card__video {
+    animation: dna-feed-slide-in 480ms var(--ease-out);
+}
+@keyframes dna-feed-slide-in {
+    0% {
+        transform: translateY(-14px);
+        opacity: 0;
+        box-shadow: 0 0 0 1px rgba(110, 231, 255, 0.9),
+                    0 0 0 0 rgba(110, 231, 255, 0.45);
+    }
+    60% {
+        transform: translateY(0);
+        opacity: 1;
+        box-shadow: 0 0 0 1px rgba(110, 231, 255, 0.9),
+                    0 0 0 8px rgba(110, 231, 255, 0);
+    }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+    .dna__controls {
+        grid-template-columns: 1fr;
+        gap: var(--sp-2);
+    }
+    .dna__filters { flex-wrap: wrap; }
+    .dna__jumps   { flex-wrap: wrap; }
+}
+@media (max-width: 960px) {
+    .dna {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    .dna__feed { max-height: 50vh; }
+}
+
+/* Profile · Your Branch — git commit log */
+.branch-summary {
+    display: inline-flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.branch-summary__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(120, 220, 255, 0.08);
+    border: 1px solid rgba(120, 220, 255, 0.25);
+    color: var(--ink-1, #d0d0d0);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+}
+.branch-summary__chip span { color: var(--ink-3, #8a8c8e); text-transform: uppercase; font-size: 10px; }
+.branch-summary__chip strong { color: #6ff5ff; font-weight: 700; font-feature-settings: "tnum"; }
+
+.commit-log {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.commit-log--stale { opacity: 0.55; }
+.commit-row {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 12px;
+    padding: 10px 12px;
+    background: rgba(10, 14, 18, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    position: relative;
+    transition: border-color 160ms ease, background 160ms ease;
+}
+.commit-row:hover { border-color: rgba(120, 220, 255, 0.22); background: rgba(10, 14, 18, 0.78); }
+.commit-row.is-head {
+    border-color: rgba(120, 220, 255, 0.55);
+    background: rgba(10, 28, 36, 0.55);
+}
+.commit-row.is-head .commit-row__node {
+    color: #6ff5ff;
+    text-shadow: 0 0 10px rgba(120, 220, 255, 0.6);
+}
+.commit-row.is-stale {
+    border-style: dashed;
+}
+.commit-row__rail {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 2px;
+    position: relative;
+}
+.commit-row__rail::after {
+    content: '';
+    position: absolute;
+    top: 22px;
+    bottom: -12px;
+    left: 50%;
+    width: 1px;
+    background: rgba(120, 220, 255, 0.18);
+    transform: translateX(-50%);
+}
+.commit-row:last-child .commit-row__rail::after { display: none; }
+.commit-row__node {
+    font-size: 16px;
+    line-height: 1;
+    color: var(--ink-2, #b8b8b8);
+}
+.commit-row__body { display: flex; flex-direction: column; gap: 4px; }
+.commit-row__head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.commit-row__op {
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--ink-2, #b8b8b8);
+}
+.commit-row__hash {
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    color: var(--ink-3, #8a8c8e);
+    letter-spacing: 0.04em;
+}
+.commit-row__time {
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    color: var(--ink-3, #8a8c8e);
+    margin-left: auto;
+}
+.commit-row__head-badge {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(120, 220, 255, 0.18);
+    color: #6ff5ff;
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+.commit-row__stale-badge {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--ink-3, #8a8c8e);
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+.commit-row__msg {
+    color: var(--ink-0, #f0f0f0);
+    font-size: 13px;
+    font-family: var(--font-mono, monospace);
+    line-height: 1.4;
+}
+.commit-row__patch {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--ink-2, #b8b8b8);
+}
+.commit-row__patch a {
+    color: var(--ink-1, #d0d0d0);
+    text-decoration: none;
+    border-bottom: 1px dotted rgba(255, 255, 255, 0.2);
+}
+.commit-row__patch a:hover { color: #6ff5ff; border-bottom-color: #6ff5ff; }
+.commit-row__actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+.commit-row__btn {
+    appearance: none;
+    border: 1px solid rgba(120, 220, 255, 0.4);
+    background: rgba(120, 220, 255, 0.06);
+    color: #6ff5ff;
+    font: inherit;
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.commit-row__btn:hover { background: rgba(120, 220, 255, 0.18); }
+.commit-row__btn--ghost {
+    border-color: rgba(255, 255, 255, 0.16);
+    background: transparent;
+    color: var(--ink-1, #d0d0d0);
+}
+.commit-row__btn--ghost:hover { border-color: rgba(255, 255, 255, 0.35); color: var(--ink-0, #f0f0f0); }
+
+.profile-upgrades__section { display: flex; flex-direction: column; gap: 10px; }
+.profile-upgrades__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.profile-upgrades__row {
+    display: grid;
+    grid-template-columns: 120px 1fr auto auto;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(10, 14, 18, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    transition: opacity 160ms ease;
+}
+.profile-upgrades__row.is-disabled { opacity: 0.45; }
+.profile-upgrades__thumb {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: rgba(120, 220, 255, 0.06);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+}
+.profile-upgrades__thumb-video {
+    width: 120px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.profile-upgrades__thumb-video .upgrade-demo-video {
+    border-radius: 8px;
+}
+.profile-upgrades__meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.profile-upgrades__title {
+    color: var(--ink-0, #f0f0f0);
+    text-decoration: none;
+    font-weight: 600;
+    font-family: var(--font-display, monospace);
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.profile-upgrades__title:hover { color: #6ff5ff; }
+.profile-upgrades__sub { font-size: 11px; }
+.profile-upgrades__toggle {
+    position: relative;
+    display: inline-block;
+    width: 32px; height: 18px;
+    cursor: pointer;
+}
+.profile-upgrades__toggle input {
+    position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0;
+    cursor: pointer; z-index: 1;
+}
+.profile-upgrades__toggle-track {
+    position: absolute; inset: 0;
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    transition: background 160ms ease;
+}
+.profile-upgrades__toggle-track::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 14px; height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.profile-upgrades__toggle input:checked + .profile-upgrades__toggle-track {
+    background: rgba(120, 220, 255, 0.55);
+}
+.profile-upgrades__toggle input:checked + .profile-upgrades__toggle-track::after {
+    transform: translateX(14px);
+}
+.profile-upgrades__empty {
+    padding: 36px 18px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    text-align: center;
+}
+.profile-upgrades__empty a { color: #6ff5ff; }
+
+/* Credits page */
+.credits__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.credits__row {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    background: rgba(10, 14, 18, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+.credits__thumb {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    border-radius: 6px;
+    background: rgba(255, 217, 122, 0.08);
+}
+.credits__patch-title {
+    color: var(--ink-0, #f0f0f0);
+    text-decoration: none;
+    font-weight: 600;
+    font-family: var(--font-display, monospace);
+}
+.credits__patch-title:hover { color: #6ff5ff; }
+.credits__byline { font-size: 11px; margin-top: 2px; }
+.credits__byline a { color: var(--ink-1, #d0d0d0); }
+.credits__byline a:hover { color: #6ff5ff; }
+.credits__star {
+    color: #ffd97a;
+    font-size: 16px;
+    text-shadow: 0 0 8px rgba(255, 217, 122, 0.5);
+}
+
+/* Capability consent dialog */
+.cap-consent {
+    position: fixed;
+    inset: 0;
+    z-index: 9500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 220ms ease;
+}
+.cap-consent.is-visible { opacity: 1; pointer-events: auto; }
+.cap-consent__veil {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+.cap-consent__card {
+    position: relative;
+    width: min(440px, calc(100vw - 32px));
+    background: rgba(10, 14, 18, 0.97);
+    border: 1px solid rgba(120, 220, 255, 0.32);
+    border-radius: 14px;
+    padding: 22px;
+    color: var(--ink-1, #d0d0d0);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+}
+.cap-consent__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.cap-consent__icon {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: rgba(240, 184, 90, 0.18);
+    color: #f0b85a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    border: 1px solid rgba(240, 184, 90, 0.4);
+}
+.cap-consent__author { font-size: 11px; color: var(--ink-3, #8a8c8e); letter-spacing: 0.06em; }
+.cap-consent__title {
+    font-family: var(--font-display, monospace);
+    font-weight: 600;
+    color: var(--ink-0, #f0f0f0);
+    font-size: 16px;
+}
+.cap-consent__intro {
+    font-size: 13px;
+    line-height: 1.45;
+    margin: 0 0 12px 0;
+}
+.cap-consent__caps {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 14px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.cap-consent__caps li {
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+.cap-consent__cap-label {
+    color: #f0b85a;
+    font-weight: 600;
+    margin-right: 6px;
+}
+.cap-consent__cap-blurb { color: var(--ink-2, #b8b8b8); }
+.cap-consent__note {
+    font-size: 11px;
+    color: var(--ink-3, #8a8c8e);
+    margin: 0 0 16px 0;
+    line-height: 1.4;
+}
+.cap-consent__note strong { color: var(--ink-1, #d0d0d0); }
+.cap-consent__actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+.cap-consent__btn {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: transparent;
+    color: var(--ink-1, #d0d0d0);
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.cap-consent__btn--allow {
+    border-color: rgba(120, 220, 255, 0.5);
+    color: #6ff5ff;
+}
+.cap-consent__btn--allow:hover { background: rgba(120, 220, 255, 0.14); }
+.cap-consent__btn--cancel:hover { background: rgba(255, 255, 255, 0.06); color: var(--ink-0, #f0f0f0); }
+
+/* ── Social-post footer chrome (renderSocialFooter from dna-feed-rail.js)
+ * Used by the DNA Feed rail card, the proposal card in chat, and the
+ * community-upgrades grid card. One look across all three so the DNA
+ * upgrade artifact reads consistently as a social post wherever it lives. */
+.dna__feed-card__social {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px 12px;
+    background: rgba(0, 0, 0, 0.32);
+    border-top: 1px solid rgba(110, 231, 255, 0.10);
+    font-family: var(--font-display, 'Inter'), system-ui, sans-serif;
+}
+.dna__feed-card__byline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+.dna__feed-card__avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(110, 231, 255, 0.10);
+    color: var(--acc-cyan, #6ee7ff);
+    font-size: 13px;
+    line-height: 1;
+}
+.dna__feed-card__handle {
+    color: var(--ink-1, #d8d8d8);
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+.dna__feed-card__handle:hover { color: var(--acc-cyan, #6ee7ff); }
+.dna__feed-card__merged-tag {
+    color: var(--tier-gold, #f59e0b);
+    font-size: 11px;
+}
+.autonomous-panel { padding: 16px 20px 32px; display: grid; gap: 24px; }
+.autonomous-panel__head p { margin-top: 8px; }
+.autonomous-panel__brain-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 8px;
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid rgba(34, 197, 94, 0.20);
+    font-size: 13px; color: var(--ink-1, #e4e4e4);
+}
+.autonomous-panel__brain-row--warn {
+    background: rgba(245, 158, 11, 0.08);
+    border-color: rgba(245, 158, 11, 0.25);
+}
+.autonomous-panel__brain-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(245, 158, 11, 0.7);
+}
+.autonomous-panel__brain-dot.is-on { background: #22c55e; box-shadow: 0 0 6px rgba(34, 197, 94, 0.5); }
+.autonomous-panel__brain-row a { color: var(--acc-cyan, #6ee7ff); }
+.autonomous-panel__section {
+    display: grid; gap: 16px;
+}
+.autonomous-panel__toggle-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.autonomous-panel__switch {
+    display: inline-flex; align-items: center; gap: 12px; cursor: pointer; user-select: none;
+}
+.autonomous-panel__switch input { position: absolute; opacity: 0; pointer-events: none; }
+.autonomous-panel__switch-track {
+    width: 44px; height: 24px; border-radius: 999px;
+    background: rgba(148, 163, 184, 0.25);
+    position: relative; transition: background 180ms ease;
+    border: 1px solid rgba(148, 163, 184, 0.40);
+}
+.autonomous-panel__switch-track::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #f1f5f9; transition: left 180ms ease;
+}
+.autonomous-panel__switch input:checked + .autonomous-panel__switch-track {
+    background: rgba(34, 197, 94, 0.55);
+    border-color: rgba(34, 197, 94, 0.70);
+}
+.autonomous-panel__switch input:checked + .autonomous-panel__switch-track::after {
+    left: 22px; background: #f0fdf4;
+}
+.autonomous-panel__switch-label { font-weight: 600; letter-spacing: 0.04em; font-size: 12px; }
+.autonomous-panel__controls {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.autonomous-panel__field {
+    display: grid; gap: 4px; font-size: 12px; color: var(--ink-2, #9ca3af);
+}
+.autonomous-panel__field select,
+.autonomous-panel__field input {
+    background: var(--surface-1, #0b1220); color: var(--ink-1, #e4e4e4);
+    border: 1px solid rgba(148, 163, 184, 0.25); border-radius: 6px;
+    padding: 8px 10px; font-size: 13px;
+}
+.autonomous-panel__stats {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+}
+.autonomous-panel__stat {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 10px 12px; border-radius: 6px;
+    background: rgba(148, 163, 184, 0.06);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+}
+.autonomous-panel__stat span { font-size: 11px; color: var(--ink-2, #9ca3af); text-transform: uppercase; letter-spacing: 0.06em; }
+.autonomous-panel__stat strong { font-size: 14px; font-weight: 600; }
+.autonomous-panel__last-title { font-size: 13px; color: var(--ink-2, #9ca3af); margin-top: 4px; }
+.autonomous-panel__last-title em { color: var(--acc-cyan, #6ee7ff); font-style: normal; }
+.autonomous-panel__steps { padding-left: 20px; display: grid; gap: 6px; color: var(--ink-2, #9ca3af); font-size: 13px; }
+.autonomous-panel__steps li { line-height: 1.5; }
+
+.dna__feed-card__caption {
+    margin: 0;
+    color: var(--ink-1, #e4e4e4);
+    font-size: 13px;
+    line-height: 1.42;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.dna__feed-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.dna__feed-card__tag {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    color: rgba(110, 231, 255, 0.85);
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(110, 231, 255, 0.06);
+    border: 1px solid rgba(110, 231, 255, 0.18);
+}
+.dna__feed-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 2px;
+}
+.dna__feed-card__action {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: transparent;
+    border: 0;
+    padding: 4px 6px;
+    color: rgba(255, 255, 255, 0.65);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: color 160ms ease, background-color 160ms ease, transform 120ms ease;
+}
+.dna__feed-card__action:hover {
+    color: var(--ink-0, #fff);
+    background: rgba(255, 255, 255, 0.04);
+}
+.dna__feed-card__action:active { transform: scale(0.96); }
+.dna__feed-card__action svg { display: block; }
+.dna__feed-card__action.is-adopted {
+    color: #ff6b9d;
+}
+.dna__feed-card__action.is-adopted svg {
+    fill: currentColor;
+    stroke: currentColor;
+}
+
+/* Proposal card variant — slightly tighter so it doesn't dominate
+ * the chat row when a fresh /upgrade proposal lands. */
+.upgrade-proposal-card .dna__feed-card__social {
+    padding: 8px 10px 10px;
+    background: rgba(0, 0, 0, 0.20);
+}
+
+/* Community-upgrades grid variant — sit flush at the bottom of the card. */
+.upgrade-card .dna__feed-card__social {
+    border-bottom-left-radius: inherit;
+    border-bottom-right-radius: inherit;
+}
+.upgrade-card .dna__feed-card__caption {
+    -webkit-line-clamp: 3;
+}
+
+/* ── Comment thread (patch detail page) ─────────────────────────── */
+.upgrade-detail__comments { margin-top: var(--sp-5); }
+.upgrade-detail__comment-form {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-3);
+}
+.upgrade-detail__comment-input {
+    flex: 1;
+    min-height: 56px;
+    max-height: 200px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--ink-1, #e4e4e4);
+    border: 1px solid rgba(110, 231, 255, 0.16);
+    border-radius: 6px;
+    font-family: var(--font-display, 'Inter'), system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.45;
+    resize: vertical;
+}
+.upgrade-detail__comment-input:focus {
+    outline: none;
+    border-color: rgba(110, 231, 255, 0.55);
+    background: rgba(255, 255, 255, 0.06);
+}
+.upgrade-detail__comments-empty {
+    padding: var(--sp-3) 0;
+    font-style: italic;
+}
+.upgrade-detail__comments-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+}
+.upgrade-detail__comment {
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.25);
+    border-left: 2px solid rgba(110, 231, 255, 0.32);
+    border-radius: 0 6px 6px 0;
+}
+.upgrade-detail__comment-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+.upgrade-detail__comment-author {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 11px;
+    color: var(--acc-cyan, #6ee7ff);
+    letter-spacing: 0.04em;
+}
+.upgrade-detail__comment-time {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.45);
+}
+.upgrade-detail__comment-body {
+    margin: 0;
+    color: var(--ink-1, #e0e0e0);
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* (The master "Changes · ON/OFF" toggle moved to the site-wide lobby
+ *  bar at the bottom of the page — see .lobby-bar__changes-toggle in
+ *  styles/shell.css. The legacy panel-footer styles that were here
+ *  have been removed.) */
+
+/* ═══ Mobile rules (3-tier contract; see tokens.css) ═══
+ * .dna__strip is intentionally a 200vw swipe carrier at ≤720px (see L1047);
+ * the rules below cover the remaining offenders: card grids, DNA controls,
+ * floating toolbar, and the upgrade-demo author overflow. */
+@media (max-width: 640px) {
+    /* Single-column card grid */
+    .upgrades-feed__grid,
+    .creator-profile__grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    /* DNA controls strip: stack the search/filter/action triple */
+    .dna__controls-body {
+        grid-template-columns: 1fr;
+        gap: var(--sp-2);
+    }
+    /* Floating preview toolbar: stop bleeding past the viewport */
+    .upgrade-toolbar {
+        top: 8px;
+        left: 8px;
+        right: 8px;
+        transform: translateY(-8px);
+        width: auto;
+        max-width: calc(100vw - 16px);
+        gap: 8px;
+        padding: 8px 10px;
+        font-size: 11px;
+        flex-wrap: wrap;
+    }
+    .upgrade-toolbar.is-visible { transform: translateY(0); }
+    .upgrade-toolbar__btn { padding: 5px 9px; font-size: 10.5px; }
+    /* Author chip in the demo-video chrome — allow it to ellipsis-truncate
+       within whatever space is left after the rec dot + timer */
+    .upgrade-demo-video__author { min-width: 0; flex: 1 1 60px; }
+}
+
+@media (max-width: 360px) {
+    .upgrades-feed__chip {
+        font-size: 10.5px;
+        padding: 4px 8px;
+    }
+    .upgrade-toolbar__label { gap: 4px; flex-wrap: wrap; }
+}
+
+/* ═══ Mobile DNA Feed — TikTok / Reels full-screen story mode ═══
+ * On phones the DNA Feed is the default landing surface (router primes
+ * #/main at ≤640px). The desktop "chart + feed" split — which exists at
+ * ≤720px as a 200vw horizontal swipe carrier — is overridden here so
+ * the feed alone owns the viewport, with vertical scroll-snap making
+ * each card snap to a full screen the way Reels / TikTok / Stories do.
+ *
+ * Key structural decisions:
+ *   - The panel itself is the scroll container (overflow-y:auto +
+ *     scroll-snap-y). This removes the need to chain heights down
+ *     through .dna → .dna__strip → .dna__feed → .dna__feed-rail →
+ *     .dna__feed-rail__list, which was the bug in the first attempt
+ *     (display:block + height:100% on a parent with no explicit height
+ *     just collapses).
+ *   - The panel chrome (header with "MAIN" + close X) shrinks to a
+ *     floating glass close-only chip so the story art owns the screen.
+ *   - The chart pane (.dna__main) is hidden — feed is the surface.
+ *   - The before/after demo-video stage fills the entire card so the
+ *     patch's actual visual effect is the "video" content.
+ *
+ * Wins over the ≤720px carrier rule at L1047 by being later in the
+ * cascade and matching at a narrower width.
+ *
+ * Scoped to the main-branch panel so other panels keep their chrome. */
+@media (max-width: 640px) {
+    /* ─── Right wing expands to full screen when Feed pane is active ───
+       The wing is normally a small floating overlay (220px) on phones.
+       When the user opens the DNA social feed via the right-arrow, take
+       over the whole viewport so the cards have room to live as full-
+       screen stories. Other panes (Activity/To-Do/Topics) keep the
+       existing floating overlay since they're list-based, not media. */
+    body[data-active-pane="feed"] .lobby-wing.lobby-wing--right {
+        top: var(--ticker-h);
+        left: 0;
+        right: 0;
+        width: 100vw;
+        max-width: 100vw;
+        min-width: 0;
+        height: calc(100dvh - var(--ticker-h) - var(--nav-h));
+        max-height: none;
+        min-height: 0;
+        background: #000;
+        padding: 0;
+    }
+    /* The feed pane fills the wing; the rail inside is the scroll-snap
+       container that drives card-by-card vertical paging. */
+    body[data-active-pane="feed"] .lobby-wing--right [data-tab-panel="feed"] {
+        display: block;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        background: transparent;
+        border: 0;
+    }
+    body[data-active-pane="feed"] .lobby-wing--right .dna__feed {
+        display: block;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+    }
+    body[data-active-pane="feed"] .lobby-wing--right .dna__feed-rail {
+        height: 100%;
+    }
+    body[data-active-pane="feed"] .lobby-wing--right .dna__feed-rail__list {
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        height: 100%;
+        gap: 0;
+        padding: 0;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    body[data-active-pane="feed"] .lobby-wing--right .dna__feed-rail__list::-webkit-scrollbar {
+        width: 0; height: 0; display: none;
+    }
+    body[data-active-pane="feed"] .lobby-wing--right .dna__feed-rail__empty {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        font-size: 14px;
+    }
+    /* Hide the bubble titles strip while in feed mode — the feed owns
+       the viewport, and the close arrow does the job of exiting back
+       to the lobby. */
+    body[data-active-pane="feed"] .lobby-stage__bubble-titles {
+        display: none;
+    }
+
+    /* ─── Each card is one full screen and snaps ─── */
+    .dna__feed-card {
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        height: 100dvh;
+        position: relative;
+        background: #000;
+        display: block;
+    }
+    /* Video fills the full card; the underlying demo stage uses
+       aspect-ratio: auto + height: 100% so it spans floor-to-ceiling. */
+    .dna__feed-card__video {
+        aspect-ratio: auto;
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        box-shadow: none;
+        background: #04060a;
+    }
+    .dna__feed-card__video .upgrade-demo-video {
+        width: 100%;
+        height: 100%;
+    }
+    .dna__feed-card__video .upgrade-demo-video__stage {
+        aspect-ratio: auto;
+        height: 100%;
+        width: 100%;
+        flex: 1;
+        min-height: 0;
+    }
+    /* SVG mock fills the stage (was xMidYMid meet which letterboxed at
+       portrait — we override the preserveAspectRatio via CSS by giving
+       the parent more breathing room and using object-fit-style scaling
+       via transform; SVGs ignore object-fit). */
+    .dna__feed-card__video .upgrade-demo-video__svg {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+    }
+    /* Suppress the REC/timer chrome at the top of the demo — replaced by
+       the patch's own story chrome (title + author overlay). */
+    .dna__feed-card__video .upgrade-demo-video__chrome { display: none; }
+    /* Mode toggle (slider/cycle/split) floats top-right of card */
+    .upgrade-demo-video__modes {
+        position: absolute;
+        top: calc(env(safe-area-inset-top, 0px) + 56px);
+        right: 12px;
+        z-index: 3;
+        background: rgba(0,0,0,0.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: 4px;
+        border-radius: 999px;
+    }
+    /* Pulse the slider handle so users know it's interactive */
+    .upgrade-demo-video__slider-handle {
+        animation: dna-feed-handle-pulse 2.4s ease-in-out infinite;
+    }
+    /* Merged star: top-left chip */
+    .dna__feed-card__merged {
+        position: absolute;
+        top: calc(env(safe-area-inset-top, 0px) + 56px);
+        left: 12px;
+        z-index: 3;
+        padding: 5px 10px;
+        background: rgba(245, 158, 11, 0.18);
+        color: #fbbf24;
+        border: 1px solid rgba(245, 158, 11, 0.55);
+        border-radius: 999px;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        backdrop-filter: blur(8px);
+    }
+
+    /* ─── Social footer overlays the bottom of the card ─── */
+    .dna__feed-card__social {
+        position: absolute;
+        left: 0;
+        right: 64px;          /* leave the right edge for the actions stack */
+        bottom: 0;
+        padding: 60px 16px calc(20px + env(safe-area-inset-bottom, 0px)) 16px;
+        background: linear-gradient(180deg,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0.55) 45%,
+            rgba(0, 0, 0, 0.88) 100%);
+        border-top: 0;
+        gap: 8px;
+        z-index: 2;
+    }
+    .dna__feed-card__byline { font-size: 13px; color: #fff; }
+    .dna__feed-card__handle { color: #fff; font-weight: 700; }
+    .dna__feed-card__title {
+        margin: 0;
+        color: #fff;
+        font-family: var(--font-display);
+        font-size: 19px;
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    }
+    .dna__feed-card__caption {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 14px;
+        line-height: 1.35;
+        -webkit-line-clamp: 3;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    }
+    .dna__feed-card__tags { gap: 4px; }
+    .dna__feed-card__tag {
+        font-size: 10.5px;
+        padding: 3px 8px;
+        background: rgba(255, 255, 255, 0.10);
+        border-color: rgba(255, 255, 255, 0.22);
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    /* ─── Action stack on the right edge (TikTok signature) ─── */
+    .dna__feed-card__actions {
+        position: absolute;
+        right: 10px;
+        bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+        margin-top: 0;
+        flex-direction: column;
+        gap: 18px;
+        z-index: 3;
+        align-items: center;
+    }
+    .dna__feed-card__action {
+        flex-direction: column;
+        gap: 3px;
+        background: rgba(0, 0, 0, 0.40);
+        padding: 10px;
+        border-radius: 999px;
+        color: #fff;
+        font-size: 10.5px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        min-width: 44px;
+        text-align: center;
+    }
+    .dna__feed-card__action:hover { background: rgba(0, 0, 0, 0.55); }
+    .dna__feed-card__action.is-adopted {
+        background: rgba(255, 107, 157, 0.25);
+        color: #ff8fb3;
+    }
+    .dna__feed-card__action svg { width: 24px; height: 24px; }
+
+    /* ─── Suppress chart-pane / carrier UI ─── */
+    .dna__feed-expand { display: none; }
+    .dna__swipe-hint { display: none !important; }
+    .dna__controls { display: none; }
+    .dna__feed-card__adopters,
+    .dna__feed-card__surface-dot,
+    .dna__feed-card__author-pill { display: none; }
+}
+
+@keyframes dna-feed-handle-pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+    50%      { transform: translate(-50%, -50%) scale(1.08); box-shadow: 0 0 0 12px rgba(255,255,255,0); }
+}
+
+@media (max-width: 360px) {
+    .dna__feed-card__actions { gap: 16px; right: 8px; }
+    .dna__feed-card__action { padding: 9px; min-width: 40px; font-size: 10px; }
+    .dna__feed-card__action svg { width: 22px; height: 22px; }
+    .dna__feed-card__caption { font-size: 13px; }
+    .dna__feed-card__social { padding: 50px 14px calc(16px + env(safe-area-inset-bottom, 0px)) 14px; right: 56px; }
+}

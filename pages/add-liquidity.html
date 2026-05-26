@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Liquidity | DexHero</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <style>
+        .utility-container { max-width: 520px; margin: 0 auto; }
+
+        .utility-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+        }
+
+        .utility-header { text-align: center; margin-bottom: 32px; }
+        .utility-icon {
+            width: 72px; height: 72px;
+            margin: 0 auto 16px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(6,182,212,0.1); border-radius: 50%;
+        }
+        .utility-icon svg { width: 32px; height: 32px; color: var(--accent-cyan); }
+        .utility-header h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        .utility-header p  { font-size: 14px; color: var(--text-secondary); }
+
+        .form-group { margin-bottom: 24px; }
+        .form-group label {
+            display: block; font-size: 14px; font-weight: 500;
+            margin-bottom: 8px; color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%; padding: 14px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary); font-size: 14px;
+            font-family: inherit; outline: none; box-sizing: border-box;
+        }
+        .form-input:focus { border-color: var(--accent-cyan); }
+
+        /* Chain buttons */
+        .chain-selector { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 24px; }
+        .chain-btn {
+            padding: 12px; border-radius: 8px; color: white;
+            cursor: pointer; transition: all 0.2s; text-align: center;
+            border: 2px solid transparent; background: rgba(255,255,255,0.05);
+        }
+        .chain-btn .chain-name  { font-weight: 600; font-size: 13px; }
+        .chain-btn .chain-sub   { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+        /* sol-btn styles removed — Solana is not a liquidity chain */
+        .chain-btn.eth-btn, .chain-btn.base-btn { border-color: rgba(59,130,246,0.25); }
+        .chain-btn.eth-btn.active, .chain-btn.base-btn.active { background: rgba(59,130,246,0.2); border-color: rgba(59,130,246,0.5); }
+        .chain-btn.bnb-btn      { border-color: rgba(251,191,36,0.25); }
+        .chain-btn.bnb-btn.active { background: rgba(251,191,36,0.2); border-color: rgba(251,191,36,0.5); }
+
+        /* Amount input */
+        .amount-input {
+            display: flex;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+        }
+        .amount-input input {
+            flex: 1; padding: 14px 16px;
+            background: transparent; border: none;
+            color: var(--text-primary); font-size: 16px; outline: none;
+        }
+        .max-btn {
+            padding: 8px 12px; margin: 6px;
+            background: rgba(6,182,212,0.2); border: none;
+            border-radius: 6px; color: var(--accent-cyan);
+            font-size: 12px; font-weight: 600; cursor: pointer;
+        }
+        .amount-currency {
+            padding: 14px 16px;
+            color: var(--text-muted);
+            border-left: 1px solid var(--border-color);
+        }
+
+        /* Info box */
+        .info-box {
+            padding: 16px;
+            background: rgba(6,182,212,0.05);
+            border: 1px solid rgba(6,182,212,0.2);
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        .info-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+        .info-row .label { color: var(--text-muted); }
+        .info-row .value { color: var(--text-primary); font-weight: 500; }
+
+        /* Submit */
+        .btn-submit {
+            width: 100%; padding: 16px;
+            background: var(--gradient-primary);
+            border: none; border-radius: 12px;
+            color: white; font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: opacity 0.2s;
+        }
+        .btn-submit:hover:not(:disabled) { opacity: 0.88; }
+        .btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        /* Token details strip */
+        .token-details-strip {
+            display: none; margin-bottom: 20px;
+            padding: 14px 16px;
+            background: rgba(6,182,212,0.05);
+            border: 1px solid rgba(6,182,212,0.2);
+            border-radius: 12px;
+        }
+        .token-details-strip .detail-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
+        .token-details-strip .detail-row:last-child { margin-bottom: 0; }
+        .token-details-strip .detail-label { color: var(--text-muted); }
+        .token-details-strip .detail-val   { color: var(--text-primary); font-weight: 500; font-family: monospace; font-size: 12px; }
+
+        /* EVM info card */
+        .evm-info-card {
+            display: none;
+            padding: 24px;
+            background: rgba(59,130,246,0.05);
+            border: 1px solid rgba(59,130,246,0.2);
+            border-radius: 14px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .evm-info-card .evm-icon {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            background: rgba(59,130,246,0.15);
+            color: #60a5fa;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 14px;
+        }
+        .evm-info-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+        .evm-info-card p  { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; }
+        .evm-dex-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 10px 20px;
+            background: rgba(59,130,246,0.2);
+            border: 1px solid rgba(59,130,246,0.4);
+            border-radius: 9px;
+            color: #60a5fa; font-weight: 600; font-size: 13px;
+            text-decoration: none; transition: all 0.2s;
+        }
+        .evm-dex-link:hover { background: rgba(59,130,246,0.3); }
+
+        /* Spinner */
+        .spinner-inline {
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+            border-radius: 50%; animation: spin 0.7s linear infinite;
+            vertical-align: -3px; margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .utility-container { padding: 0 12px; }
+            .utility-card { padding: 20px; }
+            .chain-selector { grid-template-columns: repeat(2,1fr); }
+            .utility-header h1 { font-size: 20px; }
+        }
+        @media (max-width: 480px) {
+            .utility-card { padding: 16px; border-radius: 14px; }
+            .utility-header { margin-bottom: 20px; }
+            .utility-header h1 { font-size: 18px; }
+            .info-box { padding: 12px; }
+            .btn-submit { padding: 14px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <div class="utility-container">
+            <div class="utility-card">
+
+                <div class="utility-header">
+                    <div class="utility-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                    <h1>Add Liquidity</h1>
+                    <p>Add liquidity to your token's trading pool</p>
+                </div>
+
+                <!-- Chain Selector -->
+                <div class="form-group">
+                    <label>Select Blockchain</label>
+                    <div class="chain-selector">
+                        <button class="chain-btn eth-btn active"  data-chain="ethereum" onclick="switchToChain('ethereum')" type="button"><div class="chain-name">Ethereum</div><div class="chain-sub">Uniswap V3</div></button>
+                        <button class="chain-btn base-btn"        data-chain="base"     onclick="switchToChain('base')"     type="button"><div class="chain-name">Base</div><div class="chain-sub">Uniswap V3</div></button>
+                        <button class="chain-btn bnb-btn"         data-chain="bnb"      onclick="switchToChain('bnb')"      type="button"><div class="chain-name">BNB</div><div class="chain-sub">PancakeSwap</div></button>
+                    </div>
+                </div>
+
+                <!-- EVM info card -->
+                <div class="evm-info-card" id="evm-ui">
+                    <div class="evm-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                            <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                    </div>
+                    <h3 id="evm-dex-name">Manage on Uniswap V3</h3>
+                    <p>EVM liquidity is managed directly through the DEX. Use the link below to add or remove liquidity for your token's pool on <span id="evm-chain-label">Ethereum</span>.</p>
+                    <a href="#" id="evm-dex-link" target="_blank" rel="noopener noreferrer" class="evm-dex-link">
+                        Open <span id="evm-dex-label">Uniswap V3</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                            <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                    </a>
+                </div>
+
+                <!-- Submit -->
+                <button class="btn-submit" id="add-liquidity-btn" disabled style="display:none;">
+                    Connect Wallet to Start
+                </button>
+
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="../js/token-creation.js"></script>
+    <script src="../js/unified-wallet.js"></script>
+    <script src="../js/blockchain-integration.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+
+    <script>
+    let activeChain = 'ethereum';
+
+    //  Chain switching (EVM only)
+    const EVM_CONFIG = {
+        ethereum: { label: 'Ethereum', dex: 'Uniswap V3', url: 'https://app.uniswap.org/#/add' },
+        base:     { label: 'Base',     dex: 'Uniswap V3', url: 'https://app.uniswap.org/#/add' },
+        bnb:      { label: 'BNB Chain',dex: 'PancakeSwap',url: 'https://pancakeswap.finance/add' }
+    };
+
+    function switchToChain(chain) {
+        activeChain = chain;
+
+        document.querySelectorAll('.chain-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.chain === chain);
+        });
+
+        document.getElementById('evm-ui').style.display = 'block';
+
+        const cfg = EVM_CONFIG[chain] || EVM_CONFIG.ethereum;
+        document.getElementById('evm-dex-name').textContent    = `Manage on ${cfg.dex}`;
+        document.getElementById('evm-chain-label').textContent = cfg.label;
+        document.getElementById('evm-dex-label').textContent   = cfg.dex;
+        document.getElementById('evm-dex-link').href           = cfg.url;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.DexHeroSupabase) window.DexHeroSupabase.init();
+        // Show EVM UI by default
+        switchToChain('ethereum');
+    });
+    </script>
+</body>
+</html>

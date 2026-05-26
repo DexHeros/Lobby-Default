@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project WarpStream | DexHero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <style>
+        .cloud-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        .cloud-hero {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .cloud-hero h1 {
+            font-size: 36px;
+            font-weight: 800;
+            margin: 0 0 12px;
+            line-height: 1.2;
+        }
+
+        .cloud-hero p {
+            font-size: 17px;
+            color: rgba(255,255,255,0.5);
+            max-width: 520px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .how-it-works {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 56px;
+        }
+
+        @media (max-width: 640px) { .how-it-works { grid-template-columns: 1fr; } }
+
+        .step-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 28px 20px;
+            text-align: center;
+        }
+
+        .step-num {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2563eb, #2563eb);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .step-card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0 0 8px;
+        }
+
+        .step-card p {
+            font-size: 13px;
+            color: rgba(255,255,255,0.45);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .audience-section {
+            margin-bottom: 48px;
+        }
+
+        .audience-section h2 {
+            font-size: 22px;
+            font-weight: 800;
+            margin: 0 0 20px;
+        }
+
+        .audience-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 16px;
+        }
+
+        .audience-card h3 {
+            font-size: 17px;
+            font-weight: 700;
+            margin: 0 0 8px;
+        }
+
+        .audience-card p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+            margin: 0 0 16px;
+            line-height: 1.6;
+        }
+
+        .audience-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .audience-card li {
+            padding: 6px 0;
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .audience-card li::before {
+            content: '\2713';
+            color: #4ade80;
+            margin-right: 10px;
+            font-weight: 700;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+
+        @media (max-width: 540px) { .stats-bar { grid-template-columns: repeat(2, 1fr); } }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-item .big {
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .stat-item .label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            margin-top: 4px;
+        }
+
+        .faq-section h2 {
+            font-size: 22px;
+            font-weight: 800;
+            margin: 0 0 20px;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding: 16px 0;
+        }
+
+        .faq-item h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0 0 6px;
+        }
+
+        .faq-item p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .cta-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary-link {
+            display: inline-flex;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #2563eb, #2563eb);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .btn-secondary-link {
+            display: inline-flex;
+            padding: 14px 28px;
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <a href="/" style="display:inline-flex;align-items:center;gap:6px;color:var(--text-secondary);font-size:13px;text-decoration:none;margin-bottom:24px;opacity:0.7;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Home
+        </a>
+
+        <div class="cloud-container">
+
+            <!-- Hero -->
+            <div class="cloud-hero">
+                <h1>Play Any Game on Any Device</h1>
+                <p>Project WarpStream is DexHero's decentralized streaming network. Stream high-quality games from community-powered GPU servers. No downloads, no expensive hardware.</p>
+            </div>
+
+            <!-- How It Works -->
+            <div class="how-it-works">
+                <div class="step-card">
+                    <div class="step-num">1</div>
+                    <h3>Pick a Game</h3>
+                    <p>Browse games on DexHero. Games with the cloud badge are available for streaming from nearby servers.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">2</div>
+                    <h3>Auto-Matched</h3>
+                    <p>Our matchmaker finds the closest capable server. Connection established in seconds with low latency.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">3</div>
+                    <h3>Play Instantly</h3>
+                    <p>The server renders the game and streams it to your browser in real-time. Full quality, any device.</p>
+                </div>
+            </div>
+
+            <!-- Network Stats -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="big" id="stat-nodes">--</div>
+                    <div class="label">Active Servers</div>
+                </div>
+                <div class="stat-item">
+                    <div class="big" id="stat-games">--</div>
+                    <div class="label">Cloud Games</div>
+                </div>
+                <div class="stat-item">
+                    <div class="big" id="stat-latency">--</div>
+                    <div class="label">Avg Latency</div>
+                </div>
+                <div class="stat-item">
+                    <div class="big" id="stat-hours">--</div>
+                    <div class="label">Compute-Hours Served</div>
+                </div>
+            </div>
+
+            <!-- For Players -->
+            <div class="audience-section">
+                <h2>For Players</h2>
+                <div class="audience-card">
+                    <h3>No Hardware Requirements</h3>
+                    <p>Your game runs on a powerful GPU server — not your device. A browser and internet connection is all you need.</p>
+                    <ul>
+                        <li>Stream at 1080p60 from any modern browser</li>
+                        <li>Works on laptops, tablets, Chromebooks</li>
+                        <li>No downloads — play instantly</li>
+                        <li>Automatic quality adjustment based on your connection</li>
+                        <li>Fall back to local play if no servers available</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- For Server Hosts -->
+            <div class="audience-section">
+                <h2>For Server Hosts</h2>
+                <div class="audience-card">
+                    <h3>Earn With Your GPU</h3>
+                    <p>Turn idle compute into permanent, tradeable DexHeros you fully own. The longer you host, the rarer — and more valuable — your unlock.</p>
+                    <ul>
+                        <li>Play Pass required — lifetime access to host across every DexHero network, present and future</li>
+                        <li>Earn Unlocked DexHero's — freely transfer, trade, or hold them as the ecosystem grows</li>
+                        <li>Progressive rarity: Common at ~4 months (4h/day) up to Legendary at 13+ months</li>
+                        <li>Higher rarities command significantly higher market value</li>
+                        <li>Host on unlimited DexHero networks with a single Pass — compound your earnings</li>
+                        <li>Early hosts build reputation and claim the top of the leaderboard before the network scales</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- FAQ -->
+            <div class="faq-section">
+                <h2>Frequently Asked Questions</h2>
+
+                <div class="faq-item">
+                    <h4>What internet speed do I need to play?</h4>
+                    <p>15 Mbps download for 720p30, 25 Mbps for 1080p60. Most broadband connections work great. We auto-adjust quality based on your connection.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>What if there are no servers near me?</h4>
+                    <p>You can download the game and play locally. WarpStream is optional — it's available when servers are nearby, and you always have the local fallback.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Is my data safe?</h4>
+                    <p>Servers only receive your game input (keyboard/mouse) and stream video back. They never access your wallet, files, or personal data. All sessions are encrypted via WebRTC.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>How much can I earn as a server host?</h4>
+                    <p>You earn compute-hours while serving real players. After 300 hours (~4 months at 4h/day), you can unlock a Common-rarity DexHero. Or keep providing to unlock rarer, more valuable tiers.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>What hardware do I need to host a server?</h4>
+                    <p>A high-end discrete GPU (RTX 3080 / RTX 4070 Ti / RX 7800 XT or better) with 12 GB+ VRAM, an 8-core CPU, 32 GB system RAM, NVMe SSD, a wired 50+ Mbps upload connection, and a recent hardware encoder (NVENC Ampere+, AMF RDNA3+, or QSV Gen12+). Our pre-flight check verifies every requirement before your server goes live.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Can I game the system?</h4>
+                    <p>Our six-layer anti-fraud system detects self-streaming, fake players, and bot activity. It checks latency, player diversity, input entropy, geographic separation, session quality, and cross-session patterns.</p>
+                </div>
+            </div>
+
+            <!-- CTAs -->
+            <div class="cta-row">
+                <a href="/pages/all-games.html" class="btn-primary-link">Browse Games</a>
+                <a href="/pages/node-onboarding.html" class="btn-secondary-link">Become a Server Host</a>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="../components/footer.js"></script>
+    <script>
+        async function loadStats() {
+            try {
+                const resp = await fetch('/api/network/stats');
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (data.totalNodes) document.getElementById('stat-nodes').textContent = data.totalNodes.toLocaleString();
+                if (data.cloudGames) document.getElementById('stat-games').textContent = data.cloudGames.toLocaleString();
+                if (data.avgLatency) document.getElementById('stat-latency').textContent = `${data.avgLatency}ms`;
+                if (data.totalComputeMinutes) {
+                    const h = data.totalComputeMinutes / 60;
+                    document.getElementById('stat-hours').textContent =
+                        h > 1000000 ? `${(h / 1000000).toFixed(1)}M` :
+                        h > 1000    ? `${(h / 1000).toFixed(0)}K` :
+                                      h.toFixed(1);
+                }
+            } catch {}
+        }
+        document.addEventListener('DOMContentLoaded', loadStats);
+    </script>
+</body>
+</html>

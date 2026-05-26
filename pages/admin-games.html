@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Moderation | DexHero Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="/js/utils.js"></script>
+    <style>
+        .admin-container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 20px 80px;
+        }
+
+        .admin-header {
+            margin-bottom: 32px;
+        }
+
+        .admin-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .admin-header p {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        /* Auth gate */
+        #auth-gate {
+            text-align: center;
+            padding: 80px 24px;
+        }
+
+        #auth-gate h2 {
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+
+        #auth-gate p {
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+        }
+
+        .btn-connect {
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #2563eb, #2563eb);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-connect:hover { opacity: 0.9; }
+
+        /* Filter tabs */
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0;
+        }
+
+        .filter-tab {
+            padding: 8px 18px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.15s;
+        }
+
+        .filter-tab.active {
+            color: var(--text-primary);
+            border-bottom-color: #2563eb;
+        }
+
+        .filter-tab .badge {
+            display: inline-block;
+            background: #2563eb22;
+            color: #60a5fa;
+            font-size: 11px;
+            padding: 1px 6px;
+            border-radius: 10px;
+            margin-left: 6px;
+            font-weight: 600;
+        }
+
+        /* Application cards */
+        .app-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .app-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 16px;
+            object-fit: cover;
+            background: var(--bg-tertiary);
+        }
+
+        .app-icon-placeholder {
+            width: 72px;
+            height: 72px;
+            border-radius: 16px;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .app-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .app-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .meta-pill {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .meta-pill.tier-bronze { border-color: #92400e33; color: #d97706; }
+        .meta-pill.tier-silver { border-color: #33333388; color: #94a3b8; }
+        .meta-pill.tier-gold   { border-color: #92400e55; color: #f59e0b; }
+
+        .app-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 110px;
+        }
+
+        .btn-action {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            border: none;
+        }
+
+        .btn-block {
+            background: transparent;
+            color: #f87171;
+            border: 1px solid #f8717144 !important;
+        }
+
+        .btn-block:hover { background: #f8717111; }
+
+        .btn-unblock {
+            background: #16a34a;
+            color: #fff;
+        }
+
+        .btn-unblock:hover { background: #15803d; }
+
+        .btn-deactivate {
+            background: transparent;
+            color: #fb923c;
+            border: 1px solid #fb923c44 !important;
+        }
+
+        .btn-deactivate:hover { background: #fb923c11; }
+
+        .btn-reactivate {
+            background: #16a34a;
+            color: #fff;
+        }
+
+        .btn-reactivate:hover { background: #15803d; }
+
+        .btn-preview {
+            padding: 6px 12px;
+            background: transparent;
+            color: #2563eb;
+            border: 1px solid #2563eb44 !important;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-preview:hover { background: #2563eb11; }
+
+        .btn-action:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Countdown badge */
+        .countdown-badge {
+            display: inline-block;
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 6px;
+            background: #2563eb22;
+            color: #60a5fa;
+            border: 1px solid #2563eb44;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .countdown-badge.expired {
+            background: #16a34a22;
+            color: #4ade80;
+            border-color: #16a34a44;
+        }
+
+        /* Status badges */
+        .status-badge {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .status-active      { background: #16a34a22; color: #4ade80; }
+        .status-pending     { background: #2563eb22; color: #60a5fa; }
+        .status-blocked     { background: #dc262622; color: #f87171; }
+        .status-deactivated { background: #33333344; color: #94a3b8; }
+
+        /* Admin notes */
+        .admin-notes-box {
+            font-size: 13px;
+            color: #f87171;
+            background: #f8717111;
+            border-left: 3px solid #f87171;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px;
+            width: 90%;
+            max-width: 440px;
+        }
+
+        .modal-box h3 { font-size: 18px; margin-bottom: 8px; }
+        .modal-box p  { color: var(--text-secondary); font-size: 14px; margin-bottom: 16px; }
+
+        .modal-box textarea {
+            width: 100%;
+            min-height: 100px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            padding: 10px 12px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+        }
+
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+        .modal-cancel {
+            padding: 8px 18px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .modal-confirm-block {
+            padding: 8px 18px;
+            background: #dc2626;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* States */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .page-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .page-btn.active { border-color: #2563eb; color: #60a5fa; }
+
+        @media (max-width: 600px) {
+            .app-card { grid-template-columns: 1fr; }
+            .app-actions { flex-direction: row; flex-wrap: wrap; }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <div class="admin-container">
+
+            <!-- Auth Gate -->
+            <div id="auth-gate">
+                <h2>Admin Access Required</h2>
+                <p>Connect with the admin wallet to manage game moderation.</p>
+                <button class="btn-connect" onclick="connectAndAuth()">Connect Wallet</button>
+                <p id="auth-error" style="color:#f87171;font-size:13px;margin-top:12px;display:none"></p>
+            </div>
+
+            <!-- Dashboard (hidden until auth) -->
+            <div id="dashboard" style="display:none">
+                <div class="admin-header">
+                    <h1>Game <span class="gradient-text">Moderation</span></h1>
+                    <p>Monitor and moderate games in the DexHero ecosystem.</p>
+                </div>
+
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-status="pending" onclick="switchTab(this)">
+                        Pending <span class="badge" id="badge-pending">—</span>
+                    </button>
+                    <button class="filter-tab" data-status="active" onclick="switchTab(this)">
+                        Active <span class="badge" id="badge-active">—</span>
+                    </button>
+                    <button class="filter-tab" data-status="blocked" onclick="switchTab(this)">
+                        Blocked <span class="badge" id="badge-blocked">—</span>
+                    </button>
+                    <button class="filter-tab" data-status="deactivated" onclick="switchTab(this)">
+                        Deactivated <span class="badge" id="badge-deactivated">—</span>
+                    </button>
+                </div>
+
+                <div id="apps-list"></div>
+
+                <div class="pagination" id="pagination" style="display:none">
+                    <button class="page-btn" id="btn-prev" onclick="changePage(-1)" disabled>← Prev</button>
+                    <span id="page-info" style="padding:6px 12px;color:var(--text-secondary);font-size:13px"></span>
+                    <button class="page-btn" id="btn-next" onclick="changePage(1)">Next →</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Block Modal -->
+    <div class="modal-overlay" id="block-modal">
+        <div class="modal-box">
+            <h3>Block Game</h3>
+            <p>This will prevent the game from going live. You can unblock it later to reset the 48-hour window.</p>
+            <textarea id="block-notes" placeholder="Optional: reason for blocking (shown internally only)…"></textarea>
+            <div class="modal-actions">
+                <button class="modal-cancel" onclick="closeBlockModal()">Cancel</button>
+                <button class="modal-confirm-block" onclick="confirmBlock()">Block Game</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script>
+        //  State 
+        let adminWallet = null;
+        let currentStatus = 'pending';
+        let currentPage = 1;
+        let pendingBlockId = null;
+        const PAGE_SIZE = 20;
+        const tabCounts = { pending: 0, active: 0, blocked: 0, deactivated: 0 };
+        const countdownIntervals = {};
+
+        //  Auth 
+        async function connectAndAuth() {
+            const errEl = document.getElementById('auth-error');
+            errEl.style.display = 'none';
+
+            if (typeof window.ethereum === 'undefined') {
+                errEl.textContent = 'MetaMask not detected.';
+                errEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send('eth_requestAccounts', []);
+                const signer = provider.getSigner();
+                const address = await signer.getAddress();
+                const message = `DexHero Admin Auth — ${Date.now()}`;
+                const signature = await signer.signMessage(message);
+
+                const resp = await fetch('/api/admin/games/list', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ walletAddress: address, signature, message, status: 'pending', page: 1 })
+                });
+
+                if (resp.status === 403) {
+                    errEl.textContent = 'This wallet is not the admin wallet.';
+                    errEl.style.display = 'block';
+                    return;
+                }
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    errEl.textContent = err.error || 'Server error. Check ADMIN_WALLET env var.';
+                    errEl.style.display = 'block';
+                    return;
+                }
+
+                adminWallet = address;
+                document.getElementById('auth-gate').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+
+                const data = await resp.json();
+                renderApps(data.games || [], 'pending');
+                loadTabCounts();
+            } catch (err) {
+                errEl.textContent = err.message || 'Authentication failed.';
+                errEl.style.display = 'block';
+            }
+        }
+
+        async function freshSign() {
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+            const message = `DexHero Admin Auth — ${Date.now()}`;
+            const signature = await signer.signMessage(message);
+            return { walletAddress: adminWallet, signature, message };
+        }
+
+        //  Tab counts 
+        async function loadTabCounts() {
+            for (const s of ['pending', 'active', 'blocked', 'deactivated']) {
+                try {
+                    const creds = await freshSign();
+                    const r = await fetch('/api/admin/games/list', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...creds, status: s, page: 1 })
+                    });
+                    if (r.ok) {
+                        const d = await r.json();
+                        const count = (d.games || []).length;
+                        tabCounts[s] = count === PAGE_SIZE ? `${PAGE_SIZE}+` : count;
+                        document.getElementById(`badge-${s}`).textContent = tabCounts[s];
+                    }
+                } catch (_) {}
+            }
+        }
+
+        //  Tab switching 
+        function switchTab(btn) {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            currentStatus = btn.dataset.status;
+            currentPage = 1;
+            clearCountdowns();
+            loadApps();
+        }
+
+        //  Load apps 
+        async function loadApps() {
+            const list = document.getElementById('apps-list');
+            list.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Loading…</p></div>';
+
+            try {
+                const creds = await freshSign();
+                const resp = await fetch('/api/admin/games/list', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...creds, status: currentStatus, page: currentPage })
+                });
+                const data = await resp.json();
+                renderApps(data.games || [], currentStatus);
+            } catch (err) {
+                list.innerHTML = `<div class="empty-state"><p style="color:#f87171">${err.message}</p></div>`;
+            }
+        }
+
+        //  Render 
+        function renderApps(games, status) {
+            clearCountdowns();
+            const list = document.getElementById('apps-list');
+            const pagination = document.getElementById('pagination');
+
+            if (!games.length) {
+                list.innerHTML = `<div class="empty-state"><p>No ${status} games.</p></div>`;
+                pagination.style.display = 'none';
+                return;
+            }
+
+            list.innerHTML = games.map(g => {
+                const socials = (g.social_handles || []).map(h =>
+                    `<span class="meta-pill">${escHtml(h.platform)}: ${escHtml(h.handle)}</span>`
+                ).join('');
+
+                const previewLink = g.slug
+                    ? `<a href="/pages/play-game.html?slug=${encodeURIComponent(g.slug)}" target="_blank" class="btn-preview">Preview Game ↗</a>`
+                    : '';
+
+                const goesLiveAt = g.goes_live_at ? new Date(g.goes_live_at) : null;
+                const countdownHtml = (status === 'pending' && goesLiveAt)
+                    ? `<span class="countdown-badge" id="countdown-${g.id}">…</span>`
+                    : '';
+
+                let actionsHtml = '';
+                if (status === 'pending') {
+                    actionsHtml = `
+                        <button class="btn-action btn-block" onclick="openBlockModal('${g.id}')">Block</button>
+                        <button class="btn-action btn-deactivate" onclick="deactivateGame('${g.id}')">Deactivate</button>
+                        ${previewLink}
+                    `;
+                } else if (status === 'active') {
+                    actionsHtml = `
+                        <button class="btn-action btn-deactivate" onclick="deactivateGame('${g.id}')">Deactivate</button>
+                        ${previewLink}
+                    `;
+                } else if (status === 'blocked') {
+                    actionsHtml = `
+                        <button class="btn-action btn-unblock" onclick="unblockGame('${g.id}')">Unblock</button>
+                        <button class="btn-action btn-deactivate" onclick="deactivateGame('${g.id}')">Deactivate</button>
+                        ${previewLink}
+                    `;
+                } else if (status === 'deactivated') {
+                    actionsHtml = `
+                        <button class="btn-action btn-reactivate" onclick="reactivateGame('${g.id}')">Reactivate</button>
+                        ${previewLink}
+                    `;
+                }
+
+                return `
+                <div class="app-card" id="card-${g.id}">
+                    <div class="app-info" style="display:flex;flex-direction:column;gap:12px">
+
+                        <!-- Row 1: icon + title + meta -->
+                        <div style="display:flex;gap:14px;align-items:flex-start">
+                            <div style="flex-shrink:0">
+                                ${g.icon_url
+                                    ? `<img class="app-icon" src="${escHtml(g.icon_url)}" alt="">`
+                                    : `<div class="app-icon-placeholder"></div>`}
+                            </div>
+                            <div style="flex:1;min-width:0">
+                                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+                                    <h3 style="margin:0">${escHtml(g.title)}</h3>
+                                    <span class="meta-pill tier-${g.tier}">${capitalize(g.tier)}</span>
+                                    ${g.category ? `<span class="meta-pill">${capitalize(g.category)}</span>` : ''}
+                                    <span class="status-badge status-${g.status}">${capitalize(g.status)}</span>
+                                    ${countdownHtml}
+                                </div>
+                                ${g.slug ? `<div style="font-size:12px;color:var(--text-muted,var(--text-secondary));font-family:monospace">/${g.slug}</div>` : ''}
+                                ${g.game_files_path
+                                    ? `<div style="font-size:12px;color:#4ade80;margin-top:4px"> Game files uploaded</div>`
+                                    : `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px">No game files yet</div>`}
+                            </div>
+                            ${g.cover_url
+                                ? `<img src="${escHtml(g.cover_url)}" style="width:52px;height:74px;border-radius:8px;object-fit:cover;flex-shrink:0" alt="Cover">`
+                                : ''}
+                        </div>
+
+                        <!-- Row 2: details grid -->
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;font-size:13px;padding:12px;background:var(--bg-primary,#0f1117);border-radius:8px;border:1px solid var(--border-color)">
+                            <div>
+                                <div style="color:var(--text-secondary,#64748b);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Contact</div>
+                                <div>${escHtml(g.contact_name || '—')}</div>
+                                <a href="mailto:${escHtml(g.contact_email || '')}" style="color:#2563eb;text-decoration:none;word-break:break-all">${escHtml(g.contact_email || '')}</a>
+                            </div>
+                            <div>
+                                <div style="color:var(--text-secondary,#64748b);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Wallet</div>
+                                <div style="word-break:break-all;font-family:monospace;font-size:11px">${escHtml(g.owner_wallet || '')}</div>
+                            </div>
+                            <div>
+                                <div style="color:var(--text-secondary,#64748b);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Monthly Players</div>
+                                <div>${escHtml(g.metrics_players || '—')}</div>
+                            </div>
+                            <div>
+                                <div style="color:var(--text-secondary,#64748b);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Revenue Model</div>
+                                <div>${escHtml(g.primary_revenue || '—')}</div>
+                            </div>
+                            <div>
+                                <div style="color:var(--text-secondary,#64748b);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Submitted</div>
+                                <div>${formatDate(g.created_at)}</div>
+                            </div>
+                            ${goesLiveAt ? `
+                            <div>
+                                <div style="color:var(--text-secondary,#64748b);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Goes Live</div>
+                                <div>${formatDate(g.goes_live_at)}</div>
+                            </div>` : ''}
+                        </div>
+
+                        <!-- Row 3: social handles -->
+                        ${socials ? `<div class="app-meta" style="gap:6px">${socials}</div>` : ''}
+
+                        <!-- Admin notes if present -->
+                        ${g.admin_notes ? `
+                        <div class="admin-notes-box">
+                            <strong>Admin notes:</strong> ${escHtml(g.admin_notes)}
+                        </div>` : ''}
+                    </div>
+
+                    <!-- Actions column -->
+                    <div class="app-actions" id="actions-${g.id}">
+                        ${actionsHtml}
+                    </div>
+                </div>`;
+            }).join('');
+
+            // Start countdowns for pending games
+            if (status === 'pending') {
+                games.forEach(g => {
+                    if (g.goes_live_at) startCountdown(g.id, g.goes_live_at);
+                });
+            }
+
+            // Pagination
+            const hasMore = games.length === PAGE_SIZE;
+            document.getElementById('btn-prev').disabled = currentPage === 1;
+            document.getElementById('btn-next').disabled = !hasMore;
+            document.getElementById('page-info').textContent = `Page ${currentPage}`;
+            pagination.style.display = games.length > 0 ? 'flex' : 'none';
+        }
+
+        //  Countdown 
+        function startCountdown(gameId, goesLiveAt) {
+            const target = new Date(goesLiveAt).getTime();
+            const el = document.getElementById(`countdown-${gameId}`);
+            if (!el) return;
+
+            function update() {
+                const diff = target - Date.now();
+                if (diff <= 0) {
+                    el.textContent = 'Goes live now';
+                    el.classList.add('expired');
+                    clearInterval(countdownIntervals[gameId]);
+                    return;
+                }
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                el.textContent = `Goes live in ${h}h ${m}m ${s}s`;
+            }
+
+            update();
+            countdownIntervals[gameId] = setInterval(update, 1000);
+        }
+
+        function clearCountdowns() {
+            Object.values(countdownIntervals).forEach(clearInterval);
+            Object.keys(countdownIntervals).forEach(k => delete countdownIntervals[k]);
+        }
+
+        //  Block 
+        function openBlockModal(gameId) {
+            pendingBlockId = gameId;
+            document.getElementById('block-notes').value = '';
+            document.getElementById('block-modal').classList.add('open');
+        }
+
+        function closeBlockModal() {
+            pendingBlockId = null;
+            document.getElementById('block-modal').classList.remove('open');
+        }
+
+        async function confirmBlock() {
+            if (!pendingBlockId) return;
+            const notes = document.getElementById('block-notes').value.trim();
+            const btn = document.querySelector('.modal-confirm-block');
+            btn.textContent = 'Blocking…';
+            btn.disabled = true;
+
+            try {
+                const creds = await freshSign();
+                const resp = await fetch('/api/admin/games/block', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...creds, gameId: pendingBlockId, adminNotes: notes })
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err.error || 'Request failed');
+                }
+
+                closeBlockModal();
+                fadeRemoveCard(pendingBlockId, 'pending');
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.textContent = 'Block Game';
+                btn.disabled = false;
+            }
+        }
+
+        //  Unblock 
+        async function unblockGame(gameId) {
+            setActionsLoading(gameId, 'Unblocking…');
+            try {
+                const creds = await freshSign();
+                const resp = await fetch('/api/admin/games/unblock', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...creds, gameId })
+                });
+                if (!resp.ok) throw new Error((await resp.json().catch(() => ({}))).error || 'Request failed');
+                fadeRemoveCard(gameId, 'blocked');
+            } catch (err) {
+                setActionsError(gameId, err.message);
+            }
+        }
+
+        //  Deactivate 
+        async function deactivateGame(gameId) {
+            if (!confirm('Deactivate this game? It will be hidden from the public listing.')) return;
+            setActionsLoading(gameId, 'Deactivating…');
+            try {
+                const creds = await freshSign();
+                const resp = await fetch('/api/admin/games/deactivate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...creds, gameId })
+                });
+                if (!resp.ok) throw new Error((await resp.json().catch(() => ({}))).error || 'Request failed');
+                fadeRemoveCard(gameId, currentStatus);
+            } catch (err) {
+                setActionsError(gameId, err.message);
+            }
+        }
+
+        //  Reactivate 
+        async function reactivateGame(gameId) {
+            setActionsLoading(gameId, 'Reactivating…');
+            try {
+                const creds = await freshSign();
+                const resp = await fetch('/api/admin/games/reactivate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...creds, gameId })
+                });
+                if (!resp.ok) throw new Error((await resp.json().catch(() => ({}))).error || 'Request failed');
+                fadeRemoveCard(gameId, 'deactivated');
+            } catch (err) {
+                setActionsError(gameId, err.message);
+            }
+        }
+
+        //  Helpers 
+        function fadeRemoveCard(gameId, fromStatus) {
+            const card = document.getElementById(`card-${gameId}`);
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transition = 'opacity 0.3s';
+                setTimeout(() => card.remove(), 300);
+            }
+            if (tabCounts[fromStatus] && typeof tabCounts[fromStatus] === 'number') {
+                tabCounts[fromStatus] = Math.max(0, tabCounts[fromStatus] - 1);
+                const badge = document.getElementById(`badge-${fromStatus}`);
+                if (badge) badge.textContent = tabCounts[fromStatus];
+            }
+        }
+
+        function setActionsLoading(gameId, msg) {
+            const el = document.getElementById(`actions-${gameId}`);
+            if (el) el.innerHTML = `<span style="color:var(--text-secondary);font-size:13px">${msg}</span>`;
+        }
+
+        function setActionsError(gameId, msg) {
+            const el = document.getElementById(`actions-${gameId}`);
+            if (el) el.innerHTML = `<span style="color:#f87171;font-size:12px">${escHtml(msg)}</span>`;
+        }
+
+        //  Pagination 
+        function changePage(delta) {
+            currentPage = Math.max(1, currentPage + delta);
+            loadApps();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        //  Utils 
+        function escHtml(str) {
+            return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function capitalize(s) {
+            return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        document.getElementById('block-modal').addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeBlockModal();
+        });
+    </script>
+</body>
+
+</html>

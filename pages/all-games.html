@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Browse all games registered in the DexHero ecosystem. Discover titles powered by your favorite tokens.">
+    <title>All Games | DexHero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <style>
+        .game-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 12px 30px rgba(6, 182, 212, 0.15);
+        }
+
+        .game-card-media-container {
+            height: 380px;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(59, 130, 246, 0.1));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card-cover {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .game-card:hover .game-card-cover {
+            transform: scale(1.05);
+        }
+
+        .game-card-icon-overlay {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid var(--bg-secondary);
+            object-fit: cover;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            background: var(--bg-card);
+            z-index: 3;
+        }
+
+        .game-card-fallback-cover {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            opacity: 0.2;
+        }
+
+        .game-card-fallback {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            border: 2px solid var(--border-color);
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            z-index: 3;
+        }
+
+        .game-card-tier {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            color: white;
+            z-index: 2;
+        }
+
+        .tier-gold {
+            border: 1px solid #fbbf24;
+            color: #fbbf24;
+        }
+
+        .tier-silver {
+            border: 1px solid #94a3b8;
+            color: #cbd5e1;
+        }
+
+        .tier-bronze {
+            border: 1px solid #b45309;
+            color: #f59e0b;
+        }
+
+        .game-card-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-card-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .game-card-owner {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            font-family: monospace;
+        }
+
+        .btn-play-game {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent-cyan);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .btn-play-game:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+
+        /* Responsive Grid */
+        .games-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 320px));
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+        /* Responsive: Tablet */
+        @media (max-width: 1024px) {
+            .games-container {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+
+            .game-card-media-container {
+                height: 300px;
+            }
+        }
+
+        /* Responsive: Mobile */
+        @media (max-width: 768px) {
+            .games-container {
+                grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+                gap: 16px;
+            }
+
+            .game-card-media-container {
+                height: 240px;
+            }
+
+            .game-card-content {
+                padding: 16px;
+            }
+
+            .game-card-title {
+                font-size: 17px;
+            }
+
+            .filters-section {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* Responsive: Small Phone */
+        @media (max-width: 480px) {
+            .games-container {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .game-card-media-container {
+                height: 200px;
+            }
+
+            .game-card-content {
+                padding: 12px;
+            }
+
+            .game-card-title {
+                font-size: 16px;
+            }
+
+            .game-card-icon-overlay,
+            .game-card-fallback {
+                width: 40px;
+                height: 40px;
+            }
+
+            .btn-play-game {
+                padding: 10px;
+                font-size: 13px;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <!-- Explorer Badge -->
+        <div class="page-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+            Game Explorer
+        </div>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title-section">
+                <h1 class="page-title">All Games</h1>
+                <p class="page-subtitle">Discover games powered by DexHero characters</p>
+            </div>
+            <div class="search-large">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                </svg>
+                <input type="text" id="game-search" class="search-input-large" placeholder="Search by game title...">
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <div class="filter-group">
+                <span class="filter-label">PACKAGES:</span>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="gold">Gold</button>
+                    <button class="filter-btn" data-filter="silver">Silver</button>
+                    <button class="filter-btn" data-filter="bronze">Bronze</button>
+                </div>
+            </div>
+            <div class="view-toggle">
+                <button class="toggle-btn active" data-view="grid" id="grid-view-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Games Grid -->
+        <div class="games-container" id="games-grid">
+            <!-- Loading State -->
+            <div style="grid-column: 1/-1; text-align: center; padding: 64px;">
+                <div class="ticker-loading">Fetching games from ecosystem...</div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <div class="pagination-info">
+                Showing <span id="showing-count">0</span> games
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+
+    <script src="/js/utils.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script>
+        let allGames = [];
+        let filteredGames = [];
+
+        async function loadGames() {
+            const container = document.getElementById('games-grid');
+            try {
+                const supabase = window.DexHeroSupabase.get();
+                if (!supabase) throw new Error('Supabase not initialized');
+
+                const now = new Date().toISOString();
+                const { data, error } = await supabase
+                    .from('registered_games')
+                    .select('id, title, tier, owner_wallet, cover_url, icon_url, game_url, slug, goes_live_at, status, game_files_path, created_at')
+                    .or(`status.eq.active,and(status.eq.pending,goes_live_at.lte.${now})`)
+                    .order('created_at', { ascending: false })
+                    .limit(200);
+
+                if (error) throw error;
+
+                allGames = data || [];
+                filteredGames = allGames;
+                renderGames();
+
+            } catch (error) {
+                console.error('Failed to load games:', error);
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 48px; color: var(--danger);">
+                    Error loading games. Please check your connection.
+                </div>`;
+            }
+        }
+
+        function createGameCard(game) {
+            const tierTitle = game.tier.charAt(0).toUpperCase() + game.tier.slice(1);
+            const shortWallet = `${escapeHtml(game.owner_wallet.slice(0, 6))}...${escapeHtml(game.owner_wallet.slice(-4))}`;
+
+            let mediaContent;
+            if (game.cover_url) {
+                mediaContent = `<img src="${sanitizeUrl(game.cover_url)}" class="game-card-cover" alt="${escapeHtml(game.title)} Cover">`;
+            } else {
+                mediaContent = `<div class="game-card-fallback-cover">${escapeHtml(game.title.charAt(0))}</div>`;
+            }
+
+            let iconOverlay;
+            if (game.icon_url) {
+                iconOverlay = `<img src="${sanitizeUrl(game.icon_url)}" class="game-card-icon-overlay" alt="${escapeHtml(game.title)} Icon">`;
+            } else {
+                iconOverlay = `<div class="game-card-fallback">${escapeHtml(game.title.charAt(0))}</div>`;
+            }
+
+            // Determine if game has playable files
+            const hasFiles = !!game.game_files_path;
+            const playUrl = game.slug
+                ? `/pages/play-game.html?slug=${encodeURIComponent(game.slug)}`
+                : (game.game_url ? sanitizeUrl(game.game_url) : null);
+
+            const playBtn = playUrl
+                ? `<a href="${playUrl}" class="btn-play-game" style="text-decoration:none;display:flex;align-items:center;gap:8px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        Play Game
+                   </a>`
+                : `<button class="btn-play-game" disabled style="opacity:0.4;cursor:not-allowed;">
+                        No Files Yet
+                   </button>`;
+
+            const cloudBadge = game.cloud_gaming_enabled
+                ? `<span style="position:absolute;top:8px;right:8px;background:rgba(37, 99, 235,0.85);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;z-index:2;letter-spacing:0.02em;">CLOUD</span>`
+                : '';
+
+            return `
+                <div class="game-card">
+                    <div class="game-card-media-container">
+                        <span class="game-card-tier tier-${escapeHtml(game.tier)}">${escapeHtml(tierTitle)}</span>
+                        ${cloudBadge}
+                        ${mediaContent}
+                        ${iconOverlay}
+                    </div>
+                    <div class="game-card-content">
+                        <h3 class="game-card-title">${escapeHtml(game.title)}</h3>
+                        <div class="game-card-owner">Developer: ${shortWallet}</div>
+                        ${playBtn}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderGames() {
+            const container = document.getElementById('games-grid');
+            const showingCount = document.getElementById('showing-count');
+
+            if (filteredGames.length === 0) {
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 64px; color: var(--text-muted);">
+                    No games found matching your search.
+                </div>`;
+                showingCount.textContent = '0';
+                return;
+            }
+
+            container.innerHTML = filteredGames.map(game => createGameCard(game)).join('');
+            showingCount.textContent = filteredGames.length.toString();
+        }
+
+        function initSearch() {
+            const searchInput = document.getElementById('game-search');
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                applyFilters(query, getActiveTier());
+            });
+        }
+
+        function initTierFilters() {
+            const btns = document.querySelectorAll('.filter-btn');
+            btns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const tier = btn.getAttribute('data-filter');
+                    const query = document.getElementById('game-search').value.toLowerCase().trim();
+                    applyFilters(query, tier);
+                });
+            });
+        }
+
+        function getActiveTier() {
+            return document.querySelector('.filter-btn.active').getAttribute('data-filter');
+        }
+
+        function applyFilters(query, tier) {
+            filteredGames = allGames.filter(game => {
+                const matchesSearch = !query || game.title.toLowerCase().includes(query);
+                const matchesTier = tier === 'all' || game.tier.toLowerCase() === tier;
+                return matchesSearch && matchesTier;
+            });
+            renderGames();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.DexHeroSupabase) window.DexHeroSupabase.init();
+            loadGames();
+            initSearch();
+            initTierFilters();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Dashboard | DexHero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <style>
+        .dashboard-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 36px 24px 80px;
+        }
+
+        /* Header bar */
+        .dash-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .dash-header h1 {
+            font-size: 24px;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .pass-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .pass-badge.active {
+            background: rgba(74,222,128,0.12);
+            color: #4ade80;
+            border: 1px solid rgba(74,222,128,0.25);
+        }
+
+        .pass-badge.inactive {
+            background: rgba(248,113,113,0.12);
+            color: #f87171;
+            border: 1px solid rgba(248,113,113,0.25);
+        }
+
+        /* Network tabs */
+        .network-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .network-tab {
+            padding: 8px 18px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .network-tab.active {
+            background: rgba(37, 99, 235,0.15);
+            border-color: rgba(37, 99, 235,0.4);
+            color: #fff;
+        }
+
+        .network-tab:hover { border-color: rgba(255,255,255,0.2); }
+
+        .add-network {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px dashed rgba(255,255,255,0.15);
+            background: transparent;
+            font-size: 13px;
+            cursor: pointer;
+            color: rgba(255,255,255,0.35);
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .card h3 {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: rgba(255,255,255,0.4);
+            margin: 0 0 16px;
+        }
+
+        /* Two-column layout */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .two-col { grid-template-columns: 1fr; }
+        }
+
+        /* Progress ring (CSS-only) */
+        .progress-section {
+            text-align: center;
+        }
+
+        .progress-ring-container {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 16px;
+        }
+
+        .progress-ring-bg, .progress-ring-fill {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+        }
+
+        .progress-ring-bg {
+            border: 8px solid rgba(255,255,255,0.06);
+        }
+
+        .progress-ring-fill {
+            /* Default: just a tiny sliver at the top so the ring reads as "empty, not broken".
+               JS in loadComputeProgress() sets the real conic-gradient once data is loaded. */
+            background: conic-gradient(#4ade80 2deg, transparent 2deg);
+            mask: radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 8px));
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 8px));
+            transition: background 0.5s ease;
+        }
+
+        .progress-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .progress-pct {
+            font-size: 32px;
+            font-weight: 800;
+        }
+
+        .progress-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .progress-stats {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 4px;
+        }
+
+        .progress-stats strong {
+            color: #fff;
+        }
+
+        /* Rarity target */
+        .rarity-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .rarity-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.06);
+            cursor: pointer;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .rarity-option:hover { border-color: rgba(255,255,255,0.15); }
+        .rarity-option.active { border-color: rgba(37, 99, 235,0.5); background: rgba(37, 99, 235,0.06); }
+        .rarity-option.eligible { border-color: rgba(74,222,128,0.4); background: rgba(74,222,128,0.06); }
+
+        .rarity-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .rarity-option-name { font-weight: 600; flex: 1; }
+        .rarity-option-threshold { font-size: 12px; color: rgba(255,255,255,0.4); }
+
+        /* Legitimacy */
+        .legit-score {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .legit-out-of {
+            font-size: 14px;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 16px;
+        }
+
+        .legit-layer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 13px;
+        }
+
+        .legit-layer:last-child { border-bottom: none; }
+
+        .legit-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+
+        .legit-icon.ok { background: rgba(74,222,128,0.15); color: #4ade80; }
+        .legit-icon.warn { background: rgba(251,191,36,0.15); color: #fbbf24; }
+        .legit-icon.bad { background: rgba(248,113,113,0.15); color: #f87171; }
+
+        /* Weekly bar */
+        .weekly-bar-bg {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.06);
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .weekly-bar-fill {
+            height: 100%;
+            border-radius: 5px;
+            background: linear-gradient(90deg, #2563eb, #2563eb);
+            transition: width 0.4s;
+        }
+
+        /* Session table */
+        .session-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .session-table th {
+            text-align: left;
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            font-weight: 600;
+            color: rgba(255,255,255,0.4);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .session-table td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: rgba(255,255,255,0.7);
+        }
+
+        /* Milestones */
+        .milestones {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .milestone {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.3);
+        }
+
+        .milestone.reached {
+            background: rgba(74,222,128,0.12);
+            border-color: rgba(74,222,128,0.25);
+            color: #4ade80;
+        }
+
+        /* Network health */
+        .health-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .health-badge.green { background: rgba(74,222,128,0.12); color: #4ade80; }
+        .health-badge.yellow { background: rgba(251,191,36,0.12); color: #fbbf24; }
+        .health-badge.red { background: rgba(248,113,113,0.12); color: #f87171; }
+
+        .health-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .health-badge.green .health-dot { background: #4ade80; }
+        .health-badge.yellow .health-dot { background: #fbbf24; }
+        .health-badge.red .health-dot { background: #f87171; }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 14px;
+        }
+
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: rgba(255,255,255,0.45); }
+        .stat-val { font-weight: 600; }
+
+        /* Unlock CTA */
+        .unlock-cta {
+            display: none;
+            text-align: center;
+            padding: 24px;
+            background: linear-gradient(135deg, rgba(37, 99, 235,0.1), rgba(37,99,235,0.1));
+            border: 1px solid rgba(37, 99, 235,0.3);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .unlock-cta.visible { display: block; }
+
+        .unlock-cta h3 {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 8px;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .unlock-cta p {
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 16px;
+        }
+
+        .btn-unlock {
+            display: inline-flex;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #2563eb, #2563eb);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .btn-unlock:hover { opacity: 0.9; }
+
+        /* Connect prompt */
+        .connect-prompt {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .connect-prompt h2 { font-size: 22px; margin-bottom: 12px; }
+        .connect-prompt p { color: rgba(255,255,255,0.5); margin-bottom: 24px; }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <a href="/" style="display:inline-flex;align-items:center;gap:6px;color:var(--text-secondary);font-size:13px;text-decoration:none;margin-bottom:24px;opacity:0.7;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Home
+        </a>
+
+        <!-- Connect prompt (shown when no wallet) -->
+        <div class="connect-prompt" id="connect-prompt">
+            <h2>Connect Your Wallet</h2>
+            <p>Connect your wallet to view your compute dashboard.</p>
+            <button class="btn-unlock" onclick="openConnectModal()">Connect Wallet</button>
+        </div>
+
+        <!-- Dashboard (shown when wallet connected) -->
+        <div class="dashboard-container" id="dashboard" style="display:none;">
+
+            <!-- Header -->
+            <div class="dash-header">
+                <h1>Server Dashboard</h1>
+                <span class="pass-badge active" id="pass-status">
+                    <span>Play Pass Active</span>
+                </span>
+            </div>
+
+            <!-- Network Tabs -->
+            <div class="network-tabs" id="network-tabs">
+                <div class="network-tab active">Loading...</div>
+                <button class="add-network" onclick="window.location='/pages/node-onboarding.html'">+ Add Network</button>
+            </div>
+
+            <!-- Unlock CTA (appears when threshold met) -->
+            <div class="unlock-cta" id="unlock-cta">
+                <h3>Ready to Unlock!</h3>
+                <p>You've reached the threshold. Unlock your DexHero or keep providing for a higher rarity.</p>
+                <p style="font-size:12px; color:rgba(248,113,113,0.8);">Your compute-hours will be reset to zero on unlock.</p>
+                <p id="bytes-served-status" style="font-size:11px; color:rgba(255,255,255,0.55); margin-top:4px;"></p>
+                <button class="btn-unlock" id="unlock-btn" onclick="startUnlock()" disabled>Unlock DexHero</button>
+            </div>
+
+            <!-- Progress + Rarity Target -->
+            <div class="two-col">
+                <div class="card">
+                    <h3>Compute Progress</h3>
+                    <div class="progress-section">
+                        <div class="progress-ring-container">
+                            <div class="progress-ring-bg"></div>
+                            <div class="progress-ring-fill" id="progress-ring"></div>
+                            <div class="progress-center">
+                                <div class="progress-pct" id="progress-pct">0%</div>
+                                <div class="progress-label">toward target</div>
+                            </div>
+                        </div>
+                        <div class="progress-stats">
+                            <strong id="current-hours">0</strong> / <span id="target-hours">300</span> compute-hours
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Rarity Target</h3>
+                    <div class="rarity-options" id="rarity-options">
+                        <div class="rarity-option active" data-rarity="COMMON" onclick="selectTarget('COMMON')">
+                            <div class="rarity-dot" style="background:#4ade80;"></div>
+                            <span class="rarity-option-name">Common</span>
+                            <span class="rarity-option-threshold">300 hrs</span>
+                        </div>
+                        <div class="rarity-option" data-rarity="UNCOMMON" onclick="selectTarget('UNCOMMON')">
+                            <div class="rarity-dot" style="background:#3b82f6;"></div>
+                            <span class="rarity-option-name">Uncommon</span>
+                            <span class="rarity-option-threshold">450 hrs</span>
+                        </div>
+                        <div class="rarity-option" data-rarity="RARE" onclick="selectTarget('RARE')">
+                            <div class="rarity-dot" style="background:#a855f7;"></div>
+                            <span class="rarity-option-name">Rare</span>
+                            <span class="rarity-option-threshold">600 hrs</span>
+                        </div>
+                        <div class="rarity-option" data-rarity="LEGENDARY" onclick="selectTarget('LEGENDARY')">
+                            <div class="rarity-dot" style="background:#f97316;"></div>
+                            <span class="rarity-option-name">Legendary</span>
+                            <span class="rarity-option-threshold">900 hrs</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legitimacy + Weekly Progress -->
+            <div class="two-col">
+                <div class="card">
+                    <h3>Legitimacy Score</h3>
+                    <div class="legit-score" id="legit-score">--</div>
+                    <div class="legit-out-of">out of 100</div>
+                    <div id="legit-layers">
+                        <div class="legit-layer"><div class="legit-icon ok">&check;</div> Latency: Clean</div>
+                        <div class="legit-layer"><div class="legit-icon ok">&check;</div> Player Diversity: 5 unique</div>
+                        <div class="legit-layer"><div class="legit-icon ok">&check;</div> Input Entropy: Normal</div>
+                        <div class="legit-layer"><div class="legit-icon ok">&check;</div> Geographic: Separate /24</div>
+                        <div class="legit-layer"><div class="legit-icon ok">&check;</div> Quality: 1080p60</div>
+                        <div class="legit-layer"><div class="legit-icon ok">&check;</div> Patterns: No flags</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Weekly Progress</h3>
+                    <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:4px;">
+                        <span style="color:rgba(255,255,255,0.5);">This week</span>
+                        <span style="font-weight:600;"><span id="weekly-hours">0</span> / 35 hrs</span>
+                    </div>
+                    <div class="weekly-bar-bg">
+                        <div class="weekly-bar-fill" id="weekly-fill" style="width:0%"></div>
+                    </div>
+                    <div style="font-size:12px; color:rgba(255,255,255,0.3); margin-top:8px;" id="weekly-note">
+                        Weekly cap resets Sunday midnight UTC
+                    </div>
+
+                    <h3 style="margin-top:24px;">Milestones</h3>
+                    <div class="milestones" id="milestones">
+                        <span class="milestone" data-pct="10">10%</span>
+                        <span class="milestone" data-pct="25">25%</span>
+                        <span class="milestone" data-pct="50">50%</span>
+                        <span class="milestone" data-pct="75">75%</span>
+                        <span class="milestone" data-pct="90">90%</span>
+                        <span class="milestone" data-pct="100">100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Health -->
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h3 style="margin:0;">Network Health</h3>
+                    <span class="health-badge green" id="health-badge">
+                        <span class="health-dot"></span>
+                        <span id="health-label">GREEN</span>
+                    </span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Active servers</span>
+                    <span class="stat-val" id="net-nodes">--</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Streaming players</span>
+                    <span class="stat-val" id="net-players">--</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Available slots</span>
+                    <span class="stat-val" id="net-slots">--</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Avg RTT</span>
+                    <span class="stat-val" id="net-rtt">--</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Avg stream quality</span>
+                    <span class="stat-val" id="net-quality">--</span>
+                </div>
+            </div>
+
+            <!-- Session History -->
+            <div class="card">
+                <h3>Recent Sessions</h3>
+                <div style="overflow-x:auto;">
+                    <table class="session-table">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Game</th>
+                                <th>Duration</th>
+                                <th>Quality</th>
+                                <th>Legit</th>
+                                <th>Credits</th>
+                            </tr>
+                        </thead>
+                        <tbody id="session-rows">
+                            <tr><td colspan="6" style="text-align:center; color:rgba(255,255,255,0.3); padding:20px;">No sessions yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/blockchain/constants.js"></script>
+    <script src="/js/monad-integration.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="../components/footer.js"></script>
+    <script>
+        const THRESHOLDS = {
+            COMMON:    { minutes: 18000, days: 45 },
+            UNCOMMON:  { minutes: 27000, days: 60 },
+            RARE:      { minutes: 36000, days: 90 },
+            LEGENDARY: { minutes: 54000, days: 120 }
+        };
+
+        let wallet = null;
+        let selectedTarget = 'COMMON';
+        let currentDexheroId = null;
+
+        // P2.7 — bytes-served eligibility cache. Hydrated from
+        // DexHeroNodeRegistry.bytesServedForDexHero on each dashboard tick.
+        // Keys: { bytesServed (BigNumber-as-string), threshold, eligible, tokenId }.
+        let unlockEligibility = null;
+
+        function activateDashboard(address) {
+            wallet = address;
+            document.getElementById('connect-prompt').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            loadDashboard();
+        }
+
+        // Listen for wallet connection/disconnection from shared modals.js
+        window.addEventListener('walletChanged', () => {
+            const addr = sessionStorage.getItem('walletAddress') || localStorage.getItem('walletAddress');
+            if (addr) {
+                activateDashboard(addr);
+            } else {
+                wallet = null;
+                document.getElementById('connect-prompt').style.display = '';
+                document.getElementById('dashboard').style.display = 'none';
+            }
+        });
+
+        // Auto-connect if wallet already in session
+        (function () {
+            const stored = sessionStorage.getItem('walletAddress') || localStorage.getItem('walletAddress');
+            const connected = sessionStorage.getItem('walletConnected') === 'true';
+            if (stored && connected) {
+                activateDashboard(stored);
+            }
+        })();
+
+        async function loadDashboard() {
+            await Promise.all([
+                loadComputeProgress(),
+                loadSessionHistory(),
+                loadNetworkHealth(),
+                loadUnlockEligibility()
+            ]);
+        }
+
+        // P2.7 — read DexHeroNodeRegistry.bytesServedForDexHero(wallet, dexheroId)
+        // and DexHeroNFT.unlockSlotsAvailable() so the Unlock CTA only enables
+        // when the on-chain threshold is met. Falls back gracefully if either
+        // contract address isn't in deployments.json yet (fresh chain) — in
+        // that case the button stays disabled with an explanatory readout.
+        async function loadUnlockEligibility() {
+            const btn = document.getElementById('unlock-btn');
+            const status = document.getElementById('bytes-served-status');
+            if (!btn || !status) return;
+            if (!wallet) {
+                btn.disabled = true;
+                status.textContent = '';
+                return;
+            }
+
+            try {
+                // Pull the deployments map; the panel uses the per-chain
+                // DexHeroNodeRegistry + DexHeroNFT addresses there. Static
+                // import isn't available in this <script> block, so fetch
+                // the JSON directly — same source the loader module reads.
+                const depResp = await fetch('/deployments.json', { cache: 'no-store' });
+                if (!depResp.ok) throw new Error('deployments.json fetch failed');
+                const deployments = await depResp.json();
+
+                // Pick whichever chain has the registry deployed. Base Sepolia
+                // (84532) is canonical for testnet; Base mainnet (8453) for prod.
+                const chains = Object.keys(deployments);
+                let registryAddr = null;
+                let nftAddr = null;
+                let rpcUrl = null;
+                let chainHex = null;
+                for (const cId of chains) {
+                    const d = deployments[cId];
+                    const a = d?.addresses || {};
+                    if (a.DexHeroNodeRegistry && !registryAddr) {
+                        registryAddr = a.DexHeroNodeRegistry;
+                        rpcUrl = `https://sepolia.base.org`;
+                        chainHex = cId === '8453' ? '0x2105' : '0x14a34';
+                    }
+                    if (a.DexHeroNFT && !nftAddr) {
+                        nftAddr = a.DexHeroNFT;
+                    }
+                }
+
+                if (!registryAddr || !nftAddr) {
+                    btn.disabled = true;
+                    status.textContent = 'Unlock contract not yet deployed on this chain.';
+                    unlockEligibility = null;
+                    return;
+                }
+
+                // Use a public read-only provider. The user doesn't need to
+                // sign anything for the eligibility check — the on-chain
+                // unlock call later will request the wallet to switch chains
+                // and pop a confirm.
+                const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+                const registry = new ethers.Contract(registryAddr,
+                    ['function bytesServedForDexHero(address,bytes32) view returns (uint256)'],
+                    provider);
+                const nft = new ethers.Contract(nftAddr,
+                    [
+                        'function unlockSlotsAvailable() view returns (uint256)',
+                        'function balanceOf(address) view returns (uint256)',
+                        'function tokenOfOwnerByIndex(address,uint256) view returns (uint256)',
+                        'function unlocked(uint256) view returns (bool)'
+                    ],
+                    provider);
+
+                // The threshold for unlockForContributor is encoded inside the
+                // NFT contract; we read it indirectly. The current NFT impl
+                // uses a fixed 100 GiB threshold (107374182400 bytes) — same
+                // value the existing UI surfaces via /api/node/status. We
+                // mirror it here as a constant so the eligibility check
+                // matches what the contract enforces.
+                //
+                // (If a future contract upgrade exposes a public getter, swap
+                // to a real read. Until then, keeping this in lockstep with
+                // the on-chain require() is intentional.)
+                const THRESHOLD_BYTES = '107374182400'; // 100 GiB
+
+                // currentDexheroId is the bytes32 form already (set by network-tab
+                // wiring). When it's null/empty we can't read this mapping yet.
+                let bytesServed = '0';
+                if (currentDexheroId) {
+                    try {
+                        const bn = await registry.bytesServedForDexHero(wallet, currentDexheroId);
+                        bytesServed = bn.toString();
+                    } catch (e) {
+                        console.warn('bytesServedForDexHero read failed:', e.message);
+                    }
+                }
+
+                // Best-effort: locate this wallet's tokenId on the NFT contract
+                // so the unlock call has something to pass. balanceOf + index
+                // is cheap when balance == 1 (the typical case). Skip on 0.
+                let tokenId = null;
+                try {
+                    const bal = await nft.balanceOf(wallet);
+                    if (bal && bal.gt(0)) {
+                        // Pick the first locked token the user owns — that's
+                        // the one unlockForContributor wants. If they're all
+                        // already unlocked, leave tokenId null.
+                        for (let i = 0; i < bal.toNumber() && i < 10; i++) {
+                            const tid = await nft.tokenOfOwnerByIndex(wallet, i);
+                            const isUnlocked = await nft.unlocked(tid).catch(() => true);
+                            if (!isUnlocked) { tokenId = tid.toString(); break; }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('NFT lookup failed:', e.message);
+                }
+
+                const eligible = ethers.BigNumber.from(bytesServed).gte(THRESHOLD_BYTES) && !!tokenId;
+                unlockEligibility = {
+                    bytesServed,
+                    threshold: THRESHOLD_BYTES,
+                    eligible,
+                    tokenId,
+                    nftAddr,
+                    registryAddr,
+                    chainHex
+                };
+
+                btn.disabled = !eligible;
+                if (eligible) {
+                    status.textContent = `Threshold met — ${(Number(bytesServed) / 1024 ** 3).toFixed(2)} GiB served.`;
+                    status.style.color = 'rgba(74,222,128,0.85)';
+                } else if (!tokenId) {
+                    status.textContent = 'No locked DexHero NFT found on this wallet.';
+                    status.style.color = 'rgba(255,255,255,0.55)';
+                } else {
+                    const gibServed = (Number(bytesServed) / 1024 ** 3).toFixed(2);
+                    const gibThresh = (Number(THRESHOLD_BYTES) / 1024 ** 3).toFixed(0);
+                    const gibLeft = Math.max(0, Number(THRESHOLD_BYTES) - Number(bytesServed)) / 1024 ** 3;
+                    status.textContent = `${gibServed} / ${gibThresh} GiB served — need ${gibLeft.toFixed(2)} GiB more.`;
+                    status.style.color = 'rgba(255,255,255,0.55)';
+                }
+            } catch (err) {
+                console.warn('loadUnlockEligibility failed:', err.message);
+                btn.disabled = true;
+                status.textContent = 'Eligibility check unavailable.';
+                unlockEligibility = null;
+            }
+        }
+
+        async function loadComputeProgress() {
+            try {
+                const resp = await fetch(`/api/compute/progress?wallet=${wallet}&dexheroId=${currentDexheroId || ''}`);
+                if (!resp.ok) return;
+                const data = await resp.json();
+
+                // Tier-relative progress: the ring fills from 0 → next threshold, resetting
+                // and changing color each time the operator crosses a rarity boundary.
+                const TIER_BANDS = [
+                    { lo:   0, hi: 300, color: '#4ade80' }, // toward Common     (green)
+                    { lo: 300, hi: 450, color: '#3b82f6' }, // toward Uncommon   (blue)
+                    { lo: 450, hi: 600, color: '#a855f7' }, // toward Rare       (purple)
+                    { lo: 600, hi: 900, color: '#f97316' }, // toward Legendary  (orange)
+                ];
+                const currentHrs = (data.computeMinutes || 0) / 60;
+                const maxed = currentHrs >= TIER_BANDS[TIER_BANDS.length - 1].hi;
+                let band = TIER_BANDS[0];
+                for (const b of TIER_BANDS) {
+                    if (currentHrs < b.hi) { band = b; break; }
+                    band = b;
+                }
+                const pct = maxed ? 100 : Math.min(100, ((currentHrs - band.lo) / (band.hi - band.lo)) * 100);
+
+                document.getElementById('progress-pct').textContent = `${Math.round(pct)}%`;
+                document.getElementById('current-hours').textContent = currentHrs.toFixed(1);
+                document.getElementById('target-hours').textContent = maxed ? '900+' : band.hi.toString();
+
+                // Ring: minimum 2° sliver so it's visible at 0%, always in the current tier's color
+                const ring = document.getElementById('progress-ring');
+                const deg = Math.max(2, (pct / 100) * 360);
+                ring.style.background = `conic-gradient(${band.color} ${deg}deg, transparent ${deg}deg)`;
+
+                // Weekly progress (35 hrs/week cap)
+                const weeklyHours = (data.weeklyMinutes || 0) / 60;
+                const weeklyPct = Math.min(100, (weeklyHours / 35) * 100);
+                document.getElementById('weekly-hours').textContent = weeklyHours.toFixed(1);
+                document.getElementById('weekly-fill').style.width = `${weeklyPct}%`;
+
+                // Legitimacy
+                document.getElementById('legit-score').textContent = data.legitimacyScore || '--';
+
+                // Milestones
+                document.querySelectorAll('.milestone').forEach(m => {
+                    const mPct = parseInt(m.dataset.pct);
+                    if (pct >= mPct) m.classList.add('reached');
+                    else m.classList.remove('reached');
+                });
+
+                // Unlock CTA
+                const eligible = data.computeMinutes >= target.minutes;
+                document.getElementById('unlock-cta').classList.toggle('visible', eligible);
+
+                // Mark eligible rarity options
+                document.querySelectorAll('.rarity-option').forEach(opt => {
+                    const r = opt.dataset.rarity;
+                    const t = THRESHOLDS[r];
+                    opt.classList.toggle('eligible', data.computeMinutes >= t.minutes);
+                });
+            } catch (err) {
+                console.warn('Could not load compute progress:', err);
+            }
+        }
+
+        async function loadSessionHistory() {
+            try {
+                const resp = await fetch(`/api/session/history?wallet=${wallet}&limit=20`);
+                if (!resp.ok) return;
+                const sessions = await resp.json();
+                const tbody = document.getElementById('session-rows');
+
+                if (!sessions.length) return;
+
+                tbody.innerHTML = sessions.map(s => `
+                    <tr>
+                        <td>${DexHeroUtils.escapeHtml((s.player_wallet || '').slice(0, 6) + '...' + (s.player_wallet || '').slice(-4))}</td>
+                        <td>${DexHeroUtils.escapeHtml(s.game_title || '--')}</td>
+                        <td>${s.duration_min ? (s.duration_min / 60).toFixed(1) + ' hrs' : '--'}</td>
+                        <td>${DexHeroUtils.escapeHtml(s.quality || '--')}</td>
+                        <td>${s.legitimacy_score != null ? s.legitimacy_score : '--'}</td>
+                        <td>${s.credits ? s.credits.toFixed(1) : '--'}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.warn('Could not load session history:', err);
+            }
+        }
+
+        async function loadNetworkHealth() {
+            try {
+                const resp = await fetch(`/api/network/health?dexheroId=${currentDexheroId || ''}`);
+                if (!resp.ok) return;
+                const data = await resp.json();
+
+                document.getElementById('net-nodes').textContent = data.activeNodes ?? '--';
+                document.getElementById('net-players').textContent = data.streamingPlayers ?? '--';
+                document.getElementById('net-slots').textContent = data.availableSlots ?? '--';
+                document.getElementById('net-rtt').textContent = data.avgRtt ? `${data.avgRtt}ms` : '--';
+                document.getElementById('net-quality').textContent = data.avgQuality || '--';
+
+                const badge = document.getElementById('health-badge');
+                const label = document.getElementById('health-label');
+                const health = data.health || 'green';
+                badge.className = `health-badge ${health}`;
+                label.textContent = health.toUpperCase();
+            } catch (err) {
+                console.warn('Could not load network health:', err);
+            }
+        }
+
+        function selectTarget(rarity) {
+            selectedTarget = rarity;
+            document.querySelectorAll('.rarity-option').forEach(opt => {
+                opt.classList.toggle('active', opt.dataset.rarity === rarity);
+            });
+            // Ring + label are tier-driven (loadComputeProgress derives the band from
+            // current hours). Selecting a target only marks which rarity you'll unlock as.
+            loadComputeProgress();
+        }
+
+        // P2.7 — real unlockForContributor call. Replaces the prior "coming
+        // soon" stub. Pre-conditions are enforced by the disabled state on
+        // #unlock-btn (loadUnlockEligibility populates `unlockEligibility`),
+        // so we only land here when bytesServed >= threshold AND we found a
+        // locked tokenId on the NFT contract. Behaviour:
+        //   1. Confirmation modal (irreversible action).
+        //   2. Resolve provider + signer from the user's wallet (ethers v5
+        //      via window.ethers + window.ethereum). Switch chain if needed.
+        //   3. Call DexHeroNFT.unlockForContributor(tokenId).
+        //   4. Re-load dashboard so the post-unlock state (reset bytes,
+        //      newly-unlocked NFT) shows immediately.
+        async function startUnlock() {
+            const btn = document.getElementById('unlock-btn');
+            if (!unlockEligibility || !unlockEligibility.eligible) {
+                alert('Unlock not available yet — keep contributing to reach the threshold.');
+                return;
+            }
+            const { tokenId, nftAddr, chainHex } = unlockEligibility;
+            const human = `Unlock DexHero #${tokenId} for your contributions?\n\n` +
+                `This is irreversible. Your bytes-served counter for this DexHero will be consumed and the NFT will be permanently unlocked to your wallet.`;
+            if (!confirm(human)) return;
+
+            try {
+                btn.disabled = true;
+                const oldLabel = btn.textContent;
+                btn.textContent = 'Unlocking…';
+
+                if (!window.ethereum) throw new Error('No wallet detected');
+
+                // Switch network if necessary. The NFT lives on the same chain
+                // as DexHeroNodeRegistry (Base Sepolia / Base mainnet).
+                if (chainHex) {
+                    try {
+                        await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainHex }] });
+                    } catch (e) {
+                        // 4902 = chain not added; user can add it manually.
+                        if (e?.code !== 4001) console.warn('chain switch warning:', e.message);
+                    }
+                }
+
+                const provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
+                await provider.send('eth_requestAccounts', []);
+                const signer = provider.getSigner();
+                const nft = new ethers.Contract(nftAddr,
+                    ['function unlockForContributor(uint256 tokenId) external'],
+                    signer);
+
+                const tx = await nft.unlockForContributor(tokenId);
+                btn.textContent = 'Confirming…';
+                const receipt = await tx.wait();
+                if (receipt.status !== 1) throw new Error('Transaction reverted on-chain');
+
+                alert(`Unlocked. Tx: ${tx.hash}`);
+                btn.textContent = oldLabel;
+                // Refresh dashboard so the new state propagates.
+                loadDashboard();
+            } catch (err) {
+                console.error('Unlock failed:', err);
+                alert('Unlock failed: ' + (err.message || String(err)));
+                btn.disabled = false;
+                btn.textContent = 'Unlock DexHero';
+            }
+        }
+
+        // Refresh every 30s
+        setInterval(() => {
+            if (wallet) loadDashboard();
+        }, 30000);
+    </script>
+</body>
+</html>

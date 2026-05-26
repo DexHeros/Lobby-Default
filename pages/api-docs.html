@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Developer API | DexHero</title>
+    <meta name="description" content="Integrate DexHero characters into your game using the Game Developer API.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="../supabase-config.js"></script>
+    <style>
+        .dev-layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 32px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .dev-sidebar {
+            position: sticky;
+            top: 130px;
+            height: fit-content;
+        }
+        .dev-nav {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .dev-nav-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+            margin-top: 16px;
+        }
+        .dev-nav-title:first-child { margin-top: 0; }
+        .dev-nav a {
+            display: block;
+            padding: 7px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .dev-nav a:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+        .dev-nav a.active { background: rgba(6,182,212,0.12); color: var(--accent-cyan); }
+
+        .dev-content section { margin-bottom: 56px; }
+        .dev-content h1 { font-size: 30px; font-weight: 700; margin-bottom: 10px; }
+        .dev-content h2 { font-size: 20px; font-weight: 600; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        .dev-content h3 { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+        .dev-content p { color: var(--text-secondary); font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
+
+        /* Key Manager */
+        .key-manager {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .key-manager-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .btn-gen-key {
+            padding: 9px 18px;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.2s;
+        }
+        .btn-gen-key:hover { opacity: 0.88; }
+        .btn-gen-key:disabled { opacity: 0.5; cursor: not-allowed; }
+        .key-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+        }
+        .key-prefix {
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            color: var(--accent-cyan);
+            letter-spacing: 0.05em;
+        }
+        .key-meta { font-size: 12px; color: var(--text-muted); }
+        .btn-revoke {
+            padding: 6px 14px;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 6px;
+            color: var(--danger);
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .btn-revoke:hover { background: rgba(239,68,68,0.2); }
+        .connect-prompt {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .connect-prompt button {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 10px 24px;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .game-select {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            margin-bottom: 14px;
+            outline: none;
+        }
+        .game-select:focus { border-color: var(--accent-cyan); }
+        .empty-keys { text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px; }
+
+        /* Endpoint cards */
+        .endpoint-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .badge {
+            padding: 3px 9px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: 'Fira Code', monospace;
+            letter-spacing: 0.05em;
+        }
+        .badge-get { background: rgba(34,197,94,0.15); color: #22c55e; }
+        .badge-post { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .endpoint-path { font-family: 'Fira Code', monospace; font-size: 13px; }
+        .endpoint-body { padding: 14px 18px; }
+        .endpoint-body p { margin-bottom: 8px; }
+
+        /* Code blocks */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+        }
+        .code-block pre {
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            color: #e6edf3;
+            margin: 0;
+            white-space: pre;
+        }
+        .c { color: #8b949e; }   /* comment */
+        .s { color: #a5d6ff; }   /* string */
+        .k { color: #7ee787; }   /* key */
+        .n { color: #79c0ff; }   /* number */
+        .p { color: #ff7b72; }   /* punctuation / keyword */
+
+        /* Base URL bar */
+        .base-url-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+        }
+        .base-url-bar span:first-child { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .base-url-bar code { font-family: 'Fira Code', monospace; font-size: 13px; color: var(--accent-cyan); }
+
+        /* Alert box */
+        .alert-info {
+            background: rgba(6,182,212,0.08);
+            border: 1px solid rgba(6,182,212,0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        .alert-warn {
+            background: rgba(234,179,8,0.08);
+            border: 1px solid rgba(234,179,8,0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 520px;
+            width: 90%;
+        }
+        .modal-box h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .modal-box p { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+        .key-reveal {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+        }
+        .key-reveal code {
+            flex: 1;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            color: #7ee787;
+            word-break: break-all;
+        }
+        .btn-copy {
+            padding: 6px 14px;
+            background: rgba(6,182,212,0.15);
+            border: 1px solid rgba(6,182,212,0.4);
+            border-radius: 6px;
+            color: var(--accent-cyan);
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .btn-done {
+            width: 100%;
+            padding: 12px;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .dev-layout { grid-template-columns: 1fr; }
+            .dev-sidebar { display: none; }
+            .key-manager { padding: 16px; }
+            .key-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .endpoint-header {
+                flex-wrap: wrap;
+                padding: 12px 14px;
+            }
+            .endpoint-body { padding: 12px 14px; }
+            .code-block {
+                padding: 12px;
+                margin-left: -14px;
+                margin-right: -14px;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+            }
+            .code-block pre {
+                font-size: 11px;
+            }
+            .base-url-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+            .base-url-bar code {
+                font-size: 12px;
+                word-break: break-all;
+            }
+            .key-manager-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dev-content h1 { font-size: 24px; }
+            .dev-content h2 { font-size: 17px; }
+            .key-manager { padding: 12px; }
+            .endpoint-header { padding: 10px 12px; }
+            .endpoint-body { padding: 10px 12px; }
+            .code-block pre { font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <main class="main-content page-content">
+        <div class="dev-layout">
+            <!-- Sidebar Nav -->
+            <aside class="dev-sidebar">
+                <nav class="dev-nav">
+                    <div class="dev-nav-title">Get Started</div>
+                    <a href="#overview" class="active">Overview</a>
+                    <a href="#auth">Authentication</a>
+                    <div class="dev-nav-title">API Keys</div>
+                    <a href="#keys">Manage Keys</a>
+                    <div class="dev-nav-title">Endpoints</div>
+                    <a href="#endpoint-list">List DexHeros</a>
+                    <a href="#endpoint-single">Get by ID</a>
+                    <a href="#endpoint-validate">Validate Key</a>
+                    <a href="#endpoint-owners">DexHero Owners</a>
+                    <a href="#endpoint-access">Access List</a>
+                    <div class="dev-nav-title">Examples</div>
+                    <a href="#example-js">JavaScript</a>
+                    <a href="#example-unity">Unity (C#)</a>
+                    <a href="#example-unreal">Unreal Engine (C++)</a>
+                </nav>
+            </aside>
+
+            <!-- Main Content -->
+            <div class="dev-content">
+                <!-- Overview -->
+                <section id="overview">
+                    <h1>Game <span class="gradient-text">Developer API</span></h1>
+                    <p>Integrate DexHero characters directly into your game. With your API key, you can fetch full character data — name, symbol, image, and 3D GLB model file — for every DexHero in the ecosystem.</p>
+
+                    <div class="base-url-bar">
+                        <span>Base URL</span>
+                        <code id="base-url">http://localhost:8000/api/game</code>
+                    </div>
+
+                    <div class="alert-info">
+                         <strong>Who is this for?</strong> Game developers who have registered their game on DexHero and want to feature DexHero characters in their game world.
+                    </div>
+                </section>
+
+                <!-- Auth -->
+                <section id="auth">
+                    <h2>Authentication</h2>
+                    <p>All API requests require your API key passed as a header. Keys are tied to your registered game.</p>
+                    <div class="code-block"><pre><span class="c">// Include this header in every request</span>
+X-API-Key: <span class="s">dh_live_YOUR_KEY_HERE</span></pre></div>
+                    <div class="alert-warn"> <strong>Never expose your API key</strong> in client-side code or public repositories. Always call the API from a server or backend.</div>
+                </section>
+
+                <!-- Key Manager -->
+                <section id="keys">
+                    <h2>Manage API Keys</h2>
+                    <p>Generate and revoke API keys for your registered games. A key is shown <strong>only once</strong> — store it securely.</p>
+                    <div class="key-manager" id="key-manager">
+                        <div id="km-connect-prompt" class="connect-prompt">
+                            Connect your wallet to manage your API keys
+                            <br>
+                            <button onclick="openConnectModal()">Connect Wallet</button>
+                        </div>
+                        <div id="km-main" style="display:none;">
+                            <div class="key-manager-header">
+                                <h3 style="margin:0;">Your API Keys</h3>
+                                <button class="btn-gen-key" id="btn-gen" onclick="openGenerateKeyModal()">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    Generate Key
+                                </button>
+                            </div>
+                            <div id="km-keys-list"><div class="empty-keys">Loading your keys...</div></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Endpoint: List -->
+                <section id="endpoint-list">
+                    <h2>GET /api/game/dexheros</h2>
+                    <p>Returns a paginated list of all DexHero characters with full character data including 3D model URLs.</p>
+
+                    <h3>Query Parameters</h3>
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="badge badge-get">GET</span>
+                            <span class="endpoint-path">/api/game/dexheros</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <p><code>chain</code> — Filter by chain: <code>ethereum</code>, <code>bnb</code>, <code>base</code></p>
+                            <p><code>limit</code> — Results per page (max 100, default 50)</p>
+                            <p><code>offset</code> — Pagination offset (default 0)</p>
+                            <div class="code-block"><pre><span class="c">// Example request</span>
+GET /api/game/dexheros?chain=ethereum&limit=20&offset=0
+X-API-Key: <span class="s">dh_live_...</span>
+
+<span class="c">// Response</span>
+{
+  <span class="k">"dexheros"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"uuid"</span>,
+      <span class="k">"name"</span>: <span class="s">"FireWolf"</span>,
+      <span class="k">"symbol"</span>: <span class="s">"FWF"</span>,
+      <span class="k">"chain"</span>: <span class="s">"ethereum"</span>,
+      <span class="k">"contract_address"</span>: <span class="s">"0xabc..."</span>,
+      <span class="k">"image_url"</span>: <span class="s">"https://..."</span>,
+      <span class="k">"model_url"</span>: <span class="s">"https://.../models/firewolf.glb"</span>,
+      <span class="k">"description"</span>: <span class="s">"..."</span>,
+      <span class="k">"tax_percentage"</span>: <span class="n">10</span>,
+      <span class="k">"player_share"</span>: <span class="n">50</span>,
+      <span class="k">"trader_share"</span>: <span class="n">50</span>,
+      <span class="k">"created_at"</span>: <span class="s">"2025-01-01T00:00:00Z"</span>
+    }
+  ],
+  <span class="k">"limit"</span>: <span class="n">20</span>,
+  <span class="k">"offset"</span>: <span class="n">0</span>
+}</pre></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Endpoint: Single -->
+                <section id="endpoint-single">
+                    <h2>GET /api/game/dexheros/:id</h2>
+                    <p>Returns full data for a single DexHero character by its UUID.</p>
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="badge badge-get">GET</span>
+                            <span class="endpoint-path">/api/game/dexheros/:id</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="code-block"><pre>GET /api/game/dexheros/550e8400-e29b-41d4-a716-446655440000
+X-API-Key: <span class="s">dh_live_...</span>
+
+{
+  <span class="k">"dexhero"</span>: {
+    <span class="k">"id"</span>: <span class="s">"550e8400-e29b-41d4-a716-446655440000"</span>,
+    <span class="k">"name"</span>: <span class="s">"FireWolf"</span>,
+    <span class="k">"model_url"</span>: <span class="s">"https://.../models/firewolf.glb"</span>,
+    ...
+  }
+}</pre></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Endpoint: Validate -->
+                <section id="endpoint-validate">
+                    <h2>GET /api/game/validate</h2>
+                    <p>Lightweight ping to verify your API key is active. Useful at game startup.</p>
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="badge badge-get">GET</span>
+                            <span class="endpoint-path">/api/game/validate</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="code-block"><pre>GET /api/game/validate
+X-API-Key: <span class="s">dh_live_...</span>
+
+{
+  <span class="k">"valid"</span>: <span class="p">true</span>,
+  <span class="k">"prefix"</span>: <span class="s">"dh_live_ab12"</span>,
+  <span class="k">"game_id"</span>: <span class="s">"uuid"</span>
+}</pre></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Endpoint: Owners -->
+                <section id="endpoint-owners">
+                    <h2>GET /api/game/dexheros/:id/owners</h2>
+                    <p>Returns all wallets that have <strong>permanently purchased/unlocked</strong> the DexHero. These players own the character outright with no expiry.</p>
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="badge badge-get">GET</span>
+                            <span class="endpoint-path">/api/game/dexheros/:id/owners</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="code-block"><pre>GET /api/game/dexheros/550e8400-e29b-41d4-a716-446655440000/owners
+X-API-Key: <span class="s">dh_live_...</span>
+
+{
+  <span class="k">"dexhero_id"</span>: <span class="s">"550e8400-..."</span>,
+  <span class="k">"owners"</span>: [
+    {
+      <span class="k">"wallet"</span>: <span class="s">"0xabc..."</span>,
+      <span class="k">"access_type"</span>: <span class="s">"owner"</span>,
+      <span class="k">"since"</span>: <span class="s">"2025-03-01T12:00:00Z"</span>
+    }
+  ],
+  <span class="k">"total"</span>: <span class="n">3</span>
+}</pre></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Endpoint: Access -->
+                <section id="endpoint-access">
+                    <h2>GET /api/game/dexheros/:id/access</h2>
+                    <p>Returns <strong>all wallets with active access</strong> — DexHero owners and staked players — merged and deduplicated. This is the primary endpoint for gating game login.</p>
+                    <div class="alert-info"> <strong>This is your game-login gate.</strong> Check the player's wallet against the <code>access</code> array at login. <code>"owner"</code> = permanent; <code>"nft_holder"</code> = active Play Pass holder.</div>
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="badge badge-get">GET</span>
+                            <span class="endpoint-path">/api/game/dexheros/:id/access</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="code-block"><pre>GET /api/game/dexheros/550e8400-e29b-41d4-a716-446655440000/access
+X-API-Key: <span class="s">dh_live_...</span>
+
+{
+  <span class="k">"dexhero_id"</span>: <span class="s">"550e8400-..."</span>,
+  <span class="k">"access"</span>: [
+    { <span class="k">"wallet"</span>: <span class="s">"0xabc..."</span>, <span class="k">"access_type"</span>: <span class="s">"owner"</span>,  <span class="k">"expires"</span>: <span class="p">null</span> },
+    { <span class="k">"wallet"</span>: <span class="s">"0xdef..."</span>, <span class="k">"access_type"</span>: <span class="s">"nft_holder"</span>, <span class="k">"expires"</span>: <span class="p">null</span> }
+  ],
+  <span class="k">"total"</span>: <span class="n">2</span>, <span class="k">"owners"</span>: <span class="n">1</span>, <span class="k">"nft_holders"</span>: <span class="n">1</span>,
+  <span class="k">"checked_at"</span>: <span class="s">"2025-03-10T21:00:00Z"</span>
+}</pre></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Example: JS -->
+                <section id="example-js">
+                    <h2>JavaScript Example</h2>
+                    <div class="code-block"><pre><span class="c">// Fetch all DexHero characters from your backend</span>
+<span class="p">const</span> res = <span class="p">await</span> fetch(<span class="s">'/api/game/dexheros?limit=50'</span>, {
+  headers: { <span class="s">'X-API-Key'</span>: process.env.DEXHERO_API_KEY }
+});
+<span class="p">const</span> { dexheros } = <span class="p">await</span> res.json();
+
+dexheros.forEach(hero => {
+  console.log(hero.name, hero.model_url);
+  <span class="c">// Load hero.model_url as a GLB in your 3D engine</span>
+});</pre></div>
+                </section>
+
+                <!-- Example: Unity -->
+                <section id="example-unity">
+                    <h2>Unity (C#) Example</h2>
+                    <div class="code-block"><pre><span class="p">using</span> UnityEngine;
+<span class="p">using</span> UnityEngine.Networking;
+<span class="p">using</span> System.Collections;
+
+<span class="p">public class</span> <span class="k">DexHeroLoader</span> : MonoBehaviour {
+    <span class="p">private const string</span> API_URL = <span class="s">"https://yourserver.com/api/game/dexheros"</span>;
+    <span class="p">private const string</span> API_KEY  = <span class="s">"dh_live_YOUR_KEY"</span>; <span class="c">// Store in secure config</span>
+
+    <span class="p">IEnumerator</span> FetchDexHeros() {
+        <span class="p">var</span> req = UnityWebRequest.Get(API_URL);
+        req.SetRequestHeader(<span class="s">"X-API-Key"</span>, API_KEY);
+        <span class="p">yield return</span> req.SendWebRequest();
+
+        <span class="p">if</span> (req.result == UnityWebRequest.Result.Success) {
+            Debug.Log(req.downloadHandler.text);
+            <span class="c">// Parse JSON and load GLB model_url via GLTFast or similar</span>
+        }
+    }
+
+    <span class="p">void</span> Start() => StartCoroutine(FetchDexHeros());
+}</pre></div>
+                    <div class="alert-info"> For loading GLB models in Unity, use <strong>GLTFast</strong> or <strong>Piglet</strong>. Pass the <code>model_url</code> string directly to the loader.</div>
+                </section>
+
+                <!-- Example: Unreal Engine -->
+                <section id="example-unreal">
+                    <h2>Unreal Engine (C++) Example</h2>
+                    <div class="code-block"><pre><span class="c">// DexHeroFetcher.h</span>
+<span class="p">#include</span> <span class="s">"HttpModule.h"</span>
+<span class="p">#include</span> <span class="s">"Interfaces/IHttpRequest.h"</span>
+<span class="p">#include</span> <span class="s">"Interfaces/IHttpResponse.h"</span>
+
+<span class="p">void</span> <span class="k">FetchDexHeros</span>() {
+    FHttpModule&amp; Http = FHttpModule::Get();
+    TSharedRef&lt;IHttpRequest, ESPMode::ThreadSafe&gt; Request = Http.CreateRequest();
+
+    Request-&gt;SetURL(<span class="s">TEXT("https://yourserver.com/api/game/dexheros")</span>);
+    Request-&gt;SetVerb(<span class="s">TEXT("GET")</span>);
+    Request-&gt;SetHeader(<span class="s">TEXT("X-API-Key")</span>, <span class="s">TEXT("dh_live_YOUR_KEY")</span>);
+    Request-&gt;SetHeader(<span class="s">TEXT("Content-Type")</span>, <span class="s">TEXT("application/json")</span>);
+
+    Request-&gt;OnProcessRequestComplete().BindLambda(
+        [](FHttpRequestPtr Req, FHttpResponsePtr Res, bool bSuccess) {
+            <span class="p">if</span> (bSuccess &amp;&amp; Res.IsValid()) {
+                FString JsonString = Res-&gt;GetContentAsString();
+                <span class="c">// Parse with FJsonSerializer and load GLB via glTFRuntime plugin</span>
+                UE_LOG(LogTemp, Log, <span class="s">TEXT("DexHeros: %s")</span>, *JsonString);
+            }
+        }
+    );
+
+    Request-&gt;ProcessRequest();
+}
+
+<span class="c">//  Access check: verify a player wallet before granting in-game access </span>
+<span class="p">void</span> <span class="k">CheckWalletAccess</span>(FString DexHeroId, FString PlayerWallet) {
+    FHttpModule&amp; Http = FHttpModule::Get();
+    TSharedRef&lt;IHttpRequest, ESPMode::ThreadSafe&gt; Request = Http.CreateRequest();
+
+    FString URL = FString::Printf(
+        <span class="s">TEXT("https://yourserver.com/api/game/dexheros/%s/access")</span>,
+        *DexHeroId
+    );
+    Request-&gt;SetURL(URL);
+    Request-&gt;SetVerb(<span class="s">TEXT("GET")</span>);
+    Request-&gt;SetHeader(<span class="s">TEXT("X-API-Key")</span>, <span class="s">TEXT("dh_live_YOUR_KEY")</span>);
+
+    Request-&gt;OnProcessRequestComplete().BindLambda(
+        [PlayerWallet](FHttpRequestPtr Req, FHttpResponsePtr Res, bool bSuccess) {
+            <span class="p">if</span> (bSuccess &amp;&amp; Res.IsValid()) {
+                <span class="c">// Parse "access" array and check if PlayerWallet is present</span>
+                FString Body = Res-&gt;GetContentAsString();
+                <span class="p">bool</span> bHasAccess = Body.Contains(PlayerWallet.ToLower());
+                UE_LOG(LogTemp, Log, <span class="s">TEXT("Access granted: %s")</span>,
+                    bHasAccess ? <span class="s">TEXT("YES")</span> : <span class="s">TEXT("NO")</span>);
+            }
+        }
+    );
+
+    Request-&gt;ProcessRequest();
+}</pre></div>
+                    <div class="alert-info"> To load GLB models in Unreal Engine, use the <strong>glTFRuntime</strong> plugin (free on GitHub) or <strong>Datasmith</strong>. Pass the <code>model_url</code> from the API response directly to <code>LoadAssetFromFilePath</code> or stream it via <code>LoadAssetFromURL</code>. The Epic skeleton from your DexHero will auto-bind to UE5's Mannequin animations.</div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Key Reveal Modal -->
+    <div class="modal-overlay" id="key-modal">
+        <div class="modal-box">
+            <h3> Your New API Key</h3>
+            <p>Copy this key now — it will <strong>never</strong> be shown again. Store it in a secure environment variable.</p>
+            <div class="key-reveal">
+                <code id="key-reveal-text"></code>
+                <button class="btn-copy" onclick="copyKey()">Copy</button>
+            </div>
+            <button class="btn-done" onclick="closeKeyModal()">I've saved it — Done</button>
+        </div>
+    </div>
+
+    <!-- Generate Key Modal -->
+    <div class="modal-overlay" id="gen-modal">
+        <div class="modal-box">
+            <h3>Generate API Key</h3>
+            <p>Select the game this key is for. You'll need to sign a message with your wallet to confirm ownership.</p>
+            <select class="game-select" id="gen-game-select">
+                <option value="">Loading your games...</option>
+            </select>
+            <div style="display:flex; gap:10px; margin-top:4px;">
+                <button onclick="closeGenModal()" style="flex:1; padding:11px; background:transparent; border:1px solid var(--border-color); border-radius:8px; color:var(--text-primary); cursor:pointer; font-size:14px;">Cancel</button>
+                <button onclick="confirmGenerateKey()" id="btn-confirm-gen" style="flex:2; padding:11px; background:var(--gradient-primary); border:none; border-radius:8px; color:white; font-size:14px; font-weight:600; cursor:pointer;">Generate & Sign</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+    <script src="../js/unified-wallet.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script>
+        // Set base URL dynamically
+        document.getElementById('base-url').textContent = window.location.origin + '/api/game';
+
+        // Sidebar scroll spy
+        const sections = document.querySelectorAll('.dev-content section');
+        const navLinks = document.querySelectorAll('.dev-nav a');
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(s => { if (window.scrollY >= s.offsetTop - 160) current = s.id; });
+            navLinks.forEach(a => {
+                a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+            });
+        });
+
+        //  Wallet awareness 
+        function getWallet() {
+            return sessionStorage.getItem('walletConnected') === 'true'
+                ? sessionStorage.getItem('walletAddress') : null;
+        }
+
+        function onWalletChange() {
+            const wallet = getWallet();
+            document.getElementById('km-connect-prompt').style.display = wallet ? 'none' : 'block';
+            document.getElementById('km-main').style.display = wallet ? 'block' : 'none';
+            if (wallet) { loadKeys(wallet); loadGames(wallet); }
+        }
+
+        // Poll for wallet state changes
+        let _lastWallet = null;
+        setInterval(() => {
+            const w = getWallet();
+            if (w !== _lastWallet) { _lastWallet = w; onWalletChange(); }
+        }, 800);
+        document.addEventListener('DOMContentLoaded', onWalletChange);
+
+        //  Load keys 
+        async function loadKeys(wallet) {
+            const list = document.getElementById('km-keys-list');
+            list.innerHTML = '<div class="empty-keys">Loading...</div>';
+            try {
+                const sig = await signMessage(wallet);
+                if (!sig) { list.innerHTML = '<div class="empty-keys">Sign the message to load your keys.</div>'; return; }
+                const res = await fetch('/api/game/keys/list', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ walletAddress: wallet, signature: sig.signature, message: sig.message })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                renderKeys(data.keys);
+            } catch (e) {
+                list.innerHTML = `<div class="empty-keys">Error: ${escapeHtml(e.message)}</div>`;
+            }
+        }
+
+        let _cachedSig = null;
+        async function signMessage(wallet) {
+            if (_cachedSig && Date.now() - _cachedSig.ts < 23 * 3600 * 1000) return _cachedSig;
+            if (!window.ethereum) { alert('MetaMask required'); return null; }
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+            const message = `DexHero API ${Date.now()}`;
+            try {
+                const signature = await signer.signMessage(message);
+                _cachedSig = { signature, message, ts: Date.now() };
+                return _cachedSig;
+            } catch { return null; }
+        }
+
+        function renderKeys(keys) {
+            const list = document.getElementById('km-keys-list');
+            if (!keys.length) {
+                list.innerHTML = '<div class="empty-keys">No active API keys. Generate one above.</div>';
+                return;
+            }
+            list.innerHTML = keys.map(k => `
+                <div class="key-row" id="kr-${escapeHtml(k.id)}">
+                    <div>
+                        <div class="key-prefix">${escapeHtml(k.key_prefix)}••••••••••••••••••••••••</div>
+                        <div class="key-meta">
+                            Created ${new Date(k.created_at).toLocaleDateString()}
+                            ${k.last_used_at ? ' · Last used ' + new Date(k.last_used_at).toLocaleDateString() : ' · Never used'}
+                        </div>
+                    </div>
+                    <button class="btn-revoke" onclick="revokeKey('${escapeHtml(k.key_prefix)}', '${escapeHtml(k.id)}')">Revoke</button>
+                </div>
+            `).join('');
+        }
+
+        //  Load games 
+        async function loadGames(wallet) {
+            const sel = document.getElementById('gen-game-select');
+            try {
+                const supabase = window.DexHeroSupabase.get();
+                if (!supabase) { sel.innerHTML = '<option value="">Supabase not ready</option>'; return; }
+                const { data } = await supabase
+                    .from('registered_games')
+                    .select('id, title')
+                    .eq('owner_wallet', wallet.toLowerCase());
+                if (!data || !data.length) {
+                    sel.innerHTML = '<option value="">No registered games found</option>';
+                    return;
+                }
+                sel.innerHTML = data.map(g => `<option value="${escapeHtml(g.id)}">${escapeHtml(g.title)}</option>`).join('');
+            } catch (e) {
+                sel.innerHTML = '<option value="">Could not load games</option>';
+            }
+        }
+
+        //  Generate key 
+        function openGenerateKeyModal() { document.getElementById('gen-modal').classList.add('open'); }
+        function closeGenModal() { document.getElementById('gen-modal').classList.remove('open'); }
+
+        async function confirmGenerateKey() {
+            const wallet = getWallet();
+            const gameId = document.getElementById('gen-game-select').value;
+            if (!gameId) { alert('Please select a game.'); return; }
+            const btn = document.getElementById('btn-confirm-gen');
+            btn.disabled = true; btn.textContent = 'Signing...';
+            try {
+                const sig = await signMessage(wallet);
+                if (!sig) { btn.disabled = false; btn.textContent = 'Generate & Sign'; return; }
+                btn.textContent = 'Generating...';
+                const res = await fetch('/api/game/keys/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ walletAddress: wallet, signature: sig.signature, message: sig.message, gameId })
+                });
+                const data = await res.json();
+                if (!res.ok) { alert(data.error); return; }
+                closeGenModal();
+                document.getElementById('key-reveal-text').textContent = data.apiKey;
+                document.getElementById('key-modal').classList.add('open');
+                loadKeys(wallet); // refresh list
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                btn.disabled = false; btn.textContent = 'Generate & Sign';
+            }
+        }
+
+        //  Revoke key 
+        async function revokeKey(prefix, rowId) {
+            if (!confirm(`Revoke key ${prefix}...? This cannot be undone.`)) return;
+            const wallet = getWallet();
+            const sig = await signMessage(wallet);
+            if (!sig) return;
+            const res = await fetch('/api/game/keys/revoke', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ walletAddress: wallet, signature: sig.signature, message: sig.message, keyPrefix: prefix })
+            });
+            if (res.ok) {
+                document.getElementById('kr-' + rowId)?.remove();
+                const list = document.getElementById('km-keys-list');
+                if (!list.children.length) list.innerHTML = '<div class="empty-keys">No active API keys. Generate one above.</div>';
+            } else {
+                const d = await res.json();
+                alert('Error: ' + d.error);
+            }
+        }
+
+        //  Key modal 
+        function closeKeyModal() { document.getElementById('key-modal').classList.remove('open'); }
+        function copyKey() {
+            const key = document.getElementById('key-reveal-text').textContent;
+            navigator.clipboard.writeText(key).then(() => {
+                const btn = document.querySelector('.btn-copy');
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            });
+        }
+    </script>
+</body>
+</html>

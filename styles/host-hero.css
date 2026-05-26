@@ -1,0 +1,309 @@
+/* host-hero.css — Phase 1 of the Steam-tier rebuild.
+ * Hero band + system-check rows + branded download manager styles.
+ *
+ * Builds on tokens.css (--surf-*, --ink-*, --acc-*) and hud.css glow
+ * primitives. No new color decisions; everything reuses existing
+ * design-system variables. */
+
+/* ── Hero band ─────────────────────────────────────────────────── */
+
+.host-hero {
+    position: relative;
+    margin: -16px -16px 16px;       /* bleed past the panel-section padding */
+    padding: 36px 24px 28px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--rule, rgba(255, 255, 255, 0.08));
+}
+
+.host-hero::before {
+    /* gradient + cyan glow stack, mirrors the cyberpunk shell backdrop */
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(120% 80% at 100% 0%, rgba(6, 182, 212, 0.18) 0%, transparent 60%),
+        radial-gradient(80%  60% at 0%  100%, rgba(59, 130, 246, 0.14) 0%, transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.85) 100%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.host-hero > * { position: relative; z-index: 1; }
+
+.host-hero-display {
+    font-family: var(--font-display, 'Inter'), system-ui, sans-serif;
+    font-weight: 600;
+    font-size: clamp(24px, 3.4vw, 30px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    color: var(--ink-0, #fff);
+    margin-bottom: 10px;
+}
+
+.host-hero-display em {
+    font-style: normal;
+    font-weight: 600;
+    color: var(--acc-cyan, #06b6d4);
+    text-decoration: underline;
+    text-decoration-color: rgba(6, 182, 212, 0.45);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+}
+
+.host-hero-sub {
+    font-family: var(--font-mono, 'JetBrains Mono'), monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: none;
+    color: var(--ink-2, rgba(255,255,255,0.65));
+    margin-bottom: 20px;
+}
+
+/* live ticker — 4 stats in a 2x2 grid */
+.host-hero-ticker {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+}
+.host-hero-stat {
+    border: 1px solid var(--rule, rgba(255,255,255,0.10));
+    background: rgba(0,0,0,0.40);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 10px 12px;
+    border-radius: 4px;
+    position: relative;
+}
+.host-hero-stat::before,
+.host-hero-stat::after {
+    /* tiny cyan corner brackets */
+    content: '';
+    position: absolute;
+    width: 8px; height: 8px;
+    border-color: var(--acc-cyan, #06b6d4);
+    border-style: solid;
+    border-width: 0;
+    opacity: 0.45;
+}
+.host-hero-stat::before {
+    top: 0; left: 0;
+    border-top-width: 1px;
+    border-left-width: 1px;
+}
+.host-hero-stat::after {
+    bottom: 0; right: 0;
+    border-bottom-width: 1px;
+    border-right-width: 1px;
+}
+.host-hero-stat-label {
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink-3, rgba(255,255,255,0.38));
+    margin-bottom: 4px;
+}
+.host-hero-stat-value {
+    font-family: var(--font-display, 'Inter'), system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-0, #fff);
+    line-height: 1.1;
+}
+.host-hero-stat-value.is-cyan {
+    color: var(--acc-cyan, #06b6d4);
+    text-shadow: 0 0 12px rgba(6, 182, 212, 0.45);
+}
+
+/* ── System check rows ─────────────────────────────────────────── */
+
+.host-check-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: linear-gradient(90deg, rgba(6,182,212,0.06) 0%, rgba(6,182,212,0.01) 100%);
+    border: 1px solid rgba(6,182,212,0.18);
+    border-radius: 4px;
+    font-family: var(--font-mono, monospace);
+    font-size: 13px;
+    color: var(--ink-1, rgba(255,255,255,0.82));
+}
+
+.host-check-rows {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.host-check-row {
+    display: grid;
+    grid-template-columns: 14px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 3px;
+    font-family: var(--font-mono, monospace);
+    font-size: 12px;
+}
+
+.host-check-row[data-state="pending"] .host-check-row-detail { color: var(--ink-3); }
+.host-check-row[data-state="ok"]      { border-left: 2px solid var(--acc-ok, #22c55e); }
+.host-check-row[data-state="warn"]    { border-left: 2px solid var(--acc-warn, #fbbf24); }
+.host-check-row[data-state="err"]     { border-left: 2px solid var(--acc-err, #ef4444); }
+.host-check-row[data-state="neutral"] { border-left: 2px solid rgba(255,255,255,0.10); }
+
+.host-check-row-label {
+    color: var(--ink-1, rgba(255,255,255,0.78));
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 11px;
+}
+.host-check-row-detail {
+    color: var(--ink-2, rgba(255,255,255,0.55));
+    font-size: 11px;
+    text-align: right;
+}
+
+.host-check-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.host-check-dot--ok      { background: var(--acc-ok, #22c55e);  box-shadow: 0 0 8px rgba(34,197,94,0.6); }
+.host-check-dot--warn    { background: var(--acc-warn, #fbbf24); box-shadow: 0 0 8px rgba(251,191,36,0.6); }
+.host-check-dot--err     { background: var(--acc-err, #ef4444);  box-shadow: 0 0 8px rgba(239,68,68,0.6); }
+.host-check-dot--pending { background: var(--ink-3, rgba(255,255,255,0.38)); animation: host-check-pulse 1.4s ease-in-out infinite; }
+.host-check-dot--neutral { background: rgba(255,255,255,0.18); }
+
+@keyframes host-check-pulse {
+    0%, 100% { opacity: 0.3; }
+    50%      { opacity: 0.85; }
+}
+
+/* ── Download manager ──────────────────────────────────────────── */
+
+.host-dl {
+    margin-top: 18px;
+    padding: 18px;
+    background: rgba(0,0,0,0.45);
+    border: 1px solid var(--rule, rgba(255,255,255,0.08));
+    border-radius: 4px;
+}
+.host-dl-cta {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--acc-cyan, #06b6d4) 0%, var(--acc-blue, #3b82f6) 100%);
+    color: #0a0a0e;
+    border: none;
+    border-radius: 3px;
+    font-family: var(--font-display, 'Inter'), sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 0 24px rgba(6,182,212,0.35), inset 0 1px 0 rgba(255,255,255,0.20);
+    transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.host-dl-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 36px rgba(6,182,212,0.55), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.host-dl-cta:disabled,
+.host-dl-cta[aria-disabled="true"] {
+    background: linear-gradient(135deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+    color: var(--ink-3, rgba(255,255,255,0.38));
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.host-dl-progress {
+    margin-top: 14px;
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.host-dl-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--acc-cyan, #06b6d4), var(--acc-blue, #3b82f6));
+    transition: width 200ms ease;
+    box-shadow: 0 0 12px rgba(6,182,212,0.65);
+}
+.host-dl-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    color: var(--ink-3, rgba(255,255,255,0.38));
+    letter-spacing: 0.06em;
+}
+
+.host-dl-attestation {
+    margin-top: 14px;
+    padding: 10px 12px;
+    background: rgba(34,197,94,0.06);
+    border-left: 2px solid var(--acc-ok, #22c55e);
+    border-radius: 3px;
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    color: var(--ink-1, rgba(255,255,255,0.78));
+    line-height: 1.5;
+}
+.host-dl-attestation a { color: var(--acc-cyan, #06b6d4); text-decoration: underline; }
+
+/* ── Feature carousel (3 cards under the hero) ─────────────────── */
+
+.host-features {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-top: 18px;
+}
+@media (min-width: 640px) {
+    .host-features { grid-template-columns: repeat(3, 1fr); }
+}
+.host-feature {
+    padding: 14px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 4px;
+    text-align: center;
+    transition: border-color 200ms ease, transform 200ms ease;
+}
+.host-feature:hover {
+    border-color: rgba(6,182,212,0.45);
+    transform: translateY(-1px);
+}
+.host-feature-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: var(--acc-cyan, #06b6d4);
+    text-shadow: 0 0 12px rgba(6,182,212,0.45);
+}
+.host-feature-title {
+    font-family: var(--font-display, 'Inter'), sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-0, #fff);
+    margin-bottom: 6px;
+}
+.host-feature-body {
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--ink-2, rgba(255,255,255,0.55));
+}

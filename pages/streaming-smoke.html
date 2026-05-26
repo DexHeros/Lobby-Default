@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DexHero Streaming Smoke (Tier 4.4d)</title>
+<style>
+  body { margin: 0; background: #000; color: #ccc; font-family: monospace; font-size: 12px; }
+  #status { position: fixed; top: 8px; left: 8px; z-index: 10; background: rgba(0,0,0,0.7); padding: 8px 12px; border-radius: 4px; max-width: 480px; }
+  #log { white-space: pre-wrap; max-height: 80vh; overflow: auto; line-height: 1.5; }
+  .ok { color: #4ade80; }
+  .err { color: #f87171; }
+  .warn { color: #fbbf24; }
+  /* Hide the canvas — we decode but don't display, since this runs
+     headless. Real-browser debugging mode (?debug=1) makes it visible. */
+  canvas { display: none; position: fixed; bottom: 8px; right: 8px; width: 320px; height: 180px; border: 1px solid #333; }
+  body.debug canvas { display: block; }
+</style>
+</head>
+<body>
+<div id="status">
+  <div><b>DexHero Streaming Smoke</b> &mdash; Tier 4.4d (real WebCodecs H.264 decode)</div>
+  <div id="log"></div>
+</div>
+<canvas id="canvas" width="1920" height="1080"></canvas>
+<video id="video" style="display:none;" autoplay muted></video>
+
+<script>
+/* eslint-disable no-console */
+
+// =====================================================================
+// Tier 4.4d — real-browser streaming smoke runner.
+//
+// Loaded by Puppeteer in the v3labs-streaming-smoke-runner Docker
+// service. Or loadable in a real browser for manual debugging
+// (?debug=1 to see the decoded canvas).
+//
+// Query params (set by Puppeteer):
+//   ?session=<id>&host=<ip>&port=<n>&token=<pair-token>&backend=<base-url>
+//
+// Lifecycle:
+//   1. Open WS to ws://<host>:<port>/api/pair?token=...
+//   2. Receive offer SDP via { Description: { ty: 'offer', sdp } }
+//   3. RTCPeerConnection answer + ICE trickle
+//   4. RTCRtpReceiver track 'video' → Insertable Streams →
+//      WebCodecs.VideoDecoder → counts + timings
+//   5. requestVideoFrameCallback → presentation timing for motion-to-photon
+//   6. Poll RTCStatsReport every 1s for jitter, RTT, packet loss
+//   7. After 30s observation, set window.__smokeResult and signal done
+//
+// Result schema (matches /api/host/streaming-probe-result):
+//   {
+//     attempted: true,
+//     real_browser: true,
+//     offer_received: bool,
+//     ice_state: string,
+//     connection_state: string,
+//     frames_decoded: number,
+//     decode_errors: number,
+//     fps_observed: number,
+//     decode_ms_p50: number,
+//     decode_ms_p99: number,
+//     m2p_ms_p50: number,           // motion-to-photon proxy
+//     m2p_ms_p99: number,
+//     rtt_ms: number,
+//     jitter_ms: number,
+//     packets_lost: number,
+//     packets_received: number,
+//     bytes_received: number,
+//     duration_ms: number,
+//     error: string|null,
+//   }
+// =====================================================================
+
+const PARAMS = (() => {
+    const u = new URL(window.location.href);
+    return {
+        sessionId: u.searchParams.get('session') || '',
+        host:      u.searchParams.get('host')    || '',
+        port:      Number(u.searchParams.get('port') || 47991),
+        token:     u.searchParams.get('token')   || '',
+        backend:   u.searchParams.get('backend') || '',
+        debug:     u.searchParams.get('debug')   === '1',
+    };
+})();
+
+if (PARAMS.debug) document.body.classList.add('debug');
+
+const logEl = document.getElementById('log');
+function log(msg, cls = '') {
+    const ts = (new Date()).toISOString().slice(11, 23);
+    const line = document.createElement('div');
+    line.className = cls;
+    line.textContent = `[${ts}] ${msg}`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+    console.log(`[smoke] ${msg}`);
+}
+
+const RESULT = {
+    attempted:        true,
+    real_browser:     true,
+    offer_received:   false,
+    ice_state:        null,
+    connection_state: null,
+    frames_decoded:   0,
+    decode_errors:    0,
+    fps_observed:     0,
+    decode_ms_p50:    0,
+    decode_ms_p99:    0,
+    m2p_ms_p50:       0,
+    m2p_ms_p99:       0,
+    rtt_ms:           0,
+    jitter_ms:        0,
+    packets_lost:     0,
+    packets_received: 0,
+    bytes_received:   0,
+    duration_ms:      0,
+    error:            null,
+};
+
+// Bail-out if essential params missing (real-browser debug mode tolerates).
+if (!PARAMS.sessionId || !PARAMS.host || !PARAMS.port) {
+    log('missing required query params (session, host, port)', 'err');
+    if (!PARAMS.debug) {
+        RESULT.error = 'missing_query_params';
+        finalize();
+    }
+}
+
+// p50 / p99 from a sample buffer. Sort once at the end; cheap on N≤2000.
+class SampleBuffer {
+    constructor() { this.samples = []; }
+    push(v) { if (Number.isFinite(v)) this.samples.push(v); }
+    percentile(p) {
+        if (!this.samples.length) return 0;
+        const sorted = [...this.samples].sort((a, b) => a - b);
+        const idx = Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * p));
+        return Math.round(sorted[idx] * 100) / 100;
+    }
+}
+
+const decodeMs = new SampleBuffer();
+const m2pMs    = new SampleBuffer();
+
+// =====================================================================
+// WebRTC + WebCodecs setup
+// =====================================================================
+
+let ws, peer, decoder;
+const startedAt = Date.now();
+
+async function fetchIceServers() {
+    if (!PARAMS.backend) return [{ urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] }];
+    try {
+        const r = await fetch(`${PARAMS.backend}/api/session/ice-servers`);
+        if (r.ok) {
+            const d = await r.json();
+            if (Array.isArray(d.iceServers)) return d.iceServers;
+        }
+    } catch {}
+    return [{ urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] }];
+}
+
+async function start() {
+    const iceServers = await fetchIceServers();
+    log(`ICE servers: ${JSON.stringify(iceServers).slice(0, 100)}…`);
+
+    if (typeof VideoDecoder === 'undefined') {
+        log('VideoDecoder not available — Chromium 105+ required', 'err');
+        RESULT.error = 'webcodecs_unavailable';
+        finalize();
+        return;
+    }
+
+    peer = new RTCPeerConnection({ iceServers });
+
+    peer.addEventListener('iceconnectionstatechange', () => {
+        RESULT.ice_state = peer.iceConnectionState;
+        log(`ice: ${peer.iceConnectionState}`, peer.iceConnectionState === 'connected' ? 'ok' : '');
+    });
+    peer.addEventListener('connectionstatechange', () => {
+        RESULT.connection_state = peer.connectionState;
+        log(`conn: ${peer.connectionState}`, peer.connectionState === 'connected' ? 'ok' : '');
+        if (peer.connectionState === 'connected') {
+            // Begin the 30s observation window.
+            scheduleFinalize(30_000);
+            startStatsPolling();
+        }
+        if (peer.connectionState === 'failed') {
+            RESULT.error = RESULT.error || 'webrtc_failed';
+            finalize();
+        }
+    });
+
+    peer.addEventListener('icecandidate', (ev) => {
+        if (!ev.candidate) return;
+        try { ws.send(JSON.stringify({ AddIceCandidate: ev.candidate.toJSON() })); } catch {}
+    });
+
+    peer.addEventListener('track', (ev) => {
+        log(`track received: kind=${ev.track.kind}`, 'ok');
+        if (ev.track.kind === 'video') wireVideoDecode(ev);
+    });
+
+    // Open WS to the host. Same signaling protocol as the in-browser
+    // app/stream/player.js uses (wrapped via streamer-bridge.js on host).
+    const wsUrl = `ws://${PARAMS.host}:${PARAMS.port}/api/pair?token=${encodeURIComponent(PARAMS.token)}`;
+    log(`WS connecting to ${wsUrl}`);
+    ws = new WebSocket(wsUrl);
+
+    ws.addEventListener('error', (e) => {
+        log(`WS error: ${e.message || 'unknown'}`, 'err');
+        if (!RESULT.error) RESULT.error = 'ws_error';
+        finalize();
+    });
+    ws.addEventListener('close', () => {
+        log('WS closed');
+        if (peer?.connectionState !== 'connected') {
+            if (!RESULT.error) RESULT.error = 'ws_closed_before_connected';
+            finalize();
+        }
+    });
+    ws.addEventListener('message', async (ev) => {
+        let msg;
+        try { msg = JSON.parse(typeof ev.data === 'string' ? ev.data : await ev.data.text()); }
+        catch { return; }
+        try {
+            if (msg.Description?.ty === 'offer') {
+                RESULT.offer_received = true;
+                log('offer SDP received', 'ok');
+                await peer.setRemoteDescription({ type: 'offer', sdp: msg.Description.sdp });
+                const answer = await peer.createAnswer();
+                await peer.setLocalDescription(answer);
+                ws.send(JSON.stringify({ Description: { ty: 'answer', sdp: peer.localDescription.sdp } }));
+                log('answer sent', 'ok');
+            } else if (msg.AddIceCandidate) {
+                await peer.addIceCandidate(msg.AddIceCandidate);
+            }
+        } catch (e) {
+            log(`signaling error: ${e.message}`, 'err');
+            if (!RESULT.error) RESULT.error = `signaling_${e.message?.slice(0, 60) || 'error'}`;
+            finalize();
+        }
+    });
+}
+
+function wireVideoDecode(trackEvent) {
+    if (typeof RTCRtpReceiver === 'undefined' || !('createEncodedStreams' in RTCRtpReceiver.prototype)) {
+        log('Insertable Streams unavailable; falling back to MediaStream → video element (no per-frame decode timing)', 'warn');
+        const videoEl = document.getElementById('video');
+        videoEl.srcObject = trackEvent.streams[0] || new MediaStream([trackEvent.track]);
+        // Best-effort frame-rate count via rVFC.
+        const onFrame = (now, meta) => {
+            RESULT.frames_decoded++;
+            if (videoEl.requestVideoFrameCallback) videoEl.requestVideoFrameCallback(onFrame);
+        };
+        if (videoEl.requestVideoFrameCallback) videoEl.requestVideoFrameCallback(onFrame);
+        return;
+    }
+
+    const enc = trackEvent.receiver.createEncodedStreams();
+    const reader = enc.readable.getReader();
+    const writer = enc.writable.getWriter();
+
+    decoder = new VideoDecoder({
+        output: (frame) => {
+            try {
+                RESULT.frames_decoded++;
+                // Decode-to-now (proxy for end-to-end decode latency contribution).
+                const dt = performance.now() - frame.timestamp / 1000;   // microseconds → ms
+                if (dt >= 0 && dt < 5000) decodeMs.push(dt);
+                // We don't render — close the frame to free memory immediately.
+                frame.close();
+            } catch (e) {
+                RESULT.decode_errors++;
+            }
+        },
+        error: (e) => {
+            RESULT.decode_errors++;
+            log(`decoder error: ${e.message || e}`, 'err');
+        },
+    });
+
+    // Dynamically configure the decoder from the first chunk's codec hint.
+    let configured = false;
+
+    (async () => {
+        for (;;) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            try {
+                if (!configured) {
+                    // Best-effort H.264 baseline — most Sunshine builds emit this.
+                    // If the host emits a different codec, the decoder's error
+                    // callback fires + we fall through to RESULT.decode_errors.
+                    decoder.configure({ codec: 'avc1.42E01E' });
+                    configured = true;
+                }
+                decoder.decode(value);
+                // Pass through unchanged so the encoded stream still reaches
+                // the receiver pipeline (other parts of WebRTC depend on it).
+                writer.write(value);
+            } catch (e) {
+                RESULT.decode_errors++;
+            }
+        }
+    })();
+}
+
+function startStatsPolling() {
+    const tick = async () => {
+        if (!peer) return;
+        try {
+            const stats = await peer.getStats();
+            for (const s of stats.values()) {
+                if (s.type === 'inbound-rtp' && s.kind === 'video') {
+                    RESULT.packets_received = Number(s.packetsReceived || 0);
+                    RESULT.packets_lost     = Number(s.packetsLost     || 0);
+                    RESULT.bytes_received   = Number(s.bytesReceived   || 0);
+                    if (Number.isFinite(s.jitter)) RESULT.jitter_ms = Math.round(s.jitter * 1000 * 100) / 100;
+                    // motion-to-photon proxy: jitterBufferDelay / framesDecoded.
+                    if (Number.isFinite(s.jitterBufferDelay) && Number.isFinite(s.framesDecoded) && s.framesDecoded > 0) {
+                        const m2p = (s.jitterBufferDelay / s.framesDecoded) * 1000;
+                        if (m2p >= 0 && m2p < 5000) m2pMs.push(m2p);
+                    }
+                }
+                if (s.type === 'candidate-pair' && s.nominated && Number.isFinite(s.currentRoundTripTime)) {
+                    RESULT.rtt_ms = Math.round(s.currentRoundTripTime * 1000 * 100) / 100;
+                }
+            }
+        } catch {}
+        if (peer && peer.connectionState !== 'closed') setTimeout(tick, 1000);
+    };
+    tick();
+}
+
+let finalizeTimer = null;
+function scheduleFinalize(ms) {
+    if (finalizeTimer) return;
+    finalizeTimer = setTimeout(finalize, ms);
+}
+
+let finalized = false;
+function finalize() {
+    if (finalized) return;
+    finalized = true;
+    RESULT.duration_ms = Date.now() - startedAt;
+    RESULT.decode_ms_p50 = decodeMs.percentile(0.50);
+    RESULT.decode_ms_p99 = decodeMs.percentile(0.99);
+    RESULT.m2p_ms_p50    = m2pMs.percentile(0.50);
+    RESULT.m2p_ms_p99    = m2pMs.percentile(0.99);
+    RESULT.fps_observed  = RESULT.duration_ms > 0
+        ? Math.round((RESULT.frames_decoded / (RESULT.duration_ms / 1000)) * 100) / 100
+        : 0;
+    log('FINAL RESULT', RESULT.error ? 'err' : 'ok');
+    log(JSON.stringify(RESULT, null, 2));
+    try { decoder?.close(); } catch {}
+    try { peer?.close(); } catch {}
+    try { ws?.close(); } catch {}
+    // Signal to Puppeteer (or anything else watching).
+    window.__smokeResult = RESULT;
+    document.title = `DexHero Smoke — ${RESULT.error ? 'FAILED' : 'PASSED'}`;
+}
+
+// Hard ceiling. If something deadlocks (no offer, no track, etc), still finalize.
+setTimeout(() => {
+    if (!finalized) {
+        if (!RESULT.error) RESULT.error = 'overall_timeout';
+        log('overall timeout — finalizing', 'err');
+        finalize();
+    }
+}, 60_000);
+
+start().catch((e) => {
+    log(`start error: ${e.message}`, 'err');
+    if (!RESULT.error) RESULT.error = `start_${e.message?.slice(0, 60) || 'error'}`;
+    finalize();
+});
+</script>
+</body>
+</html>

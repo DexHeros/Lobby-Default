@@ -1,0 +1,1598 @@
+/* Token-detail panel — Sovereign Lobby styling for character-inspect
+   + live chart + buy/sell.  All rules live under .panel[data-panel-id="token-detail"]
+   so they don't leak to other panels. */
+
+.panel[data-panel-id="token-detail"] .panel__body {
+    padding: 20px 22px 28px;
+}
+
+/* ── Identity + price header ───────────────────────────────── */
+.td-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+.td-head__id {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+.td-head__name {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-0);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.td-head__sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+}
+.td-head__sub .sep { opacity: 0.4; margin: 0 6px; }
+
+.td-head__price {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    flex-shrink: 0;
+}
+.td-head__price-tag {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    line-height: 1.2;
+}
+.td-head__price-main {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink-0);
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+}
+.td-head__price-now {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 4px;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    color: var(--ink-2);
+    letter-spacing: 0.04em;
+}
+.td-head__price-now-tag {
+    color: var(--acc-cyan);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+}
+
+/* ── Timeframe pills ───────────────────────────────────────── */
+.td-timeframes {
+    display: flex;
+    gap: 2px;
+    padding: 4px;
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-1);
+    margin-bottom: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.td-timeframes::-webkit-scrollbar { display: none; }
+.td-tf {
+    flex: 1;
+    min-width: 40px;
+    padding: 6px 0;
+    background: transparent;
+    border: 0;
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: color var(--dur-sm), background var(--dur-sm);
+}
+.td-tf:hover { color: var(--ink-1); }
+.td-tf[aria-pressed="true"] {
+    background: var(--acc-soft);
+    color: var(--acc-cyan);
+    box-shadow: var(--glow-cyan-sm);
+}
+
+/* ── Inspect / Games tab pills ─────────────────────────────── */
+.td-pills {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    margin-bottom: 18px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-1);
+}
+.td-pill {
+    flex: 1;
+    padding: 9px 14px;
+    background: transparent;
+    border: 0;
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: color var(--dur-sm), background var(--dur-sm), box-shadow var(--dur-sm);
+}
+.td-pill:hover { color: var(--ink-1); }
+.td-pill[aria-pressed="true"] {
+    background: var(--acc-soft);
+    color: var(--acc-cyan);
+    box-shadow: var(--glow-cyan-sm);
+}
+
+.td-panes { position: relative; }
+.td-pane[hidden] { display: none; }
+
+/* ── Games tab — list of games this DexHero is approved to play in ── */
+.td-games-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Developer call-to-action: "Add this DexHero to your game".
+   Three render forms: invite-to-connect, invite-to-register, toggle-picker. */
+.td-link-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(6, 182, 212, 0.02));
+    border: 1px dashed rgba(6, 182, 212, 0.45);
+    border-radius: var(--r-2);
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color var(--dur-sm), background var(--dur-sm), box-shadow var(--dur-sm);
+    font-family: inherit;
+    text-align: left;
+    width: 100%;
+}
+.td-link-cta:hover {
+    border-color: var(--acc-cyan);
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.14), rgba(6, 182, 212, 0.04));
+    box-shadow: var(--glow-cyan-sm);
+}
+.td-link-cta__lead {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+.td-link-cta__title {
+    color: var(--ink-0);
+    font-family: var(--font-display);
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+.td-link-cta__sub {
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+.td-link-cta__action {
+    color: var(--acc-cyan);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    flex-shrink: 0;
+}
+.td-link-cta--done {
+    border-style: solid;
+    border-color: rgba(34, 197, 94, 0.35);
+    background: rgba(34, 197, 94, 0.05);
+    cursor: default;
+}
+.td-link-cta--done:hover {
+    border-color: rgba(34, 197, 94, 0.45);
+    box-shadow: none;
+    background: rgba(34, 197, 94, 0.06);
+}
+.td-link-cta--done .td-link-cta__action { color: var(--ok); }
+
+/* Inline picker that replaces the CTA when expanded. */
+.td-link-picker {
+    border: 1px solid var(--rule);
+    border-radius: var(--r-2);
+    background: rgba(255, 255, 255, 0.025);
+    overflow: hidden;
+}
+.td-link-picker__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--rule);
+    background: rgba(0, 0, 0, 0.25);
+}
+.td-link-picker__title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    font-weight: 600;
+}
+.td-link-picker__close {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--rule-strong);
+    color: var(--ink-3);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color var(--dur-sm), border-color var(--dur-sm);
+}
+.td-link-picker__close:hover {
+    color: var(--err);
+    border-color: rgba(239, 68, 68, 0.6);
+}
+.td-link-picker__list {
+    display: flex;
+    flex-direction: column;
+}
+.td-link-picker__row {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--rule);
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: background var(--dur-sm);
+    font-family: inherit;
+}
+.td-link-picker__row:last-child { border-bottom: 0; }
+.td-link-picker__row:hover:not(:disabled) {
+    background: rgba(6, 182, 212, 0.06);
+}
+.td-link-picker__row:disabled { opacity: 0.5; cursor: progress; }
+.td-link-picker__row .td-game-row__icon { width: 44px; height: 44px; }
+.td-link-picker__name {
+    color: var(--ink-0);
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.td-link-picker__cta {
+    color: var(--acc-cyan);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+}
+.td-game-row {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-2);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color var(--dur-sm), background var(--dur-sm), transform var(--dur-sm), box-shadow var(--dur-sm);
+}
+.td-game-row:hover {
+    border-color: rgba(6, 182, 212, 0.45);
+    background: rgba(6, 182, 212, 0.04);
+    transform: translateY(-1px);
+    box-shadow: var(--glow-cyan-sm);
+}
+.td-game-row__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--r-1);
+    overflow: hidden;
+    background: var(--surf-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.td-game-row__icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.td-game-row__initial {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink-2);
+}
+.td-game-row__body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+.td-game-row__title {
+    color: var(--ink-0);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.td-game-row__meta {
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+.td-game-row__cta {
+    color: var(--acc-cyan);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    flex-shrink: 0;
+}
+
+/* ── DexHero model preview (above chart) ──────────────────── */
+.td-model {
+    position: relative;
+    width: 100%;
+    height: clamp(220px, 36vh, 320px);
+    margin-bottom: 16px;
+    background:
+        radial-gradient(ellipse at center, rgba(6,182,212,0.05) 0%, transparent 70%),
+        rgba(255, 255, 255, 0.015);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-1);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.td-model model-viewer {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    --poster-color: transparent;
+    --progress-bar-color: transparent;
+    --progress-bar-height: 0;
+}
+.td-model img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* Play / pause overlay — small circular HUD button at the top-right of
+   the model preview. Glass-style background to read over any model
+   colour. Cyan accent on hover, matching the rest of the panel. */
+.td-model-toggle {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--rule);
+    color: var(--ink-1);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: color var(--dur-sm), border-color var(--dur-sm), background var(--dur-sm), box-shadow var(--dur-sm);
+}
+.td-model-toggle:hover {
+    color: var(--acc-cyan);
+    border-color: rgba(6, 182, 212, 0.55);
+    background: rgba(0, 0, 0, 0.6);
+    box-shadow: var(--glow-cyan-sm);
+}
+.td-model-toggle:focus-visible {
+    outline: none;
+    color: var(--acc-cyan);
+    border-color: var(--acc-cyan);
+}
+/* The two SVGs share the same slot — only the one matching the current
+   data-state is shown. Default state="playing" → show the pause icon. */
+.td-model-toggle__pause,
+.td-model-toggle__play { display: none; }
+.td-model-toggle[data-state="playing"] .td-model-toggle__pause { display: block; }
+.td-model-toggle[data-state="paused"]  .td-model-toggle__play  { display: block; }
+
+/* ── Chart container ───────────────────────────────────────── */
+.td-chart {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-2);
+    overflow: hidden;
+    margin-bottom: 18px;
+    background: linear-gradient(180deg, rgba(6,182,212,0.02), transparent 40%);
+}
+.td-chart__spinner,
+.td-chart__empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+}
+.td-chart__ohlcv {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    display: flex;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--dur-sm);
+    z-index: 2;
+    background: rgba(0,0,0,0.45);
+    padding: 4px 8px;
+    border-radius: 2px;
+    border: 1px solid var(--rule);
+    backdrop-filter: blur(6px);
+}
+.td-chart__ohlcv.visible { opacity: 1; }
+.td-chart__ohlcv b { color: var(--ink-0); font-weight: 600; margin-left: 3px; }
+.td-chart__ohlcv .h b { color: var(--ok); }
+.td-chart__ohlcv .l b { color: var(--err); }
+
+/* External chart variant — GeckoTerminal / DexScreener iframe.
+   Taller than the native chart because the embed includes its own
+   header + interval bar above the candles, leaving little room for
+   the chart itself at native heights. */
+.td-chart--external {
+    height: 640px;
+    padding: 0;
+}
+.td-gecko-frame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #000;
+    color-scheme: dark;
+}
+.td-gecko-footer .hud-btn { padding: 5px 12px; font-size: 10px; letter-spacing: 0.2em; }
+
+/* ── Trade widget ──────────────────────────────────────────── */
+.td-trade {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-2);
+    padding: 14px;
+    margin-bottom: 18px;
+    background: rgba(255,255,255,0.015);
+}
+.td-trade__toggle {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: var(--r-1);
+}
+.td-trade__dir {
+    flex: 1;
+    padding: 8px 0;
+    background: transparent;
+    border: 0;
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background var(--dur-sm), color var(--dur-sm);
+}
+.td-trade__dir[data-dir="buy"][aria-pressed="true"]  { background: rgba(34,197,94,0.12); color: var(--ok); box-shadow: 0 0 12px rgba(34,197,94,0.18); }
+.td-trade__dir[data-dir="sell"][aria-pressed="true"] { background: rgba(239,68,68,0.12); color: var(--err); box-shadow: 0 0 12px rgba(239,68,68,0.18); }
+
+.td-trade__input {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r-2);
+    background: var(--surf-1);
+    transition: border-color var(--dur-sm), box-shadow var(--dur-sm);
+}
+.td-trade__input:focus-within {
+    border-color: var(--acc-cyan);
+    box-shadow: 0 0 0 2px rgba(6,182,212,0.18);
+}
+.td-trade__input input {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    color: var(--ink-0);
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 20px;
+    font-weight: 500;
+    padding: 14px 0;
+    outline: 0;
+    letter-spacing: 0.02em;
+    -moz-appearance: textfield;
+    text-align: right;
+}
+.td-trade__input input::-webkit-outer-spin-button,
+.td-trade__input input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.td-trade__input .unit {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-left: 8px;
+}
+
+.td-trade__quotes {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+.td-trade__quotes .label { color: var(--ink-3); }
+.td-trade__quotes .val   { color: var(--ink-1); font-variant-numeric: tabular-nums; }
+.td-trade__quotes .val.accent { color: var(--acc-cyan); }
+
+.td-trade__quick {
+    display: flex;
+    gap: 6px;
+}
+.td-trade__quick button {
+    flex: 1;
+    padding: 7px 0;
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color var(--dur-sm), border-color var(--dur-sm), box-shadow var(--dur-sm);
+}
+.td-trade__quick button:hover {
+    color: var(--acc-cyan);
+    border-color: rgba(6,182,212,0.4);
+    box-shadow: var(--glow-cyan-sm);
+}
+
+.td-trade__submit {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid;
+    border-radius: var(--r-2);
+    background: transparent;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--dur-sm) var(--ease-out);
+}
+.td-trade__submit.buy  { color: var(--ok);  border-color: rgba(34,197,94,0.5);  }
+.td-trade__submit.sell { color: var(--err); border-color: rgba(239,68,68,0.5); }
+.td-trade__submit:hover:not(:disabled) {
+    background: rgba(255,255,255,0.02);
+    box-shadow: 0 0 20px currentColor;
+    filter: brightness(1.15);
+}
+.td-trade__submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Metadata strip ─────────────────────────────────────────── */
+.td-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 14px 20px;
+    font-family: var(--font-mono);
+    padding: 14px 0;
+    border-top: 1px solid var(--rule);
+}
+.td-meta__item { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.td-meta__label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+}
+.td-meta__val {
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Mobile collapse ───────────────────────────────────────── */
+@media (max-width: 640px) {
+    .panel[data-panel-id="token-detail"] .panel__body { padding: 14px 12px 22px; }
+    .td-head__name { font-size: 20px; }
+    .td-head__price-main { font-size: 18px; }
+    .td-chart { height: 240px; }
+    .td-chart--external { height: 480px; }
+    .td-trade__input input { font-size: 16px; padding: 12px 0; }
+    .td-tf { min-width: 34px; padding: 5px 0; font-size: 10px; }
+}
+
+/* ── V3 sections (mint / Genesis / Buyout Vault / DAO) ─────── */
+/* Visual identity matches existing .td-* sections: dark surface, cyan accent,
+   panel-card pattern. All blocks live inside the inspect pane after .td-meta. */
+
+.td-mint, .td-genesis, .td-buyout, .td-dao {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: var(--surf-1, rgba(255,255,255,0.03));
+    border: 1px solid var(--rule, rgba(255,255,255,0.06));
+    border-radius: 10px;
+}
+
+.td-mint__head, .td-genesis__head, .td-buyout__head, .td-dao__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.td-mint__title, .td-genesis__title, .td-buyout__title, .td-dao__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-0, #fff);
+    letter-spacing: 0.02em;
+}
+
+.td-mint__price, .td-genesis__badge, .td-buyout__sub, .td-dao__sub {
+    font-size: 11px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    font-variant-numeric: tabular-nums;
+}
+
+.td-genesis__badge {
+    color: var(--acc-cyan, #06b6d4);
+    border: 1px solid currentColor;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* Mint block */
+.td-mint__row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    margin-top: 8px;
+}
+.td-mint__qty-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.td-mint__qty-label {
+    font-size: 10px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.td-mint__qty {
+    width: 76px;
+    padding: 10px;
+    background: rgba(0,0,0,0.4);
+    color: var(--ink-0, #fff);
+    border: 1px solid var(--rule-strong, rgba(255,255,255,0.12));
+    border-radius: 6px;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}
+.td-mint__qty:focus { outline: none; border-color: var(--acc-cyan, #06b6d4); }
+.td-mint__submit { flex: 1; padding: 12px 14px; }
+.td-mint__hint {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    line-height: 1.5;
+}
+
+/* Genesis block */
+.td-genesis__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.td-genesis__cell {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 6px;
+    min-width: 0;
+}
+.td-genesis__cell--full { grid-column: 1 / -1; }
+.td-genesis__label {
+    font-size: 10px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.td-genesis__val {
+    font-size: 12px;
+    color: var(--ink-1, rgba(255,255,255,0.78));
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.td-genesis__actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.td-genesis__cta { flex: 1; min-width: 180px; padding: 10px 14px; }
+.td-genesis__meta-form {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(0,0,0,0.35);
+    border: 1px dashed var(--rule-strong, rgba(255,255,255,0.12));
+    border-radius: 8px;
+}
+.td-genesis__form-hint {
+    margin: 0 0 8px 0;
+    font-size: 11px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    line-height: 1.5;
+}
+.td-genesis__form-hint code {
+    background: rgba(255,255,255,0.08);
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 10px;
+}
+.td-genesis__meta-input {
+    width: 100%;
+    padding: 9px 10px;
+    background: rgba(0,0,0,0.5);
+    color: var(--ink-0, #fff);
+    border: 1px solid var(--rule-strong, rgba(255,255,255,0.12));
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    margin-bottom: 8px;
+}
+.td-genesis__meta-input:focus { outline: none; border-color: var(--acc-cyan, #06b6d4); }
+.td-genesis__meta-actions { display: flex; justify-content: flex-end; }
+
+/* Buyout vault */
+.td-buyout__bars { display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px; }
+.td-buyout__bar-row { display: flex; flex-direction: column; gap: 5px; }
+.td-buyout__bar-label {
+    display: flex; justify-content: space-between;
+    font-size: 11px;
+    color: var(--ink-2, rgba(255,255,255,0.55));
+    font-variant-numeric: tabular-nums;
+}
+.td-buyout__bar-stat { color: var(--ink-1, rgba(255,255,255,0.78)); }
+.td-buyout__bar {
+    height: 8px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.td-buyout__bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--acc-cyan, #06b6d4), #7c3aed);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+.td-buyout__executed {
+    padding: 10px;
+    background: rgba(34,197,94,0.08);
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--ink-1, rgba(255,255,255,0.78));
+    line-height: 1.5;
+}
+.td-buyout__executed code {
+    background: rgba(0,0,0,0.4);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+.td-buyout__form { display: flex; flex-direction: column; gap: 10px; }
+.td-buyout__kind-toggle {
+    display: inline-flex;
+    gap: 0;
+    background: rgba(0,0,0,0.4);
+    border-radius: 6px;
+    padding: 2px;
+    align-self: flex-start;
+}
+.td-buyout__kind {
+    padding: 6px 14px;
+    background: transparent;
+    color: var(--ink-2, rgba(255,255,255,0.55));
+    border: 0;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.td-buyout__kind[aria-pressed="true"] {
+    background: var(--acc-cyan, #06b6d4);
+    color: #000;
+}
+.td-buyout__input {
+    display: flex;
+    align-items: center;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--rule-strong, rgba(255,255,255,0.12));
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+.td-buyout__input input {
+    flex: 1;
+    background: transparent;
+    color: var(--ink-0, #fff);
+    border: 0;
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+    outline: none;
+}
+.td-buyout__input .unit {
+    font-size: 11px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    margin-left: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.td-buyout__actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.td-buyout__actions .hud-btn { flex: 1; min-width: 140px; }
+.td-buyout__hint {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    line-height: 1.5;
+}
+.td-buyout__mine {
+    margin-top: 14px;
+    padding: 10px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 6px;
+}
+.td-buyout__mine-title {
+    display: block;
+    font-size: 10px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+}
+.td-buyout__mine-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--ink-1, rgba(255,255,255,0.78));
+    font-variant-numeric: tabular-nums;
+    padding: 4px 0;
+}
+
+/* DAO */
+.td-dao__weight {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+.td-dao__weight--active {
+    border: 1px solid rgba(6,182,212,0.4);
+    background: rgba(6,182,212,0.06);
+}
+.td-dao__weight-label {
+    font-size: 11px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.td-dao__weight-val {
+    font-size: 13px;
+    color: var(--ink-0, #fff);
+    font-variant-numeric: tabular-nums;
+}
+.td-dao__create-wrap { margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
+.td-dao__create {
+    padding: 12px;
+    background: rgba(0,0,0,0.35);
+    border: 1px dashed var(--rule-strong, rgba(255,255,255,0.12));
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.td-dao__field { display: flex; flex-direction: column; gap: 5px; }
+.td-dao__field > span {
+    font-size: 10px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.td-dao__field select, .td-dao__field input {
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.4);
+    color: var(--ink-0, #fff);
+    border: 1px solid var(--rule-strong, rgba(255,255,255,0.12));
+    border-radius: 6px;
+    font-size: 12px;
+}
+.td-dao__field-hint {
+    font-size: 10px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    line-height: 1.5;
+}
+.td-dao__field-hint code {
+    background: rgba(255,255,255,0.08);
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+.td-dao__props { display: flex; flex-direction: column; gap: 10px; }
+.td-dao__empty {
+    padding: 16px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+}
+.td-dao__prop {
+    padding: 12px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--rule, rgba(255,255,255,0.06));
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.td-dao__prop-head { display: flex; justify-content: space-between; align-items: center; }
+.td-dao__prop-kind {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-0, #fff);
+    letter-spacing: 0.02em;
+}
+.td-dao__prop-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 10px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    font-variant-numeric: tabular-nums;
+}
+.td-dao__prop-votes { display: flex; flex-direction: column; gap: 4px; }
+.td-dao__prop-bar {
+    height: 6px;
+    background: rgba(239,68,68,0.3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.td-dao__prop-bar-fill {
+    height: 100%;
+    background: var(--ok, #22c55e);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+.td-dao__prop-bar-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+}
+.td-dao__prop-bar-stats .ok { color: var(--ok, #22c55e); }
+.td-dao__prop-bar-stats .err { color: var(--err, #ef4444); }
+.td-dao__prop-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.td-dao__addr {
+    margin: 10px 0 0;
+    font-size: 10px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    text-align: right;
+}
+.td-dao__addr code {
+    background: rgba(255,255,255,0.06);
+    padding: 1px 5px;
+    border-radius: 3px;
+}
+
+/* Generic V3 status pills */
+.td-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: rgba(255,255,255,0.06);
+    color: var(--ink-2, rgba(255,255,255,0.55));
+}
+.td-status--ok { background: rgba(34,197,94,0.15); color: var(--ok, #22c55e); }
+.td-status--err { background: rgba(239,68,68,0.15); color: var(--err, #ef4444); }
+.td-status--neutral { background: rgba(255,255,255,0.08); color: var(--ink-2, rgba(255,255,255,0.55)); }
+
+/* V3 header — Mint button sits to the LEFT of a vertical stack containing
+   the "MINT" tag and the "$10" price. The button stretches to match the
+   combined height of those two text lines. Gap between button and stack
+   is held at the same 10px that the original column layout used. */
+.td-head__price--v3 {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 10px;
+}
+.td-head__price-stack {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 1px;
+}
+
+/* Inline V3 Mint button — sits in .td-head__price next to the mint amount,
+   replacing the V2 "Now" live-price chip. One-tap mint of qty=1 SBT.
+   align-self: stretch makes it as tall as the price-stack sibling. */
+.td-head__mint-btn {
+    align-self: stretch;
+    padding: 0 24px;
+    background: var(--acc-soft, rgba(6,182,212,0.14));
+    color: var(--acc-cyan, #06b6d4);
+    border: 1px solid var(--acc-cyan, #06b6d4);
+    border-radius: 10px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background var(--dur-sm), color var(--dur-sm), transform var(--dur-sm);
+}
+.td-head__mint-btn:hover:not([disabled]) {
+    background: var(--acc-cyan, #06b6d4);
+    color: #000;
+}
+.td-head__mint-btn:active:not([disabled]) { transform: translateY(1px); }
+.td-head__mint-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+/* V3 Graduation bar — minimal, immersive level visual.
+   Just a glowing level chip + a 10-segment track. No labels, no subtitles.
+   Filled segment count IS the level; active segment fills partially. */
+.td-graduation {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 14px;
+    padding: 10px 14px;
+    background: transparent;
+    border: 0;
+}
+.td-graduation--loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+}
+
+/* Level chip — single bold number that sits to the LEFT of the track.
+   No "Lv" prefix, no "/10" — the track communicates the max visually. */
+.td-level__chip {
+    flex: 0 0 auto;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: radial-gradient(circle at 30% 30%, rgba(6,182,212,0.32), rgba(0,0,0,0.5) 75%);
+    border: 1px solid var(--acc-cyan, #06b6d4);
+    box-shadow: 0 0 14px rgba(6,182,212,0.25), inset 0 0 8px rgba(6,182,212,0.18);
+}
+.td-level__chip-num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+    text-shadow: 0 0 8px rgba(6,182,212,0.6);
+}
+.td-graduation--max .td-level__chip {
+    background: radial-gradient(circle at 30% 30%, rgba(255,128,0,0.4), rgba(0,0,0,0.5) 75%);
+    border-color: #ff8000;
+    box-shadow: 0 0 16px rgba(255,128,0,0.4);
+}
+.td-graduation--max .td-level__chip-num {
+    color: #ff8000;
+    text-shadow: 0 0 10px rgba(255,128,0,0.7);
+    font-size: 28px;
+}
+
+/* Track — 10 thin chunks, no inner labels. */
+.td-level__track {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 3px;
+}
+.td-level__seg {
+    position: relative;
+    height: 26px;
+    border-radius: 5px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--rule, rgba(255,255,255,0.06));
+    overflow: hidden;
+    transition: background var(--dur-md, 220ms) ease, border-color var(--dur-md, 220ms) ease, box-shadow var(--dur-md, 220ms) ease;
+}
+.td-level__seg--full {
+    background: linear-gradient(135deg, var(--acc-cyan, #06b6d4), #8b5cf6);
+    border-color: transparent;
+    box-shadow: 0 0 8px rgba(6,182,212,0.45);
+}
+.td-level__seg--active {
+    border-color: var(--acc-cyan, #06b6d4);
+    box-shadow: 0 0 6px rgba(6,182,212,0.22) inset;
+    animation: td-level-pulse 1.8s ease-in-out infinite;
+}
+.td-level__seg-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: linear-gradient(135deg, rgba(6,182,212,0.7), rgba(139,92,246,0.55));
+    transition: width var(--dur-md, 220ms) ease;
+}
+@keyframes td-level-pulse {
+    0%, 100% { box-shadow: 0 0 6px rgba(6,182,212,0.22) inset; }
+    50%      { box-shadow: 0 0 14px rgba(6,182,212,0.45) inset; }
+}
+
+/* Final segment (level 10) — the graduation/tokenization milestone.
+   Always tinted with a warm orange so the eye registers a "goal" at the
+   right end of the track, without any text. A tiny ★ glyph sits inside
+   for explicit-but-subtle "this is the finish line" cue. When the player
+   actually reaches level 10, the fill takes over with full legendary
+   orange + glow. */
+.td-level__seg--final {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-color: rgba(255, 128, 0, 0.45);
+    background: linear-gradient(135deg, rgba(255,128,0,0.06), rgba(255,184,77,0.04));
+}
+.td-level__seg-star {
+    position: relative;
+    z-index: 2;
+    font-size: 14px;
+    line-height: 1;
+    color: rgba(255, 128, 0, 0.65);
+    text-shadow: 0 0 4px rgba(255, 128, 0, 0.3);
+    pointer-events: none;
+}
+/* Pulled close → brighten the marker so users know they're almost there. */
+.td-level__seg--final.td-level__seg--active {
+    border-color: #ff8000;
+    box-shadow: 0 0 10px rgba(255,128,0,0.35) inset;
+    animation: td-level-pulse-final 1.4s ease-in-out infinite;
+}
+.td-level__seg--final.td-level__seg--active .td-level__seg-star { color: #ff8000; }
+.td-level__seg--final.td-level__seg--active .td-level__seg-fill {
+    background: linear-gradient(135deg, rgba(255,128,0,0.8), rgba(255,184,77,0.65));
+}
+/* Reached → full legendary fill + brighter star. */
+.td-level__seg--final.td-level__seg--full {
+    background: linear-gradient(135deg, #ff8000, #ffb84d);
+    border-color: transparent;
+    box-shadow: 0 0 14px rgba(255,128,0,0.55);
+}
+.td-level__seg--final.td-level__seg--full .td-level__seg-star {
+    color: #fff;
+    text-shadow: 0 0 6px rgba(255,255,255,0.9);
+}
+@keyframes td-level-pulse-final {
+    0%, 100% { box-shadow: 0 0 8px rgba(255,128,0,0.3) inset; }
+    50%      { box-shadow: 0 0 16px rgba(255,128,0,0.55) inset; }
+}
+
+/* Level-10 tokenization tooltip — anchored to the final segment of the
+   level bar. Hover OR keyboard-focus the segment to reveal a small
+   floating callout that explains what graduation means. Touch users get
+   the same tooltip via :focus-within on the invisible <button> trigger,
+   which they tap. Hidden by default so the bar stays clean. */
+.td-level__seg--final { overflow: visible; }
+.td-level__seg-trigger {
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    cursor: help;
+    -webkit-tap-highlight-color: transparent;
+}
+.td-level__seg-trigger:focus { outline: none; }
+.td-level__tooltip {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    right: 0;
+    width: 240px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(255,128,0,0.14), rgba(0,0,0,0.88));
+    border: 1px solid #ff8000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 18px rgba(255,128,0,0.25);
+    backdrop-filter: blur(6px);
+    color: var(--ink-1, rgba(255,255,255,0.78));
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 160ms ease, transform 160ms ease;
+    z-index: 10;
+}
+.td-level__tooltip::after {
+    /* tiny pointer triangle at the bottom-right of the tooltip */
+    content: "";
+    position: absolute;
+    top: 100%;
+    right: 12px;
+    border: 6px solid transparent;
+    border-top-color: #ff8000;
+}
+.td-level__seg--final:hover .td-level__tooltip,
+.td-level__seg--final:focus-within .td-level__tooltip {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+.td-level__tooltip-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #ff8000;
+    margin-bottom: 4px;
+    text-shadow: 0 0 6px rgba(255,128,0,0.4);
+}
+.td-level__tooltip-body {
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--ink-1, rgba(255,255,255,0.82));
+}
+.td-level__tooltip-body b {
+    color: #ff8000;
+    font-weight: 700;
+}
+.td-level__tooltip-progress {
+    display: block;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,128,0,0.25);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    color: var(--ink-2, rgba(255,255,255,0.62));
+}
+
+/* Header ownership badges — replace the Mint button when the viewer already
+   owns the DexHero. "Genesis" trumps "Soulbound" since Genesis NFT holders
+   are the dexhero owner. Same height as the price-stack sibling so the row
+   stays aligned regardless of which state renders. */
+.td-head__badge {
+    align-self: stretch;
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 22px;
+    border-radius: 12px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    cursor: default;
+    user-select: none;
+}
+.td-head__badge--sbt {
+    background: rgba(34,197,94,0.12);
+    color: var(--ok, #22c55e);
+    border: 1px solid var(--ok, #22c55e);
+}
+/* WoW-legendary orange — Blizzard's #ff8000 hex maps to this palette.
+   Keep contrast against the dark surface; the glow lifts it off the chrome. */
+.td-head__badge--genesis {
+    background: linear-gradient(135deg, rgba(255,128,0,0.22), rgba(255,184,77,0.18));
+    color: #ff8000;
+    border: 1px solid #ff8000;
+    box-shadow: 0 0 14px rgba(255,128,0,0.32);
+    text-shadow: 0 0 6px rgba(255,128,0,0.4);
+}
+
+/* Owner Controls section — Genesis NFT holder management panel.
+   WoW-legendary orange treatment (matches the .td-head__badge--genesis
+   header chip) so Genesis-only chrome reads as the same tier across the
+   page. Compact rows since each action is single-line (price, metadata, …). */
+.td-owner {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(255,128,0,0.06), rgba(255,184,77,0.04));
+    border: 1px solid #ff8000;
+    border-radius: 10px;
+    box-shadow: 0 0 18px rgba(255,128,0,0.10);
+}
+.td-owner__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.td-owner__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-0, #fff);
+    letter-spacing: 0.02em;
+}
+.td-owner__badge {
+    background: rgba(255,128,0,0.16);
+    color: #ff8000;
+    border: 1px solid currentColor;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+.td-owner__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: 1px solid var(--rule, rgba(255,255,255,0.06));
+}
+.td-owner__row:first-of-type { border-top: 0; }
+.td-owner__row-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+.td-owner__row-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+}
+.td-owner__row-value {
+    font-size: 13px;
+    color: var(--ink-1, rgba(255,255,255,0.78));
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.td-owner__row-pending {
+    font-size: 11px;
+    color: var(--acc-cyan, #06b6d4);
+}
+.td-owner__row-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.td-owner__form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin: 8px 0 12px;
+    padding: 10px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 6px;
+}
+.td-owner__form input[type="number"],
+.td-owner__form .td-owner__input {
+    flex: 1;
+    min-width: 200px;
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.4);
+    color: var(--ink-0, #fff);
+    border: 1px solid var(--rule-strong, rgba(255,255,255,0.12));
+    border-radius: 6px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+.td-owner__form input:focus { outline: none; border-color: var(--acc-cyan, #06b6d4); }
+.td-owner__form-hint {
+    flex: 1 0 100%;
+    margin: 4px 0 0;
+    font-size: 11px;
+    color: var(--ink-3, rgba(255,255,255,0.55));
+    line-height: 1.5;
+}
+.td-owner__form-hint code {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    background: rgba(255,255,255,0.05);
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+/* Mint-price timelock section — pending banner OR Genesis-only propose form. */
+.td-mp {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: var(--surf-1, rgba(255,255,255,0.03));
+    border: 1px solid var(--rule, rgba(255,255,255,0.06));
+    border-radius: 10px;
+}
+.td-mp--pending {
+    border-color: var(--acc-cyan, #06b6d4);
+    background: rgba(6,182,212,0.06);
+}
+.td-mp__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+.td-mp__title {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-1, rgba(255,255,255,0.78));
+}
+.td-mp--pending .td-mp__title { color: var(--acc-cyan, #06b6d4); }
+.td-mp__sub {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 11.5px;
+    color: var(--ink-2, rgba(255,255,255,0.66));
+}
+.td-mp__actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+.td-mp__form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+.td-mp__form input[type="number"] {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.4);
+    color: var(--ink-0, #fff);
+    border: 1px solid var(--rule-strong, rgba(255,255,255,0.12));
+    border-radius: 6px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+.td-mp__form input[type="number"]:focus { outline: none; border-color: var(--acc-cyan, #06b6d4); }
+
+/* Mobile */
+@media (max-width: 640px) {
+    .td-genesis__grid { grid-template-columns: 1fr; }
+    .td-buyout__actions .hud-btn { min-width: 0; }
+}
+
+/* Small-phone polish */
+@media (max-width: 360px) {
+    .panel[data-panel-id="token-detail"] .panel__body { padding: 10px 10px 18px; }
+    .td-head__name { font-size: 18px; }
+    .td-head__price-main { font-size: 16px; }
+    .td-chart { height: 200px; }
+    .td-chart--external { height: 360px; }
+}

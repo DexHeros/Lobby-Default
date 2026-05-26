@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compute-to-Unlock Estimator | DexHero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <style>
+        .estimator-container {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        .estimator-header {
+            margin-bottom: 40px;
+        }
+
+        .estimator-header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0 0 8px;
+        }
+
+        .estimator-header p {
+            color: rgba(255,255,255,0.5);
+            font-size: 15px;
+            margin: 0;
+        }
+
+        .section-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 20px;
+        }
+
+        .section-card h2 {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255,255,255,0.4);
+            margin: 0 0 20px;
+        }
+
+        /* Sliders */
+        .slider-group {
+            margin-bottom: 20px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .slider-label {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .slider-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .rarity-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 8px;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.12);
+            outline: none;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+
+        input[type="range"].rarity-slider {
+            background: linear-gradient(to right, #4ade80, #a3e635, #fbbf24, #f87171);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235,0.4), 0 2px 6px rgba(0,0,0,0.4);
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235,0.4);
+            cursor: pointer;
+            border: none;
+        }
+
+        .rarity-current {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 4px;
+        }
+
+        .rarity-badge {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .rarity-threshold-note {
+            font-size: 13px;
+            color: rgba(255,255,255,0.45);
+        }
+
+        /* Stats */
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
+        }
+
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: rgba(255,255,255,0.5); }
+        .stat-value { font-weight: 600; }
+
+        .network-live-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4ade80;
+            margin-right: 6px;
+            vertical-align: middle;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .stat-updated {
+            font-size: 11px;
+            color: rgba(255,255,255,0.3);
+            margin-top: 12px;
+        }
+
+        /* Rarity Comparison */
+        .rarity-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        @media (max-width: 640px) {
+            .rarity-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .rarity-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+
+        .rarity-card.active {
+            border-color: rgba(37, 99, 235,0.5);
+            background: rgba(37, 99, 235,0.08);
+        }
+
+        .rarity-card-name {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .rarity-card-minutes {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 2px;
+        }
+
+        .rarity-card-unit {
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 8px;
+        }
+
+        .rarity-card-days-req {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 4px;
+        }
+
+        .rarity-card-est {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .rarity-card-est-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.35);
+        }
+
+        /* Weekly Cap Bar */
+        .cap-bar-container {
+            margin-top: 4px;
+        }
+
+        .cap-bar-bg {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.08);
+            overflow: hidden;
+        }
+
+        .cap-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #2563eb, #2563eb);
+            transition: width 0.3s;
+        }
+
+        /* CTA */
+        .cta-section {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+            flex-wrap: wrap;
+        }
+
+        .explainer-box {
+            background: rgba(37, 99, 235,0.08);
+            border: 1px solid rgba(37, 99, 235,0.2);
+            border-radius: 10px;
+            padding: 16px 20px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.6);
+            margin-top: 16px;
+        }
+
+        .explainer-box strong {
+            color: rgba(255,255,255,0.85);
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <a href="/" style="display:inline-flex;align-items:center;gap:6px;color:var(--text-secondary);font-size:13px;text-decoration:none;margin-bottom:24px;opacity:0.7;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Home
+        </a>
+
+        <div class="estimator-container">
+            <div class="estimator-header">
+                <h1>Compute-to-Unlock Estimator</h1>
+                <p>See how long it takes to unlock a DexHero by providing WarpStream compute.</p>
+            </div>
+
+            <!-- Hours Per Day Slider -->
+            <div class="section-card">
+                <h2>Your Compute Schedule</h2>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <span class="slider-label">Hours providing compute per day</span>
+                        <span class="slider-value" id="hours-value">4 hrs/day</span>
+                    </div>
+                    <input type="range" id="hours-slider" min="1" max="8" step="0.5" value="4">
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Effective compute-hours per day</span>
+                    <span class="stat-value" id="effective-hours-per-day">—</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Weekly cap</span>
+                    <span class="stat-value">35 hrs/week</span>
+                </div>
+                <div class="cap-bar-container">
+                    <div class="slider-header" style="margin-bottom:4px;">
+                        <span class="slider-label" style="font-size:12px;">Weekly cap usage at this pace</span>
+                        <span class="slider-value" style="font-size:12px;" id="cap-pct">0%</span>
+                    </div>
+                    <div class="cap-bar-bg">
+                        <div class="cap-bar-fill" id="cap-fill" style="width:0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Network Stats -->
+            <div class="section-card">
+                <h2><span class="network-live-dot"></span>Live Network Data</h2>
+                <div class="stat-row">
+                    <span class="stat-label">Active servers</span>
+                    <span class="stat-value" id="stat-nodes">--</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Players streaming now</span>
+                    <span class="stat-value" id="stat-streaming">--</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Network utilization</span>
+                    <span class="stat-value" id="stat-utilization">~65%</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Avg stream quality</span>
+                    <span class="stat-value" id="stat-quality">--</span>
+                </div>
+                <div class="stat-updated" id="stat-updated">Updating every 5 minutes</div>
+            </div>
+
+            <!-- Rarity Comparison Chart -->
+            <div class="section-card">
+                <h2>Rarity Unlock Comparison</h2>
+                <p style="font-size:13px; color:rgba(255,255,255,0.4); margin:0 0 16px;">
+                    Choose when to unlock. Longer grind = rarer DexHero = more valuable on secondary market.
+                </p>
+                <div class="rarity-grid">
+                    <div class="rarity-card" id="card-common">
+                        <div class="rarity-card-name" style="color:#4ade80;">Common</div>
+                        <div class="rarity-card-minutes">300</div>
+                        <div class="rarity-card-unit">compute-hours</div>
+                        <div class="rarity-card-est" id="est-common">--</div>
+                        <div class="rarity-card-est-label">months</div>
+                    </div>
+                    <div class="rarity-card" id="card-uncommon">
+                        <div class="rarity-card-name" style="color:#a3e635;">Uncommon</div>
+                        <div class="rarity-card-minutes">450</div>
+                        <div class="rarity-card-unit">compute-hours</div>
+                        <div class="rarity-card-est" id="est-uncommon">--</div>
+                        <div class="rarity-card-est-label">months</div>
+                    </div>
+                    <div class="rarity-card" id="card-rare">
+                        <div class="rarity-card-name" style="color:#fbbf24;">Rare</div>
+                        <div class="rarity-card-minutes">600</div>
+                        <div class="rarity-card-unit">compute-hours</div>
+                        <div class="rarity-card-est" id="est-rare">--</div>
+                        <div class="rarity-card-est-label">months</div>
+                    </div>
+                    <div class="rarity-card" id="card-legendary">
+                        <div class="rarity-card-name" style="color:#f87171;">Legendary</div>
+                        <div class="rarity-card-minutes">900</div>
+                        <div class="rarity-card-unit">compute-hours</div>
+                        <div class="rarity-card-est" id="est-legendary">--</div>
+                        <div class="rarity-card-est-label">months</div>
+                    </div>
+                </div>
+
+                <div class="explainer-box">
+                    <strong>The Choice:</strong> You can unlock as soon as you hit Common at 300 hours.
+                    Or keep providing to reach Legendary — worth significantly more because it represents 13+ months of sustained contribution.
+                    On unlock, your compute-hours reset to zero. Each unlocked DexHero is a fresh commitment.
+                </div>
+            </div>
+
+            <!-- Supply & Economics -->
+            <div class="section-card">
+                <h2>Supply Controls</h2>
+                <div class="stat-row">
+                    <span class="stat-label">Weekly compute cap</span>
+                    <span class="stat-value">35 hrs</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Concurrency bonus (2 players)</span>
+                    <span class="stat-value">1.5x (not 2x)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Concurrency cap (3 players)</span>
+                    <span class="stat-value">1.8x (hard cap)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Hours reset on unlock</span>
+                    <span class="stat-value">Yes (back to zero)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Play Pass required</span>
+                    <span class="stat-value">$100 USDC (one-time, permanent)</span>
+                </div>
+                <p style="font-size:12px; color:rgba(255,255,255,0.3); margin:14px 0 0; line-height:1.6;">
+                    Even a dedicated provider (6h/day) can only produce ~2 Common unlocks per year, or ~1 Legendary per year, per DexHero.
+                    Unlocked DexHeros are genuinely scarce.
+                </p>
+            </div>
+
+            <!-- CTA -->
+            <div class="cta-section">
+                <a href="/pages/node-onboarding.html" class="btn-primary" style="padding:14px 28px; background:linear-gradient(135deg,#2563eb,#2563eb); color:#fff; text-decoration:none; border-radius:8px; font-weight:600; font-size:15px;">Become a Server Host</a>
+                <a href="/pages/developer-portal.html" style="padding:14px 28px; background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.8); text-decoration:none; border-radius:8px; font-weight:600; font-size:15px;">I'm a Game Developer</a>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="../components/footer.js"></script>
+    <script>
+        const THRESHOLDS = {
+            common:    { minutes: 18000, days: 45 },
+            uncommon:  { minutes: 27000, days: 60 },
+            rare:      { minutes: 36000, days: 90 },
+            legendary: { minutes: 54000, days: 120 }
+        };
+        const WEEKLY_CAP = 2100;
+        const UTILIZATION = 0.65;
+        const LEGITIMACY = 0.90;
+
+        function calcEffectiveMinPerDay(hours) {
+            return hours * 60 * UTILIZATION * LEGITIMACY;
+        }
+
+        function calcWeeklyMin(hours) {
+            const daily = calcEffectiveMinPerDay(hours);
+            return Math.min(daily * 7, WEEKLY_CAP);
+        }
+
+        function estimateMonths(threshold, hours) {
+            const effectivePerDay = calcEffectiveMinPerDay(hours);
+            const weeklyEffective = Math.min(effectivePerDay * 7, WEEKLY_CAP);
+            const dailyCapped = weeklyEffective / 7;
+            const daysByMinutes = threshold / dailyCapped;
+            return daysByMinutes / 30;
+        }
+
+        function formatMonths(m) {
+            if (m < 1) return '<1';
+            if (m < 12) return `~${m.toFixed(1)}`;
+            return `~${Math.round(m)}`;
+        }
+
+        function update() {
+            const hours = parseFloat(document.getElementById('hours-slider').value);
+            document.getElementById('hours-value').textContent = `${hours} hrs/day`;
+
+            const effectiveHrs = calcEffectiveMinPerDay(hours) / 60;
+            document.getElementById('effective-hours-per-day').textContent = `~${effectiveHrs.toFixed(1)} hrs`;
+
+            const weeklyMin = Math.round(calcWeeklyMin(hours));
+            const capPct = Math.min(100, Math.round((weeklyMin / WEEKLY_CAP) * 100));
+            document.getElementById('cap-pct').textContent = `${capPct}%`;
+            document.getElementById('cap-fill').style.width = `${capPct}%`;
+
+            for (const [rarity, t] of Object.entries(THRESHOLDS)) {
+                const months = estimateMonths(t.minutes, hours);
+                document.getElementById(`est-${rarity}`).textContent = formatMonths(months);
+            }
+        }
+
+        async function loadNetworkStats() {
+            try {
+                const resp = await fetch('/api/node/network-stats');
+                if (!resp.ok) return;
+                const data = await resp.json();
+
+                document.getElementById('stat-nodes').textContent =
+                    data.active_nodes != null ? data.active_nodes.toLocaleString() : '--';
+                document.getElementById('stat-streaming').textContent =
+                    data.streaming_players != null ? data.streaming_players.toLocaleString() : '--';
+                if (data.avg_quality) {
+                    document.getElementById('stat-quality').textContent = data.avg_quality;
+                }
+                if (data.utilization != null) {
+                    document.getElementById('stat-utilization').textContent = `${Math.round(data.utilization * 100)}%`;
+                }
+                if (data.updated_at) {
+                    const d = new Date(data.updated_at);
+                    document.getElementById('stat-updated').textContent =
+                        `Updated ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · Refreshes every 5 min`;
+                }
+            } catch (err) {
+                console.warn('Could not load network stats:', err.message);
+            }
+        }
+
+        document.getElementById('hours-slider').addEventListener('input', update);
+        update();
+        document.addEventListener('DOMContentLoaded', loadNetworkStats);
+    </script>
+</body>
+</html>

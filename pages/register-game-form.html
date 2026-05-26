@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Registration Form | DexHero</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+
+    <!-- Supabase JavaScript Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+    <!-- Cropper.js Dependencies -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+    <!-- EVM Blockchain Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" type="application/javascript"></script>
+    <script src="/js/utils.js"></script>
+    <script src="../js/blockchain-integration.js"></script>
+    <style>
+        .create-container {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .create-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .create-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .create-header p {
+            color: var(--text-secondary);
+        }
+
+        .create-form {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title svg {
+            color: var(--accent-cyan);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .form-group label .required {
+            color: var(--danger);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+            appearance: none;
+            -webkit-appearance: none;
+            color-scheme: dark;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Prevent browser autofill from flashing white */
+        .form-input:-webkit-autofill,
+        .form-input:-webkit-autofill:hover,
+        .form-input:-webkit-autofill:focus {
+            -webkit-text-fill-color: var(--text-primary);
+            -webkit-box-shadow: 0 0 0 1000px rgba(15, 15, 15, 0.98) inset;
+            box-shadow: 0 0 0 1000px rgba(15, 15, 15, 0.98) inset;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        /* Select arrow (replaces removed native arrow) */
+        select.form-input {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 40px;
+            cursor: pointer;
+        }
+
+        select.form-input option {
+            background: #0f0f0f;
+            color: #ffffff;
+        }
+
+        /* Standardized Upload Containers */
+        label.image-upload {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            height: 160px !important;
+            width: 100% !important;
+            border: 2px dashed var(--border-color) !important;
+            border-radius: 12px !important;
+            cursor: pointer !important;
+            transition: all 0.3s !important;
+            text-align: center !important;
+            padding: 16px !important;
+            position: relative !important;
+            background: rgba(255, 255, 255, 0.02) !important;
+        }
+
+        label.image-upload:hover {
+            border-color: var(--accent-cyan) !important;
+            background: rgba(6, 182, 212, 0.05) !important;
+        }
+
+        label.image-upload svg {
+            width: 40px !important;
+            height: 40px !important;
+            color: var(--text-muted) !important;
+            margin-bottom: 8px !important;
+            flex-shrink: 0 !important;
+        }
+
+        label.image-upload span {
+            font-size: 13px !important;
+            color: var(--text-secondary) !important;
+            display: block;
+        }
+
+        .image-preview {
+            width: 140px;
+            height: 140px;
+            border-radius: 70px;
+            object-fit: cover;
+            border: 2px solid var(--accent-cyan);
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .cover-preview {
+            width: 100px;
+            height: 150px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid var(--accent-cyan);
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .submit-section {
+            display: flex;
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        .btn-back {
+            flex: 1;
+            padding: 16px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .btn-submit {
+            flex: 2;
+            padding: 16px;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .tier-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+        }
+
+        .tier-bronze {
+            background: rgba(205, 127, 50, 0.2);
+            color: #cd7f32;
+            border: 1px solid #cd7f32;
+        }
+
+        .tier-silver {
+            background: rgba(192, 192, 192, 0.2);
+            color: #c0c0c0;
+            border: 1px solid #c0c0c0;
+        }
+
+        .tier-gold {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+            border: 1px solid #ffd700;
+        }
+
+        /* Round Cropper Styles */
+        .cropper-view-box.round,
+        .cropper-face.round {
+            border-radius: 50%;
+        }
+
+        .cropper-view-box {
+            outline: none;
+            box-shadow: 0 0 0 1px #39f;
+        }
+
+        /* Dynamic Social Inputs */
+        .social-entry {
+            display: grid;
+            grid-template-columns: 140px 1fr 40px;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .btn-add-social {
+            background: transparent;
+            border: none;
+            color: var(--accent-cyan);
+            padding: 8px 0;
+            cursor: pointer;
+            width: fit-content;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.3s;
+            opacity: 0.8;
+        }
+
+        .btn-add-social:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        .btn-remove-social {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-remove-social:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .create-container {
+                max-width: 100%;
+                padding: 0 12px;
+            }
+            .create-form {
+                padding: 20px;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .social-entry {
+                grid-template-columns: 1fr 1fr 40px;
+            }
+            label.image-upload {
+                height: 140px !important;
+            }
+            .create-header h1 {
+                font-size: 26px;
+            }
+            .submit-section {
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .create-form {
+                padding: 16px;
+                border-radius: 14px;
+            }
+            .social-entry {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            label.image-upload {
+                height: 120px !important;
+            }
+            .create-header h1 {
+                font-size: 22px;
+            }
+            .create-header {
+                margin-bottom: 24px;
+            }
+            .section-title {
+                font-size: 16px;
+            }
+            .submit-section {
+                flex-direction: column;
+            }
+            .btn-back,
+            .btn-submit {
+                flex: unset;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <div class="create-container">
+            <div class="create-header">
+                <div id="selected-tier-badge" class="tier-badge">Bronze Package</div>
+                <h1>Complete Your <span class="gradient-text">Registration</span></h1>
+                <p>Provide your game details to go live on the DexHero Games Bar. A one-time $100 USDC registration fee is required to complete your listing.</p>
+            </div>
+
+            <div class="create-form">
+                <!-- Game Media -->
+                <div class="section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                    Game Asset (Icon)
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Game Icon <span class="required">*</span></label>
+                        <label class="image-upload" for="game-icon" id="icon-upload-trigger">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span>Round Icon (512x512)</span>
+                            <img id="icon-preview" class="image-preview">
+                        </label>
+                        <input type="file" id="game-icon" accept="image/*" style="display:none">
+                        <p class="form-hint">Used for the Games Bar.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Game Cover <span class="required">*</span></label>
+                        <label class="image-upload" for="game-cover" id="cover-upload-trigger">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span>Portrait Cover (2:3 Ratio)</span>
+                            <img id="cover-preview" class="cover-preview">
+                        </label>
+                        <input type="file" id="game-cover" accept="image/*" style="display:none">
+                        <p class="form-hint">Used for the Explorer cards.</p>
+                    </div>
+                </div>
+
+                <!-- Game Information -->
+                <div class="section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                    Game Information
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Game Title <span class="required">*</span></label>
+                        <input type="text" id="game-title" class="form-input" placeholder="e.g. Cyber Arena">
+                    </div>
+                    <div class="form-group">
+                        <label>Category <span class="required">*</span></label>
+                        <select id="game-category" class="form-input">
+                            <option value="action">Action / Battle</option>
+                            <option value="rpg">RPG / Adventure</option>
+                            <option value="casual">Casual / Arcade</option>
+                            <option value="strategy">Strategy</option>
+                            <option value="simulation">Simulation</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Website URL <span class="required">*</span></label>
+                    <input type="url" id="game-url" class="form-input" placeholder="https://yourgame.com">
+                </div>
+
+                <!-- Game Performance Metrics -->
+                <div class="section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                        <polyline points="17 6 23 6 23 12" />
+                    </svg>
+                    Performance & Metrics
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Active Players (Monthly) <span class="required">*</span></label>
+                        <select id="game-metrics" class="form-input">
+                            <option value="0-1k">0 - 1,000</option>
+                            <option value="1k-10k">1,000 - 10,000</option>
+                            <option value="10k-50k">10,000 - 50,000</option>
+                            <option value="50k-100k">50,000 - 100,000</option>
+                            <option value="100k+">100,000+</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Primary Revenue Source <span class="required">*</span></label>
+                        <select id="game-revenue" class="form-input">
+                            <option value="sales">Game Sales / Upfront</option>
+                            <option value="items">In-game Item Sales</option>
+                            <option value="subscriptions">Subscriptions</option>
+                            <option value="ads">Advertisements</option>
+                            <option value="skins">Skins & Cosmetics</option>
+                            <option value="other">Other / Mixed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                    </svg>
+                    Developer Contact
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Name / Team <span class="required">*</span></label>
+                        <input type="text" id="contact-name" class="form-input" placeholder="e.g. Neon Studios">
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address <span class="required">*</span></label>
+                        <input type="email" id="contact-email" class="form-input" placeholder="contact@yourgame.com">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Social Handles <span class="required">*</span></label>
+                    <div id="social-handles-container">
+                        <!-- Initial Social Entry -->
+                        <div class="social-entry">
+                            <select class="form-input platform-select">
+                                <option value="telegram">Telegram</option>
+                                <option value="discord">Discord</option>
+                                <option value="twitter">X (Twitter)</option>
+                                <option value="website">Other Website</option>
+                            </select>
+                            <input type="text" class="form-input handle-input" placeholder="@handle or Username#1234">
+                            <button type="button" class="btn-remove-social" style="display: none;"
+                                onclick="removeSocial(this)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-add-social" onclick="addSocial()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add Another Social Handle
+                    </button>
+                </div>
+
+                <!-- Minimum Host Requirements — cloud gaming is on for every
+                     game; these four fields define the floor a host machine
+                     must meet to stream it. -->
+                <div class="section-title" style="margin-top:32px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+                    </svg>
+                    Minimum Host Requirements
+                </div>
+                <p style="font-size:13px;color:var(--text-muted);margin:-12px 0 16px;">Set the floor a host machine must meet to stream your game.</p>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Minimum GPU Tier</label>
+                        <select id="min-gpu-tier" class="form-input">
+                            <option value="1">Tier 1 — Entry (GTX 1650+)</option>
+                            <option value="2" selected>Tier 2 — Mid-Range (RTX 3060+)</option>
+                            <option value="3">Tier 3 — High-End (RTX 4070+)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Minimum VRAM (GB)</label>
+                        <select id="min-vram-gb" class="form-input">
+                            <option value="4" selected>4 GB</option>
+                            <option value="6">6 GB</option>
+                            <option value="8">8 GB</option>
+                            <option value="12">12 GB</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Minimum Upload Speed (Mbps)</label>
+                        <select id="min-upload-mbps" class="form-input">
+                            <option value="15" selected>15 Mbps (720p30)</option>
+                            <option value="25">25 Mbps (1080p30)</option>
+                            <option value="50">50 Mbps (1080p60)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Max Concurrent Players per Server</label>
+                        <select id="max-concurrent-players" class="form-input">
+                            <option value="1" selected>1 Player</option>
+                            <option value="2">2 Players</option>
+                            <option value="3">3 Players</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Game File Upload -->
+                <div class="form-group" style="margin-top:24px;">
+                    <label class="form-label">Upload Your Game <span style="color:rgba(255,255,255,0.4);font-weight:400;">(Optional — upload now or later via Developer Portal)</span></label>
+                    <div id="zip-drop-zone"
+                         style="border:2px dashed rgba(37, 99, 235,0.4);border-radius:12px;padding:32px 24px;text-align:center;cursor:pointer;transition:border-color 0.2s;background:rgba(37, 99, 235,0.05);"
+                         onclick="document.getElementById('game-zip-input').click()"
+                         ondragover="event.preventDefault();this.style.borderColor='#2563eb';"
+                         ondragleave="this.style.borderColor='rgba(37, 99, 235,0.4)';"
+                         ondrop="handleZipDrop(event)">
+                        <div id="zip-label" style="font-size:14px;color:rgba(255,255,255,0.6);">Drop your game ZIP here or <span style="color:#60a5fa;text-decoration:underline;">click to browse</span></div>
+                        <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:6px;">Max 150MB · Must contain index.html at root · HTML5 / WebGL / Canvas games</div>
+                    </div>
+                    <input type="file" id="game-zip-input" accept=".zip" style="display:none;" onchange="handleZipSelect(this)">
+                </div>
+
+                <div class="submit-section">
+                    <button class="btn-back" onclick="history.back()">← Back</button>
+                    <button class="btn-submit" onclick="handleSubmit()">Proceed to Payment</button>
+                </div>
+            </div>
+
+            <!-- Success Screen (hidden until payment + submission complete) -->
+            <div id="success-screen" style="display:none; padding:48px 24px; max-width:560px; margin:0 auto;">
+                <div style="text-align:center; margin-bottom:32px;">
+                    <h2 style="font-size:28px; margin-bottom:8px;">Game Submitted!</h2>
+                    <p style="color:var(--text-secondary); font-size:15px;">Goes live automatically in:</p>
+                    <div id="success-countdown" style="font-size:28px; font-weight:700; color:#60a5fa; margin:8px 0 0; font-variant-numeric:tabular-nums;">48:00:00</div>
+                </div>
+
+                <!-- Upload progress (shown when ZIP is uploading) -->
+                <div id="upload-progress-section" style="display:none; margin-bottom:24px; background:rgba(37, 99, 235,0.08); border:1px solid rgba(37, 99, 235,0.25); border-radius:12px; padding:16px;">
+                    <div style="font-size:13px; color:rgba(255,255,255,0.7); margin-bottom:10px;" id="upload-status-text">Uploading game files...</div>
+                    <div style="background:rgba(255,255,255,0.08); border-radius:4px; height:6px; overflow:hidden;">
+                        <div id="upload-progress-bar" style="height:100%; background:linear-gradient(90deg,#2563eb,#2563eb); width:0%; transition:width 0.3s;"></div>
+                    </div>
+                </div>
+
+                <!-- API Key -->
+                <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(37, 99, 235,0.4); border-radius:12px; padding:20px; margin-bottom:20px;">
+                    <div style="font-size:11px; color:#60a5fa; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;"> API Key — Copy now, shown once only</div>
+                    <div id="success-api-key"
+                         onclick="copyApiKey()"
+                         title="Click to copy"
+                         style="font-family:monospace; font-size:13px; background:rgba(0,0,0,0.4); padding:10px 14px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); cursor:pointer; word-break:break-all; color:#e2e8f0;"></div>
+                    <div style="font-size:12px; color:rgba(255,255,255,0.4); margin-top:8px;">Use <code style="color:#60a5fa;">X-API-Key: [your key]</code> in your game's backend to check which players can use each DexHero character.</div>
+                </div>
+
+                <!-- Actions -->
+                <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+                    <a href="/pages/developer-portal.html" class="btn-submit" style="text-decoration:none; display:inline-block; padding:14px 24px;">Developer Portal →</a>
+                    <a href="/pages/all-games.html" style="text-decoration:none; display:inline-flex; align-items:center; padding:14px 24px; border:1px solid rgba(255,255,255,0.15); border-radius:10px; color:rgba(255,255,255,0.7); font-size:14px;">Browse Games</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <!-- Crop Modal -->
+    <div id="crop-modal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 1000; align-items: center; justify-content: center;">
+        <div
+            style="background: linear-gradient(160deg, rgba(59,130,246,0.1) 0%, rgba(0,0,0,0.97) 100%); border: 1px solid rgba(59,130,246,0.28); box-shadow: 0 0 60px rgba(59,130,246,0.12), 0 8px 40px rgba(0,0,0,0.7); border-radius: 20px; padding: 24px; width: 90%; max-width: 500px;">
+            <h3 style="margin-bottom: 16px; font-size: 18px;">Reposition Game Icon</h3>
+            <div style="height: 300px; background: #000; margin-bottom: 20px; border-radius: 10px; overflow: hidden;">
+                <img id="crop-image" src="">
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button onclick="closeCropModal()"
+                    style="padding: 10px 20px; background: transparent; border: 1px solid rgba(255,255,255,0.15); color: var(--text-primary); border-radius: 8px; cursor: pointer; font-size: 14px;">Cancel</button>
+                <button onclick="saveCrop()"
+                    style="padding: 10px 20px; background: var(--accent-cyan); border: none; color: #000; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;">Save Selection</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modals-placeholder"></div>
+
+    <!-- Registration Progress Overlay -->
+    <div id="reg-progress-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:10000; align-items:center; justify-content:center;">
+        <div style="background:linear-gradient(160deg,rgba(59,130,246,0.1) 0%,rgba(0,0,0,0.97) 100%); border:1px solid rgba(59,130,246,0.28); box-shadow:0 0 60px rgba(59,130,246,0.12),0 8px 40px rgba(0,0,0,0.7); border-radius:20px; padding:40px; max-width:500px; width:90%; text-align:center;">
+            <h2 style="margin:0 0 6px; font-size:22px;">Registering Your Game</h2>
+            <p style="color:var(--text-muted,rgba(255,255,255,0.4)); margin:0 0 28px; font-size:14px;">Please don't close this window</p>
+
+            <div>
+                <div id="reg-step-payment" class="reg-step" style="padding:14px 16px; margin:8px 0; background:rgba(255,255,255,0.05); border-radius:10px; display:flex; align-items:center; gap:14px; text-align:left;">
+                    <div class="reg-step-icon" style="width:22px; height:22px; border:2px solid rgba(255,255,255,0.2); border-top-color:#3b82f6; border-radius:50%; animation:spin 0.8s linear infinite; flex-shrink:0;"></div>
+                    <div>
+                        <div style="font-size:14px; font-weight:500;">Sending Payment</div>
+                        <div class="reg-step-sub" style="font-size:12px; color:rgba(255,255,255,0.45); margin-top:2px;">Sending USDC to treasury &amp; confirming on-chain...</div>
+                    </div>
+                </div>
+                <div id="reg-step-assets" class="reg-step" style="padding:14px 16px; margin:8px 0; background:rgba(255,255,255,0.05); border-radius:10px; display:flex; align-items:center; gap:14px; text-align:left; opacity:0.4;">
+                    <div class="reg-step-icon" style="visibility:hidden; width:22px; height:22px; border:2px solid rgba(255,255,255,0.2); border-top-color:#3b82f6; border-radius:50%; animation:spin 0.8s linear infinite; flex-shrink:0;"></div>
+                    <div>
+                        <div style="font-size:14px; font-weight:500;">Uploading Assets</div>
+                        <div class="reg-step-sub" style="font-size:12px; color:rgba(255,255,255,0.45); margin-top:2px;">Uploading game icon &amp; cover image...</div>
+                    </div>
+                </div>
+                <div id="reg-step-register" class="reg-step" style="padding:14px 16px; margin:8px 0; background:rgba(255,255,255,0.05); border-radius:10px; display:flex; align-items:center; gap:14px; text-align:left; opacity:0.4;">
+                    <div class="reg-step-icon" style="visibility:hidden; width:22px; height:22px; border:2px solid rgba(255,255,255,0.2); border-top-color:#3b82f6; border-radius:50%; animation:spin 0.8s linear infinite; flex-shrink:0;"></div>
+                    <div>
+                        <div style="font-size:14px; font-weight:500;">Registering Game</div>
+                        <div class="reg-step-sub" style="font-size:12px; color:rgba(255,255,255,0.45); margin-top:2px;">Creating your game record &amp; API key...</div>
+                    </div>
+                </div>
+                <div id="reg-step-done" class="reg-step" style="padding:14px 16px; margin:8px 0; background:rgba(255,255,255,0.05); border-radius:10px; display:flex; align-items:center; gap:14px; text-align:left; opacity:0.4;">
+                    <div class="reg-step-icon" style="visibility:hidden; width:22px; height:22px; border:2px solid rgba(255,255,255,0.2); border-top-color:#3b82f6; border-radius:50%; animation:spin 0.8s linear infinite; flex-shrink:0;"></div>
+                    <div>
+                        <div style="font-size:14px; font-weight:500;">Complete!</div>
+                        <div class="reg-step-sub" style="font-size:12px; color:rgba(255,255,255,0.45); margin-top:2px;">Game submitted successfully.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="reg-progress-error" style="display:none; margin-top:20px; padding:14px 16px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:12px; text-align:left;">
+                <div style="font-size:13px; font-weight:600; color:#f87171; margin-bottom:4px;">Something went wrong</div>
+                <p id="reg-progress-error-msg" style="margin:0; font-size:13px; color:rgba(255,255,255,0.6); line-height:1.5;"></p>
+                <button onclick="document.getElementById('reg-progress-overlay').style.display='none'" style="margin-top:12px; padding:8px 18px; background:transparent; border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:rgba(255,255,255,0.6); font-size:13px; cursor:pointer;">Close</button>
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script>
+        let tier = 'bronze';
+        let USDC_CONFIG = {
+            sepolia: {
+                address: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+                treasury: null, // loaded from /api/config on init
+                decimals: 6
+            },
+            prices: {
+                bronze: 100,
+                silver: 200,
+                gold: 500
+            }
+        };
+
+
+        function initForm() {
+            const urlParams = new URLSearchParams(window.location.search);
+            tier = urlParams.get('tier') || 'bronze';
+
+            const badge = document.getElementById('selected-tier-badge');
+            if (badge) {
+                badge.textContent = tier.charAt(0).toUpperCase() + tier.slice(1) + ' Package';
+                badge.className = `tier-badge tier-${tier}`;
+            }
+
+            // Image Preview (Icon)
+            const iconInput = document.getElementById('game-icon');
+            if (iconInput) {
+                iconInput.addEventListener('change', function () {
+                    handleImageSelect(this, 'icon');
+                });
+            }
+
+            // Image Preview (Cover)
+            const coverInput = document.getElementById('game-cover');
+            if (coverInput) {
+                coverInput.addEventListener('change', function () {
+                    handleImageSelect(this, 'cover');
+                });
+            }
+
+            // Initialize Supabase
+            if (window.DexHeroSupabase) window.DexHeroSupabase.init();
+
+            // Load treasury address from server (same pattern as blockchain-integration.js)
+            fetch('/api/config')
+                .then(r => r.json())
+                .then(cfg => { if (cfg.treasury) USDC_CONFIG.sepolia.treasury = cfg.treasury; })
+                .catch(e => console.warn('Failed to load treasury address from /api/config:', e));
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initForm);
+        } else {
+            initForm();
+        }
+
+        let cropper;
+        let selectedFile;
+        let currentCropType = 'icon'; // 'icon' or 'cover'
+
+        function handleImageSelect(input, type) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                selectedFile = file;
+                currentCropType = type;
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const image = document.getElementById('crop-image');
+                    const modalTitle = document.querySelector('#crop-modal h3');
+                    modalTitle.textContent = type === 'icon' ? 'Reposition Game Icon' : 'Reposition Game Cover';
+
+                    document.getElementById('crop-modal').style.display = 'flex';
+
+                    if (cropper) {
+                        cropper.destroy();
+                    }
+
+                    image.onload = function () {
+                        cropper = new Cropper(image, {
+                            aspectRatio: type === 'icon' ? 1 : 2 / 3,
+                            viewMode: 1,
+                            dragMode: 'move',
+                            autoCropArea: 1,
+                            restore: false,
+                            guides: true,
+                            center: true,
+                            highlight: false,
+                            cropBoxMovable: false,
+                            cropBoxResizable: false,
+                            toggleDragModeOnDblclick: false,
+                            ready: function () {
+                                // Add round class if icon
+                                const cropperEl = document.querySelector('.cropper-view-box');
+                                const faceEl = document.querySelector('.cropper-face');
+                                if (type === 'icon') {
+                                    cropperEl.classList.add('round');
+                                    faceEl.classList.add('round');
+                                } else {
+                                    cropperEl.classList.remove('round');
+                                    faceEl.classList.remove('round');
+                                }
+                            }
+                        });
+                    };
+
+                    image.src = e.target.result;
+                }
+
+                reader.readAsDataURL(file);
+            }
+            input.value = ''; // Reset
+        }
+
+        function closeCropModal() {
+            document.getElementById('crop-modal').style.display = 'none';
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+        }
+
+        function saveCrop() {
+            if (!cropper) return;
+
+            const isIcon = currentCropType === 'icon';
+            const canvas = cropper.getCroppedCanvas({
+                width: isIcon ? 512 : 600,
+                height: isIcon ? 512 : 900
+            });
+
+            const previewId = isIcon ? 'icon-preview' : 'cover-preview';
+            const triggerId = isIcon ? 'icon-upload-trigger' : 'cover-upload-trigger';
+
+            const preview = document.getElementById(previewId);
+            const trigger = document.getElementById(triggerId);
+            const uploadIcon = trigger.querySelector('svg');
+            const uploadText = trigger.querySelector('span');
+
+            preview.src = canvas.toDataURL();
+            preview.style.display = 'block';
+            if (uploadIcon) uploadIcon.style.setProperty('display', 'none', 'important');
+            if (uploadText) uploadText.style.setProperty('display', 'none', 'important');
+
+            canvas.toBlob((blob) => {
+                const fileName = selectedFile ? selectedFile.name : (isIcon ? 'game-icon.png' : 'game-cover.png');
+                const file = new File([blob], fileName, { type: 'image/png' });
+
+                if (isIcon) {
+                    window.croppedIconFile = file;
+                } else {
+                    window.croppedCoverFile = file;
+                }
+                closeCropModal();
+            }, 'image/png');
+        }
+
+        function addSocial() {
+            const container = document.getElementById('social-handles-container');
+            const entry = document.createElement('div');
+            entry.className = 'social-entry';
+            entry.innerHTML = `
+                <select class="form-input platform-select">
+                    <option value="telegram">Telegram</option>
+                    <option value="discord">Discord</option>
+                    <option value="twitter">X (Twitter)</option>
+                    <option value="website">Other Website</option>
+                </select>
+                <input type="text" class="form-input handle-input" placeholder="@handle or Username#1234">
+                <button type="button" class="btn-remove-social" onclick="removeSocial(this)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            `;
+            container.appendChild(entry);
+        }
+
+        function removeSocial(button) {
+            const entries = document.querySelectorAll('.social-entry');
+            if (entries.length > 1) {
+                button.closest('.social-entry').remove();
+            }
+        }
+
+        function handleSubmit() {
+            const requiredFields = ['game-title', 'game-url', 'game-metrics', 'game-revenue', 'contact-name', 'contact-email'];
+            let isValid = true;
+
+            requiredFields.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el.value.trim()) {
+                    el.style.borderColor = 'var(--danger)';
+                    isValid = false;
+                } else {
+                    el.style.borderColor = 'var(--border-color)';
+                }
+            });
+
+            // Social handles validation
+            const handles = document.querySelectorAll('.handle-input');
+            let handleCount = 0;
+            handles.forEach(el => {
+                if (el.value.trim()) {
+                    handleCount++;
+                    el.style.borderColor = 'var(--border-color)';
+                } else {
+                    el.style.borderColor = 'var(--danger)';
+                    isValid = false;
+                }
+            });
+
+            if (handleCount === 0) {
+                isValid = false;
+                if (handles[0]) handles[0].style.borderColor = 'var(--danger)';
+            }
+
+            if (!window.croppedIconFile || !window.croppedCoverFile) {
+                alert('Please upload and reposition both your game icon and cover.');
+                if (!window.croppedIconFile) document.getElementById('icon-upload-trigger').style.borderColor = 'var(--danger)';
+                if (!window.croppedCoverFile) document.getElementById('cover-upload-trigger').style.borderColor = 'var(--danger)';
+                isValid = false;
+            }
+
+            if (!isValid) {
+                alert('Please fill in all required fields and upload both assets.');
+                return;
+            }
+
+            // Trigger Transaction
+            processPayment(tier);
+        }
+
+        function regUpdateStep(stepId, status) {
+            const step = document.getElementById(stepId);
+            if (!step) return;
+            const icon = step.querySelector('.reg-step-icon');
+            if (status === 'active') {
+                step.style.opacity = '1';
+                if (icon) {
+                    icon.style.visibility = 'visible';
+                    icon.style.border = '2px solid rgba(255,255,255,0.2)';
+                    icon.style.borderTopColor = '#3b82f6';
+                    icon.style.animation = 'spin 0.8s linear infinite';
+                    icon.style.color = '';
+                    icon.style.fontSize = '';
+                    icon.textContent = '';
+                }
+            } else if (status === 'complete') {
+                step.style.opacity = '1';
+                if (icon) {
+                    icon.style.visibility = 'visible';
+                    icon.style.border = 'none';
+                    icon.style.animation = 'none';
+                    icon.style.color = '#22c55e';
+                    icon.style.fontSize = '18px';
+                    icon.textContent = '';
+                }
+            } else if (status === 'error') {
+                step.style.opacity = '1';
+                if (icon) {
+                    icon.style.visibility = 'visible';
+                    icon.style.border = 'none';
+                    icon.style.animation = 'none';
+                    icon.style.color = '#ef4444';
+                    icon.style.fontSize = '18px';
+                    icon.textContent = '';
+                }
+            }
+        }
+
+        function regShowProgress() {
+            // Reset all steps
+            ['reg-step-payment','reg-step-assets','reg-step-register','reg-step-done'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.style.opacity = '0.4';
+                const icon = el.querySelector('.reg-step-icon');
+                if (icon) { icon.style.visibility = 'hidden'; icon.style.border = '2px solid rgba(255,255,255,0.2)'; icon.style.borderTopColor = '#3b82f6'; icon.style.animation = 'none'; icon.textContent = ''; }
+            });
+            const errEl = document.getElementById('reg-progress-error');
+            if (errEl) errEl.style.display = 'none';
+            const overlay = document.getElementById('reg-progress-overlay');
+            if (overlay) overlay.style.display = 'flex';
+            regUpdateStep('reg-step-payment', 'active');
+        }
+
+        function regShowError(msg) {
+            const errEl = document.getElementById('reg-progress-error');
+            const errMsg = document.getElementById('reg-progress-error-msg');
+            if (errEl) errEl.style.display = 'block';
+            if (errMsg) errMsg.textContent = msg;
+        }
+
+        const REQUIRED_NETWORK = { chainId: 11155111, hex: '0xaa36a7', name: 'Sepolia Testnet', rpcUrl: 'https://rpc.sepolia.org', explorerUrl: 'https://sepolia.etherscan.io' };
+
+        async function ensureCorrectNetwork() {
+            if (!window.ethereum) return true;
+            const hexChainId = await window.ethereum.request({ method: 'eth_chainId' });
+            const currentChainId = parseInt(hexChainId, 16);
+            if (currentChainId === REQUIRED_NETWORK.chainId) return true;
+            try {
+                await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: REQUIRED_NETWORK.hex }] });
+                if (window.DexHeroBlockchain) {
+                    window.DexHeroBlockchain.provider = new ethers.providers.Web3Provider(window.ethereum);
+                    window.DexHeroBlockchain.signer = window.DexHeroBlockchain.provider.getSigner();
+                }
+                return true;
+            } catch (switchErr) {
+                if (switchErr.code === 4902 || switchErr.code === -32603) {
+                    try {
+                        await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: REQUIRED_NETWORK.hex, chainName: REQUIRED_NETWORK.name, nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 }, rpcUrls: [REQUIRED_NETWORK.rpcUrl], blockExplorerUrls: [REQUIRED_NETWORK.explorerUrl] }] });
+                        if (window.DexHeroBlockchain) {
+                            window.DexHeroBlockchain.provider = new ethers.providers.Web3Provider(window.ethereum);
+                            window.DexHeroBlockchain.signer = window.DexHeroBlockchain.provider.getSigner();
+                        }
+                        return true;
+                    } catch { return false; }
+                }
+                return false;
+            }
+        }
+
+        async function processPayment(tier) {
+            const btn = document.querySelector('.btn-submit');
+            if (btn && btn.disabled) return;
+            const originalText = btn ? btn.textContent : 'Proceed to Payment';
+            if (btn) {
+                btn.textContent = 'Processing...';
+                btn.disabled = true;
+            }
+            try {
+                if (!USDC_CONFIG.sepolia.treasury) {
+                    alert('Unable to load payment config. Please refresh the page and try again.');
+                    return;
+                }
+
+                if (!window.DexHeroBlockchain || !window.DexHeroBlockchain.signer) {
+                    alert('Please connect a wallet to proceed.');
+                    return;
+                }
+
+                const onCorrectNetwork = await ensureCorrectNetwork();
+                if (!onCorrectNetwork) return;
+
+                const signer = window.DexHeroBlockchain.signer;
+                const userAddress = window.DexHeroBlockchain.userAddress;
+
+                const usdc = new ethers.Contract(USDC_CONFIG.sepolia.address, USDC_ABI, signer);
+                const price = USDC_CONFIG.prices[tier];
+                const amountWei = ethers.utils.parseUnits(price.toString(), USDC_CONFIG.sepolia.decimals);
+
+                const balance = await usdc.balanceOf(userAddress);
+                if (balance.lt(amountWei)) {
+                    alert(`Insufficient USDC balance. You need ${price} USDC (Sepolia) to register.`);
+                    return;
+                }
+
+                // Show progress overlay — from here on no more alerts
+                regShowProgress();
+
+                console.log(`Sending ${price} USDC to treasury: ${USDC_CONFIG.sepolia.treasury}`);
+                const tx = await usdc.transfer(USDC_CONFIG.sepolia.treasury, amountWei);
+                const receipt = await tx.wait();
+
+                if (receipt.status !== 1) throw new Error('Transaction failed on-chain');
+
+                regUpdateStep('reg-step-payment', 'complete');
+                regUpdateStep('reg-step-assets', 'active');
+
+                const result = await registerGameWithServer(userAddress, tier, tx.hash);
+
+                if (result.success) {
+                    regUpdateStep('reg-step-assets', 'complete');
+                    regUpdateStep('reg-step-register', 'complete');
+                    regUpdateStep('reg-step-done', 'complete');
+                    // Brief pause so user sees the complete state, then show success screen
+                    setTimeout(() => {
+                        document.getElementById('reg-progress-overlay').style.display = 'none';
+                        showSuccessScreen(result.apiKey, result.goesLiveAt, result.gameId);
+                    }, 800);
+                } else {
+                    regUpdateStep('reg-step-assets', 'error');
+                    regShowError('Registration failed after payment. Please contact support with your transaction hash: ' + tx.hash);
+                }
+                return; // skip finally re-enable (success screen takes over)
+
+            } catch (error) {
+                console.error('Payment Error:', error);
+                const overlay = document.getElementById('reg-progress-overlay');
+                if (overlay && overlay.style.display === 'flex') {
+                    regUpdateStep('reg-step-payment', 'error');
+                    regShowError('Payment failed: ' + (error.reason || error.message || 'Unknown error'));
+                } else {
+                    alert('Payment failed: ' + (error.reason || error.message || 'Unknown error'));
+                }
+            } finally {
+                const btn = document.querySelector('.btn-submit');
+                btn.textContent = 'Proceed to Payment';
+                btn.disabled = false;
+            }
+        }
+
+        // ZIP file handling
+        let selectedZipFile = null;
+
+        function handleZipSelect(input) {
+            if (input.files && input.files[0]) setZipFile(input.files[0]);
+        }
+
+        function handleZipDrop(e) {
+            e.preventDefault();
+            document.getElementById('zip-drop-zone').style.borderColor = 'rgba(37, 99, 235,0.4)';
+            const file = e.dataTransfer.files[0];
+            if (file && file.name.endsWith('.zip')) setZipFile(file);
+            else alert('Please drop a .zip file.');
+        }
+
+        function setZipFile(file) {
+            if (file.size > 150 * 1024 * 1024) {
+                alert('ZIP file is too large. Max 150MB.');
+                return;
+            }
+            selectedZipFile = file;
+            const mb = (file.size / 1024 / 1024).toFixed(1);
+            document.getElementById('zip-label').innerHTML =
+                `<strong style="color:#60a5fa;"> ${file.name}</strong> <span style="color:rgba(255,255,255,0.4);">(${mb} MB)</span> — <span style="color:rgba(255,255,255,0.5);text-decoration:underline;cursor:pointer;" onclick="document.getElementById('game-zip-input').click()">Change</span>`;
+        }
+
+        async function registerGameWithServer(wallet, tier, txHash) {
+            try {
+                const supabase = window.DexHeroSupabase.get();
+                let iconUrl = null;
+                let coverUrl = null;
+
+                // Upload icon and cover to Supabase Storage (browser-side, same as before)
+                if (window.croppedIconFile && supabase) {
+                    const fileExt = window.croppedIconFile.name.split('.').pop();
+                    const filePath = `game-icons/${Date.now()}-icon.${fileExt}`;
+                    await supabase.storage.from('models').upload(filePath, window.croppedIconFile);
+                    iconUrl = supabase.storage.from('models').getPublicUrl(filePath).data.publicUrl;
+                }
+                if (window.croppedCoverFile && supabase) {
+                    const fileExt = window.croppedCoverFile.name.split('.').pop();
+                    const filePath = `game-covers/${Date.now()}-cover.${fileExt}`;
+                    await supabase.storage.from('models').upload(filePath, window.croppedCoverFile);
+                    coverUrl = supabase.storage.from('models').getPublicUrl(filePath).data.publicUrl;
+                }
+
+                // Collect social handles
+                const socialHandles = [];
+                document.querySelectorAll('.social-entry').forEach(entry => {
+                    const platform = entry.querySelector('.platform-select').value;
+                    const handle = entry.querySelector('.handle-input').value.trim();
+                    if (handle) socialHandles.push({ platform, handle });
+                });
+
+                regUpdateStep('reg-step-assets', 'complete');
+                regUpdateStep('reg-step-register', 'active');
+
+                // POST to server — server verifies payment and creates record + API key
+                const resp = await fetch('/api/game/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        txHash,
+                        walletAddress: wallet,
+                        tier,
+                        title: document.getElementById('game-title').value.trim(),
+                        game_url: (document.getElementById('game-url') ? document.getElementById('game-url').value.trim() : '') || null,
+                        category: document.getElementById('game-category').value,
+                        metrics_players: document.getElementById('game-metrics').value,
+                        primary_revenue: document.getElementById('game-revenue').value,
+                        contact_name: document.getElementById('contact-name').value.trim(),
+                        contact_email: document.getElementById('contact-email').value.trim(),
+                        social_handles: socialHandles,
+                        icon_url: iconUrl,
+                        cover_url: coverUrl,
+                        cloud_gaming_enabled: true,
+                        min_gpu_tier: parseInt(document.getElementById('min-gpu-tier').value),
+                        min_vram_gb: parseInt(document.getElementById('min-vram-gb').value),
+                        min_upload_mbps: parseInt(document.getElementById('min-upload-mbps').value),
+                        max_concurrent_players: parseInt(document.getElementById('max-concurrent-players').value),
+                    })
+                });
+
+                const data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    throw new Error(data.error || 'Registration failed');
+                }
+
+                return data; // { success, gameId, apiKey, slug, goesLiveAt }
+            } catch (err) {
+                console.error('Registration error:', err);
+                regUpdateStep('reg-step-register', 'error');
+                regShowError('Payment succeeded but registration failed: ' + err.message + ' — Contact support with your transaction hash.');
+                return { success: false };
+            }
+        }
+
+        async function uploadGameZip(gameId, walletAddress) {
+            if (!selectedZipFile) return;
+            const progressSection = document.getElementById('upload-progress-section');
+            const statusText = document.getElementById('upload-status-text');
+            const progressBar = document.getElementById('upload-progress-bar');
+
+            progressSection.style.display = 'block';
+            statusText.textContent = `Uploading ${selectedZipFile.name}…`;
+
+            // Simulate progress while uploading (XHR for real progress)
+            return new Promise((resolve) => {
+                const xhr = new XMLHttpRequest();
+                const formData = new FormData();
+                formData.append('walletAddress', walletAddress);
+                formData.append('gameId', gameId);
+                formData.append('file', selectedZipFile);
+
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const pct = Math.round((e.loaded / e.total) * 80);
+                        progressBar.style.width = pct + '%';
+                    }
+                };
+                xhr.onload = () => {
+                    progressBar.style.width = '100%';
+                    if (xhr.status === 200) {
+                        const result = JSON.parse(xhr.responseText);
+                        statusText.textContent = ` ${result.filesUploaded} files uploaded`;
+                    } else {
+                        statusText.textContent = 'Upload failed — you can upload later in the Developer Portal';
+                    }
+                    resolve();
+                };
+                xhr.onerror = () => {
+                    statusText.textContent = 'Upload failed — you can upload later in the Developer Portal';
+                    resolve();
+                };
+                xhr.open('POST', '/api/game/upload');
+                xhr.send(formData);
+            });
+        }
+
+        let _countdownInterval = null;
+
+        function showSuccessScreen(apiKey, goesLiveAt, gameId) {
+            document.querySelector('.create-form').style.display = 'none';
+            document.querySelector('.create-header').style.display = 'none';
+            const screen = document.getElementById('success-screen');
+            document.getElementById('success-api-key').textContent = apiKey || '';
+            screen.style.display = 'block';
+
+            // Start countdown
+            const deadline = new Date(goesLiveAt).getTime();
+            function tick() {
+                const remaining = deadline - Date.now();
+                if (remaining <= 0) {
+                    document.getElementById('success-countdown').textContent = 'LIVE NOW!';
+                    document.getElementById('success-countdown').style.color = '#4ade80';
+                    clearInterval(_countdownInterval);
+                    return;
+                }
+                const h = Math.floor(remaining / 3600000);
+                const m = Math.floor((remaining % 3600000) / 60000);
+                const s = Math.floor((remaining % 60000) / 1000);
+                document.getElementById('success-countdown').textContent =
+                    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            }
+            tick();
+            _countdownInterval = setInterval(tick, 1000);
+
+            // Upload ZIP if one was selected (non-blocking)
+            if (selectedZipFile && gameId) {
+                const walletAddress = sessionStorage.getItem('walletAddress') || '';
+                uploadGameZip(gameId, walletAddress);
+            }
+        }
+
+        function copyApiKey() {
+            const key = document.getElementById('success-api-key').textContent;
+            navigator.clipboard.writeText(key).then(() => {
+                const el = document.getElementById('success-api-key');
+                el.style.color = '#4ade80';
+                setTimeout(() => { el.style.color = ''; }, 1500);
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,231 @@
+/* Games Bar Styles - Battle.net Inspired - Refined */
+.games-nav-container {
+    background: transparent;
+    border: none;
+    margin: 0 0 16px 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Top Nav */
+.games-nav-top {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    gap: 24px;
+    border: none;
+}
+
+.nav-item {
+    color: #94a3b8;
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-decoration: none;
+    letter-spacing: 1.5px;
+    transition: color 0.2s;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    color: #ffffff;
+    opacity: 1;
+}
+
+.nav-item.active {
+    position: relative;
+}
+
+/* Bottom Bar */
+.games-bar-bottom {
+    display: flex;
+    align-items: center;
+    padding: 4px 0;
+    background: transparent;
+    border: none;
+    gap: 12px;
+}
+
+.all-games-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 140px;
+}
+
+.all-games-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.all-games-btn svg {
+    width: 16px;
+    height: 16px;
+    opacity: 0.7;
+}
+
+.favorites-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 12px;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.favorites-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-right: 8px;
+}
+
+.game-icon-btn {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.game-icon-btn img,
+.game-icon-btn svg {
+    width: 40px;
+    height: 40px;
+}
+
+.game-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.game-icon-btn.active {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.game-icon-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 4px;
+    right: 4px;
+    height: 3px;
+    background: #00aeff;
+    border-radius: 2px;
+    box-shadow: 0 0 12px rgba(0, 174, 255, 0.8);
+}
+
+.add-game-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    color: #94a3b8;
+    margin-left: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+/* ── Games Bar Responsive ──────────────────────────────── */
+@media (max-width: 768px) {
+    .games-nav-container {
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .games-nav-top {
+        gap: 16px;
+    }
+
+    .games-bar-bottom {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 8px;
+        padding-bottom: 8px;
+    }
+
+    .all-games-btn {
+        min-width: 110px;
+        padding: 10px 14px;
+        font-size: 11px;
+    }
+
+    .game-icon-btn {
+        width: 48px;
+        height: 48px;
+    }
+
+    .game-icon-btn img,
+    .game-icon-btn svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .favorites-section {
+        flex-shrink: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .favorites-label {
+        font-size: 10px;
+        white-space: nowrap;
+    }
+
+    .add-game-btn {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .games-nav-top {
+        gap: 12px;
+    }
+
+    .games-nav-top .nav-item {
+        font-size: 12px;
+        letter-spacing: 1px;
+    }
+
+    .all-games-btn {
+        min-width: 90px;
+        padding: 8px 10px;
+        font-size: 10px;
+    }
+
+    .game-icon-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .game-icon-btn img,
+    .game-icon-btn svg {
+        width: 28px;
+        height: 28px;
+    }
+}

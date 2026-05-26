@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="0; url=/pages/profile.html">
+    <title>Developer Portal | DexHero</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <style>
+        .portal-container {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 40px 20px 80px;
+        }
+
+        .portal-header {
+            margin-bottom: 32px;
+        }
+
+        .portal-header h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+        .portal-header p  { color: var(--text-secondary); font-size: 15px; }
+
+        /* Game identity card */
+        .game-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 28px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .game-card img {
+            width: 64px;
+            height: 64px;
+            border-radius: 14px;
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+
+        .game-card-icon-placeholder {
+            width: 64px;
+            height: 64px;
+            border-radius: 14px;
+            background: var(--bg-tertiary, #1e293b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .game-card-info h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+        .game-card-info p  { font-size: 13px; color: var(--text-secondary); }
+
+        .game-status-badge {
+            margin-left: auto;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .game-status-active      { background: #16a34a22; color: #4ade80; border: 1px solid #4ade8044; }
+        .game-status-pending     { background: #2563eb22; color: #60a5fa; border: 1px solid #60a5fa44; }
+        .game-status-blocked     { background: #dc262622; color: #f87171; border: 1px solid #f8717144; }
+        .game-status-deactivated { background: #33333344; color: #94a3b8; border: 1px solid #33333388; }
+
+        .countdown-inline {
+            font-size: 12px;
+            color: #60a5fa;
+            margin-top: 4px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Upload modal */
+        .upload-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.88);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-modal-overlay.open { display: flex; }
+
+        .upload-modal-box {
+            background: linear-gradient(160deg, rgba(59,130,246,0.1) 0%, rgba(0,0,0,0.97) 100%);
+            border: 1px solid rgba(59,130,246,0.28);
+            box-shadow: 0 0 60px rgba(59,130,246,0.12), 0 8px 40px rgba(0,0,0,0.7);
+            border-radius: 20px;
+            padding: 28px;
+            width: 90%;
+            max-width: 480px;
+        }
+
+        .upload-modal-box h3 { font-size: 18px; margin-bottom: 8px; }
+        .upload-modal-box p  { color: var(--text-secondary); font-size: 14px; margin-bottom: 16px; }
+
+        .upload-drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 16px;
+        }
+
+        .upload-drop-zone:hover,
+        .upload-drop-zone.drag-over {
+            border-color: #2563eb;
+            background: #2563eb08;
+        }
+
+        .upload-drop-zone .drop-icon { font-size: 36px; margin-bottom: 10px; }
+        .upload-drop-zone .drop-text { font-size: 14px; color: var(--text-secondary); }
+        .upload-drop-zone .drop-hint { font-size: 12px; color: var(--text-muted, var(--text-secondary)); margin-top: 6px; }
+
+        .upload-file-selected {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: var(--bg-primary, #0f1117);
+            border: 1px solid #2563eb44;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .upload-progress-bar {
+            height: 6px;
+            background: var(--bg-primary, #0f1117);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            display: none;
+        }
+
+        .upload-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2563eb, #2563eb);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.2s;
+        }
+
+        .upload-status-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .upload-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+        .btn-upload-submit {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #2563eb, #2563eb);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-upload-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-upload-cancel {
+            padding: 8px 18px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-upload-files {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid #2563eb44;
+            border-radius: 8px;
+            color: #60a5fa;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-left: auto;
+        }
+
+        .btn-upload-files:hover { background: #2563eb11; }
+
+        /* Section */
+        .portal-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .portal-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .portal-section .section-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        /* Key list */
+        .key-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: var(--bg-primary, #0f1117);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .key-prefix {
+            font-family: monospace;
+            font-size: 13px;
+            color: var(--text-primary);
+            flex: 1;
+            letter-spacing: 0.03em;
+        }
+
+        .key-meta {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .btn-revoke {
+            padding: 4px 12px;
+            border: 1px solid #f8717144;
+            background: transparent;
+            color: #f87171;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-revoke:hover { background: #f8717111; }
+
+        /* Generate button */
+        .btn-generate {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #2563eb, #2563eb);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .btn-generate:hover { opacity: 0.9; }
+        .btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* New key reveal */
+        .new-key-box {
+            margin-top: 16px;
+            padding: 14px 16px;
+            background: #2563eb11;
+            border: 1px solid #2563eb44;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .new-key-box .key-warning {
+            font-size: 12px;
+            color: #60a5fa;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .new-key-value {
+            font-family: monospace;
+            font-size: 13px;
+            word-break: break-all;
+            background: var(--bg-primary, #0f1117);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .new-key-value span { flex: 1; }
+
+        /* States */
+        .not-connected {
+            text-align: center;
+            padding: 80px 24px;
+            color: var(--text-secondary);
+        }
+
+        .not-connected h2 { font-size: 22px; color: var(--text-primary); margin-bottom: 10px; }
+        .not-connected p  { margin-bottom: 0; }
+
+        .not-approved {
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--text-secondary);
+        }
+
+        .not-approved h2 { font-size: 20px; color: var(--text-primary); margin-bottom: 10px; }
+
+        .loading-state {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-secondary);
+        }
+
+        .api-docs-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #2563eb;
+            text-decoration: none;
+            margin-top: 8px;
+        }
+
+        .api-docs-link:hover { text-decoration: underline; }
+    </style>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <div class="portal-container">
+
+            <div class="portal-header">
+                <h1>Developer <span class="gradient-text">Portal</span></h1>
+                <p>Manage API keys and integrate DexHero into your game.</p>
+            </div>
+
+            <!-- Not connected -->
+            <div id="state-not-connected" class="not-connected" style="display:none">
+                <h2>Wallet Not Connected</h2>
+                <p>Connect your wallet using the button in the top right to access your developer portal.</p>
+            </div>
+
+            <!-- Loading -->
+            <div id="state-loading" class="loading-state">
+                <div style="font-size:32px;margin-bottom:12px">⏳</div>
+                <p>Loading your developer profile…</p>
+            </div>
+
+            <!-- No game -->
+            <div id="state-not-approved" class="not-approved" style="display:none">
+                <h2>No Registered Game Found</h2>
+                <p style="margin-bottom:20px">This wallet doesn't have a registered game yet.</p>
+                <a href="register-game-form.html" style="padding:10px 24px;background:linear-gradient(135deg,#2563eb,#2563eb);color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">Register Your Game</a>
+            </div>
+
+            <!-- Portal content (shown when approved) -->
+            <div id="portal-content" style="display:none">
+
+                <!-- Game identity -->
+                <div class="game-card" id="game-card"></div>
+
+                <!-- API Keys -->
+                <div class="portal-section">
+                    <h3>API Keys</h3>
+                    <p class="section-desc">
+                        Use your API key in the <code>X-API-Key</code> header when calling the DexHero Game API.
+                        Keys are shown once — store them securely. Maximum 5 active keys.
+                        <a class="api-docs-link" href="api-docs.html">View API Documentation →</a>
+                    </p>
+
+                    <div id="keys-list"><p style="color:var(--text-secondary);font-size:13px">Loading keys…</p></div>
+
+                    <button class="btn-generate" id="btn-generate" onclick="generateKey()">+ Generate New Key</button>
+
+                    <div class="new-key-box" id="new-key-box">
+                        <div class="key-warning">Copy this key now — it will never be shown again.</div>
+                        <div class="new-key-value" onclick="copyNewKey()" title="Click to copy">
+                            <span id="new-key-value"></span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DexHero Allowlist -->
+                <div class="portal-section">
+                    <h3>DexHero Allowlist</h3>
+                    <p class="section-desc">Characters your game supports. Add a DexHero by pasting its manager address from the character's marketplace page.</p>
+
+                    <div style="display:flex;gap:8px;margin-bottom:8px">
+                        <input id="allowlist-input" type="text" placeholder="Paste manager address (0x...)"
+                            style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary,#1e293b);color:var(--text-primary);font-size:13px;font-family:monospace"
+                            onkeydown="if(event.key==='Enter')addToAllowlist()">
+                        <button id="btn-allowlist-add" class="btn-primary" onclick="addToAllowlist()" style="padding:9px 16px;font-size:13px">Add</button>
+                    </div>
+                    <div id="allowlist-msg" style="font-size:12px;margin-bottom:8px;min-height:16px"></div>
+                    <div id="allowlist-list"><p style="color:var(--text-secondary);font-size:13px">Loading…</p></div>
+                </div>
+
+                <!-- DexHero Rarity Settings (visible once at least one DexHero is linked) -->
+                <div class="portal-section" id="rarity-settings-panel" style="display:none;">
+                    <h3>DexHero Rarity Settings</h3>
+                    <p class="section-desc">Control how hard players must work to permanently unlock each DexHero. Changes go through a 48-hour on-chain timelock to protect players. Only the DexHero creator can modify these settings.</p>
+
+                    <div style="margin-bottom:16px;">
+                        <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:6px;">Select DexHero to configure</label>
+                        <select id="rarity-token-select" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary,#1e293b);color:var(--text-primary);font-size:13px;" onchange="loadRarityForToken(this.value)">
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom:20px;">
+                        <label style="font-size:13px;font-weight:500;display:block;margin-bottom:10px;">How rare should earning this DexHero be?</label>
+                        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);margin-bottom:6px;">
+                            <span>Common</span><span>Uncommon</span><span>Medium</span><span>Rare</span><span>Legendary</span>
+                        </div>
+                        <input type="range" id="portal-rarity-slider" min="0" max="4" step="1" value="2"
+                            style="-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:linear-gradient(to right,#4ade80,#fbbf24,#f87171);outline:none;cursor:pointer;margin-bottom:10px;"
+                            oninput="updatePortalRarityDisplay()">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <span id="portal-rarity-name" style="font-size:15px;font-weight:700;color:#fbbf24;">Medium</span>
+                                <span id="portal-rarity-detail" style="font-size:12px;color:var(--text-secondary);margin-left:10px;">100 GB · 300 players/slot</span>
+                            </div>
+                            <a href="/pages/threshold-estimator.html" target="_blank" style="font-size:12px;color:#2563eb;text-decoration:none;">Open estimator →</a>
+                        </div>
+                        <p id="portal-rarity-plain" style="font-size:13px;color:var(--text-secondary);margin:10px 0 0;line-height:1.5;"></p>
+                    </div>
+
+                    <div style="margin-bottom:20px;">
+                        <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px;">Unlock rate limit</label>
+                        <p class="section-desc" style="margin-bottom:8px;">Minimum hours between consecutive unlocks for this DexHero (1–720). Prevents market flooding. Goes through 48-hr timelock.</p>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <input type="number" id="portal-unlock-rate" min="1" max="720" value="24"
+                                style="width:90px;padding:9px 12px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-tertiary,#1e293b);color:var(--text-primary);font-size:13px;">
+                            <span style="font-size:13px;color:var(--text-secondary);">hours between unlocks</span>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <button id="btn-rarity-apply" class="btn-primary" onclick="applyRaritySettings()" style="padding:10px 20px;font-size:13px;">Apply Settings</button>
+                        <span id="rarity-apply-msg" style="font-size:12px;min-height:16px;"></span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Upload Game Files Modal -->
+    <div class="upload-modal-overlay" id="upload-modal">
+        <div class="upload-modal-box">
+            <h3>Upload Game Files</h3>
+            <p>Upload your web game as a ZIP file. Must contain <code>index.html</code> at the root. Max 150MB.</p>
+
+            <div class="upload-drop-zone" id="upload-drop-zone" onclick="document.getElementById('upload-file-input').click()">
+                <div class="drop-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                </div>
+                <div class="drop-text">Drop your game ZIP here or click to browse</div>
+                <div class="drop-hint">Max 150MB · Must contain index.html at root</div>
+            </div>
+
+            <input type="file" id="upload-file-input" accept=".zip" style="display:none">
+
+            <div class="upload-file-selected" id="upload-file-selected">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;opacity:0.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <div style="flex:1;min-width:0">
+                    <div id="upload-file-name" style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+                    <div id="upload-file-size" style="font-size:11px;color:var(--text-secondary);margin-top:2px"></div>
+                </div>
+                <button onclick="clearUploadFile()" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:16px">&times;</button>
+            </div>
+
+            <div class="upload-progress-bar" id="upload-progress-bar">
+                <div class="upload-progress-fill" id="upload-progress-fill"></div>
+            </div>
+            <div class="upload-status-text" id="upload-status-text"></div>
+
+            <div class="upload-modal-actions">
+                <button class="btn-upload-cancel" id="btn-upload-cancel" onclick="closeUploadModal()">Cancel</button>
+                <button class="btn-upload-submit" id="btn-upload-submit" onclick="submitGameUpload()" disabled>Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="/js/utils.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script>
+        //  State 
+        let connectedWallet = null;
+        let approvedGame    = null;
+
+        //  Boot: read session wallet — no reconnect needed 
+        document.addEventListener('DOMContentLoaded', () => {
+            // Give header a moment to restore session
+            setTimeout(init, 400);
+            // Also listen for wallet events fired by the header
+            window.addEventListener('walletConnected',      () => init());
+            window.addEventListener('walletChanged',        () => init());
+            window.addEventListener('walletAccountChanged', () => init());
+        });
+
+        async function init() {
+            // Read wallet from the same sessionStorage keys the header writes
+            const wallet  = sessionStorage.getItem('walletAddress');
+            const isConn  = sessionStorage.getItem('walletConnected') === 'true';
+
+            if (!isConn || !wallet) {
+                show('state-not-connected');
+                return;
+            }
+
+            show('state-loading');
+            connectedWallet = wallet.toLowerCase();
+
+            try {
+                await window.DexHeroSupabase.init();
+                const supabase = window.DexHeroSupabase.get();
+                if (!supabase) { show('state-not-connected'); return; }
+
+                const { data } = await supabase
+                    .from('registered_games')
+                    .select('*')
+                    .eq('owner_wallet', connectedWallet)
+                    .not('status', 'eq', 'deactivated')
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                if (!data) { show('state-not-approved'); return; }
+
+                approvedGame = data;
+                show('portal-content');
+                renderGameCard();
+                await loadKeys();
+                await loadAllowlist();
+            } catch (_) {
+                show('state-not-approved');
+            }
+        }
+
+        //  Render game identity card 
+        let goesLiveCountdownInterval = null;
+
+        function renderGameCard() {
+            const g = approvedGame;
+            const statusLabel = { active: 'Live', pending: 'Pending', blocked: 'Blocked', deactivated: 'Deactivated' }[g.status] || g.status;
+            const goesLiveAt = g.goes_live_at ? new Date(g.goes_live_at) : null;
+
+            document.getElementById('game-card').innerHTML = `
+                ${g.icon_url
+                    ? `<img src="${sanitizeUrl(g.icon_url)}" alt="">`
+                    : `<div class="game-card-icon-placeholder"></div>`}
+                <div class="game-card-info" style="flex:1">
+                    <h2>${escapeHtml(g.title)}</h2>
+                    ${g.slug ? `<p style="font-family:monospace;font-size:12px;color:var(--text-secondary)">/${escapeHtml(g.slug)}</p>` : ''}
+                    ${g.status === 'pending' && goesLiveAt ? `<div class="countdown-inline" id="portal-countdown"></div>` : ''}
+                    ${g.status === 'blocked' ? `<p style="font-size:12px;color:#f87171;margin-top:4px">Blocked by admin. Contact support for details.</p>` : ''}
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
+                    <span class="game-status-badge game-status-${g.status}">${statusLabel}</span>
+                    <button class="btn-upload-files" onclick="openUploadModal()">Upload Game Files</button>
+                    ${g.game_files_path ? `<span style="font-size:11px;color:#4ade80">Files uploaded</span>` : `<span style="font-size:11px;color:var(--text-secondary)">No files yet</span>`}
+                </div>
+            `;
+
+            if (g.status === 'pending' && goesLiveAt) {
+                startPortalCountdown(goesLiveAt);
+            }
+        }
+
+        function startPortalCountdown(target) {
+            if (goesLiveCountdownInterval) clearInterval(goesLiveCountdownInterval);
+            const el = () => document.getElementById('portal-countdown');
+            function update() {
+                const diff = target.getTime() - Date.now();
+                if (!el()) { clearInterval(goesLiveCountdownInterval); return; }
+                if (diff <= 0) {
+                    el().textContent = 'Going live now — refresh to see updated status';
+                    clearInterval(goesLiveCountdownInterval);
+                    return;
+                }
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                el().textContent = `Goes live in ${h}h ${m}m ${s}s`;
+            }
+            update();
+            goesLiveCountdownInterval = setInterval(update, 1000);
+        }
+
+        //  Load API keys (public endpoint — no signature) 
+        async function loadKeys() {
+            const listEl = document.getElementById('keys-list');
+            try {
+                const resp = await fetch(`/api/game/keys?wallet=${encodeURIComponent(connectedWallet)}`);
+                const data = await resp.json();
+                const keys = data.keys || [];
+
+                if (!keys.length) {
+                    listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:13px">No active keys. Generate your first one below.</p>';
+                    return;
+                }
+
+                listEl.innerHTML = keys.map(k => `
+                    <div class="key-row" id="key-row-${escapeHtml(k.key_prefix)}">
+                        <span class="key-prefix">${escapeHtml(k.key_prefix)}••••••••••••••••••••••</span>
+                        <span class="key-meta">
+                            Created ${formatDate(k.created_at)}
+                            ${k.last_used_at ? ` · Used ${formatDate(k.last_used_at)}` : ' · Never used'}
+                        </span>
+                        <button class="btn-revoke" onclick="revokeKey('${escapeHtml(k.key_prefix)}')">Revoke</button>
+                    </div>
+                `).join('');
+
+                // Disable generate if at limit
+                if (keys.length >= 5) {
+                    const btn = document.getElementById('btn-generate');
+                    btn.disabled = true;
+                    btn.title = 'Maximum 5 active keys. Revoke one first.';
+                }
+            } catch (err) {
+                listEl.innerHTML = `<p style="color:#f87171;font-size:13px">Failed to load keys: ${escapeHtml(err.message)}</p>`;
+            }
+        }
+
+        //  Generate key — signs once per action 
+        async function generateKey() {
+            const btn    = document.getElementById('btn-generate');
+            const keyBox = document.getElementById('new-key-box');
+            btn.disabled = true;
+            btn.textContent = 'Signing…';
+            keyBox.style.display = 'none';
+
+            try {
+                const { walletAddress, signature, message } = await signWithConnectedWallet();
+
+                btn.textContent = 'Generating…';
+                const resp = await fetch('/api/game/keys/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ walletAddress, signature, message, gameId: approvedGame.id })
+                });
+
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Request failed');
+
+                document.getElementById('new-key-value').textContent = data.apiKey;
+                keyBox.style.display = 'block';
+                await loadKeys();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '+ Generate New Key';
+            }
+        }
+
+        //  Revoke key 
+        async function revokeKey(prefix) {
+            if (!confirm(`Revoke key ${prefix}…? This cannot be undone.`)) return;
+            const rowEl = document.getElementById(`key-row-${prefix}`);
+            if (rowEl) rowEl.style.opacity = '0.5';
+
+            try {
+                const { walletAddress, signature, message } = await signWithConnectedWallet();
+                const resp = await fetch('/api/game/keys/revoke', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ walletAddress, signature, message, keyPrefix: prefix })
+                });
+                if (!resp.ok) throw new Error((await resp.json()).error || 'Failed');
+                await loadKeys();
+                document.getElementById('btn-generate').disabled = false;
+            } catch (err) {
+                alert('Error: ' + err.message);
+                if (rowEl) rowEl.style.opacity = '1';
+            }
+        }
+
+        //  DexHero Allowlist
+
+        function _truncateAddr(addr) {
+            if (!addr || addr.length < 12) return addr || '';
+            return addr.slice(0, 6) + '...' + addr.slice(-4);
+        }
+
+        async function loadAllowlist() {
+            const listEl = document.getElementById('allowlist-list');
+            try {
+                const supabase = window.DexHeroSupabase.get();
+                const { data } = await supabase
+                    .from('game_token_links')
+                    .select('token_id, manager_address, linked_at, tokens(id, name, image_url)')
+                    .eq('game_id', approvedGame.id)
+                    .order('linked_at', { ascending: false });
+
+                if (!data || !data.length) {
+                    listEl.innerHTML = '<p style="color:var(--text-secondary);font-size:13px">No DexHeros added yet. Paste a manager address above to get started.</p>';
+                    document.getElementById('rarity-settings-panel').style.display = 'none';
+                    return;
+                }
+
+                // Populate rarity settings dropdown
+                const select = document.getElementById('rarity-token-select');
+                select.innerHTML = data.map(row => {
+                    const t = row.tokens || {};
+                    return `<option value="${escapeHtml(row.token_id)}">${escapeHtml(t.name || 'Unknown Hero')}</option>`;
+                }).join('');
+                document.getElementById('rarity-settings-panel').style.display = 'block';
+                // Load rarity settings for first DexHero in dropdown
+                loadRarityForToken(data[0].token_id);
+
+                listEl.innerHTML = data.map(row => {
+                    const t = row.tokens || {};
+                    const addr = row.manager_address || '';
+                    return `
+                    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-color)">
+                        ${t.image_url
+                            ? `<img src="${sanitizeUrl(t.image_url)}" style="width:40px;height:40px;border-radius:8px;object-fit:cover">`
+                            : `<div style="width:40px;height:40px;border-radius:8px;background:var(--bg-tertiary,#1e293b)"></div>`}
+                        <div style="flex:1;min-width:0">
+                            <div style="font-size:14px;font-weight:500">${escapeHtml(t.name || 'Unknown Hero')}</div>
+                            <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+                                <code style="font-size:11px;color:var(--text-secondary)">${escapeHtml(_truncateAddr(addr))}</code>
+                                ${addr ? `<button onclick="navigator.clipboard.writeText('${escapeHtml(addr)}').then(()=>this.textContent='Copied!').catch(()=>{})" style="font-size:11px;padding:1px 6px;border-radius:4px;border:1px solid var(--border-color);background:transparent;color:var(--text-secondary);cursor:pointer">Copy</button>` : ''}
+                            </div>
+                        </div>
+                        <button onclick="removeFromAllowlist('${escapeHtml(row.token_id)}')"
+                            style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #f87171;background:transparent;color:#f87171;cursor:pointer">Remove</button>
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                listEl.innerHTML = `<p style="color:#f87171;font-size:13px">Failed to load allowlist.</p>`;
+            }
+        }
+
+        function _setAllowlistMsg(text, isError) {
+            const el = document.getElementById('allowlist-msg');
+            el.textContent = text;
+            el.style.color = isError ? '#f87171' : '#4ade80';
+        }
+
+        async function addToAllowlist() {
+            const input = document.getElementById('allowlist-input');
+            const btn = document.getElementById('btn-allowlist-add');
+            const managerAddress = input.value.trim();
+            if (!managerAddress.startsWith('0x') || managerAddress.length < 10) {
+                _setAllowlistMsg('Paste a valid manager address (starts with 0x)', true);
+                return;
+            }
+            btn.disabled = true;
+            btn.textContent = 'Adding...';
+            _setAllowlistMsg('', false);
+            try {
+                const { walletAddress, signature, message } = await signWithConnectedWallet();
+                const resp = await fetch('/api/game/allowlist/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ walletAddress, signature, message, managerAddress })
+                });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Request failed');
+                input.value = '';
+                _setAllowlistMsg(`${data.dexhero.name} added to allowlist.`, false);
+                await loadAllowlist();
+            } catch (err) {
+                _setAllowlistMsg(err.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Add';
+            }
+        }
+
+        async function removeFromAllowlist(tokenId) {
+            if (!confirm('Remove this DexHero from your allowlist?')) return;
+            _setAllowlistMsg('', false);
+            try {
+                const { walletAddress, signature, message } = await signWithConnectedWallet();
+                const resp = await fetch('/api/game/allowlist/remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ walletAddress, signature, message, tokenId })
+                });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Failed to remove');
+                _setAllowlistMsg('Removed.', false);
+                await loadAllowlist();
+            } catch (err) {
+                _setAllowlistMsg(err.message, true);
+            }
+        }
+
+        // ── DexHero Rarity Settings ──────────────────────────────────
+
+        const RARITY_PRESETS = [
+            { name: 'Common',    thresholdGB: 10,   playersPerSlot: 50,  minHrs: 1,  color: '#4ade80' },
+            { name: 'Uncommon',  thresholdGB: 50,   playersPerSlot: 150, minHrs: 12, color: '#a3e635' },
+            { name: 'Medium',    thresholdGB: 100,  playersPerSlot: 300, minHrs: 24, color: '#fbbf24' },
+            { name: 'Rare',      thresholdGB: 500,  playersPerSlot: 750, minHrs: 72, color: '#f97316' },
+            { name: 'Legendary', thresholdGB: 2000, playersPerSlot: 2000, minHrs: 168, color: '#f87171' },
+        ];
+
+        async function loadRarityForToken(tokenId) {
+            if (!tokenId) return;
+            try {
+                const supabase = window.DexHeroSupabase.get();
+                const { data } = await supabase
+                    .from('tokens')
+                    .select('unlock_threshold_bytes, players_per_unlock_slot, min_hours_between_unlocks')
+                    .eq('id', tokenId)
+                    .single();
+                if (!data) return;
+
+                // Find closest preset based on threshold
+                const gb = (data.unlock_threshold_bytes || 107374182400) / 1073741824;
+                const thresholds = RARITY_PRESETS.map(p => p.thresholdGB);
+                let closest = 2; // default Medium
+                let minDiff = Infinity;
+                thresholds.forEach((t, i) => {
+                    const diff = Math.abs(t - gb);
+                    if (diff < minDiff) { minDiff = diff; closest = i; }
+                });
+
+                document.getElementById('portal-rarity-slider').value = closest;
+                document.getElementById('portal-unlock-rate').value = data.min_hours_between_unlocks || 24;
+                updatePortalRarityDisplay();
+            } catch (_) {}
+        }
+
+        function updatePortalRarityDisplay() {
+            const idx = parseInt(document.getElementById('portal-rarity-slider').value, 10);
+            const preset = RARITY_PRESETS[idx];
+            document.getElementById('portal-rarity-name').textContent = preset.name;
+            document.getElementById('portal-rarity-name').style.color = preset.color;
+            document.getElementById('portal-rarity-detail').textContent =
+                `${preset.thresholdGB} GB · ${preset.playersPerSlot} players/slot`;
+
+            // Plain English description
+            const hrsPerDay = 2.5;
+            const bytesPerSec = (5 * 1_000_000) / 8; // 5 Mbps typical
+            const daysTypical = Math.ceil((preset.thresholdGB * 1073741824) / (bytesPerSec * hrsPerDay * 3600));
+            document.getElementById('portal-rarity-plain').textContent =
+                `A typical player gaming ${hrsPerDay} hours/day will earn this DexHero in approximately ${daysTypical} days.`;
+        }
+
+        async function applyRaritySettings() {
+            const tokenId = document.getElementById('rarity-token-select').value;
+            if (!tokenId) return;
+            const btn = document.getElementById('btn-rarity-apply');
+            const msg = document.getElementById('rarity-apply-msg');
+            btn.disabled = true;
+            btn.textContent = 'Applying…';
+            msg.textContent = '';
+
+            try {
+                const idx = parseInt(document.getElementById('portal-rarity-slider').value, 10);
+                const preset = RARITY_PRESETS[idx];
+                const minHrs = parseInt(document.getElementById('portal-unlock-rate').value, 10) || 24;
+                const { walletAddress, signature, message } = await signWithConnectedWallet();
+
+                const resp = await fetch('/api/game/tokens/rarity', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tokenId,
+                        unlockThresholdBytes: preset.thresholdGB * 1073741824,
+                        playersPerUnlockSlot: preset.playersPerSlot,
+                        minHoursBetweenUnlocks: minHrs,
+                        walletAddress,
+                        signature
+                    })
+                });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Failed to apply');
+                msg.textContent = 'Settings updated. On-chain change queued through 48-hr timelock.';
+                msg.style.color = '#4ade80';
+            } catch (err) {
+                msg.textContent = err.message;
+                msg.style.color = '#f87171';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Apply Settings';
+            }
+        }
+
+        //  Copy new key
+        function copyNewKey() {
+            const val = document.getElementById('new-key-value').textContent;
+            navigator.clipboard.writeText(val).then(() => alert('API key copied!'));
+        }
+
+        //  Sign with already-connected wallet (no reconnect) 
+        async function signWithConnectedWallet() {
+            if (typeof window.ethereum === 'undefined') throw new Error('MetaMask not found');
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer   = provider.getSigner();
+            const message  = `DexHero Developer Portal — ${Date.now()}`;
+            const signature = await signer.signMessage(message);
+            const walletAddress = await signer.getAddress();
+            return { walletAddress, signature, message };
+        }
+
+        //  Upload Modal 
+        let uploadFile = null;
+
+        function openUploadModal() {
+            uploadFile = null;
+            document.getElementById('upload-drop-zone').style.display = 'block';
+            document.getElementById('upload-file-selected').style.display = 'none';
+            document.getElementById('upload-progress-bar').style.display = 'none';
+            document.getElementById('upload-status-text').style.display = 'none';
+            document.getElementById('btn-upload-submit').disabled = true;
+            document.getElementById('btn-upload-cancel').textContent = 'Cancel';
+            document.getElementById('upload-file-input').value = '';
+            document.getElementById('upload-modal').classList.add('open');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('upload-modal').classList.remove('open');
+        }
+
+        function clearUploadFile() {
+            uploadFile = null;
+            document.getElementById('upload-drop-zone').style.display = 'block';
+            document.getElementById('upload-file-selected').style.display = 'none';
+            document.getElementById('btn-upload-submit').disabled = true;
+            document.getElementById('upload-file-input').value = '';
+        }
+
+        function setUploadFile(file) {
+            if (!file || !file.name.endsWith('.zip')) {
+                alert('Please select a ZIP file.');
+                return;
+            }
+            if (file.size > 150 * 1024 * 1024) {
+                alert('File too large. Maximum size is 150MB.');
+                return;
+            }
+            uploadFile = file;
+            document.getElementById('upload-file-name').textContent = file.name;
+            document.getElementById('upload-file-size').textContent = (file.size / 1024 / 1024).toFixed(1) + ' MB';
+            document.getElementById('upload-drop-zone').style.display = 'none';
+            document.getElementById('upload-file-selected').style.display = 'flex';
+            document.getElementById('btn-upload-submit').disabled = false;
+        }
+
+        async function submitGameUpload() {
+            if (!uploadFile || !approvedGame) return;
+            const submitBtn = document.getElementById('btn-upload-submit');
+            const cancelBtn = document.getElementById('btn-upload-cancel');
+            const progressBar = document.getElementById('upload-progress-bar');
+            const progressFill = document.getElementById('upload-progress-fill');
+            const statusText = document.getElementById('upload-status-text');
+
+            submitBtn.disabled = true;
+            cancelBtn.textContent = 'Close when done';
+            progressBar.style.display = 'block';
+            statusText.style.display = 'block';
+            statusText.textContent = 'Uploading…';
+            progressFill.style.width = '0%';
+
+            try {
+                const { walletAddress } = await signWithConnectedWallet();
+                const formData = new FormData();
+                formData.append('gameId', approvedGame.id);
+                formData.append('walletAddress', walletAddress);
+                formData.append('file', uploadFile);
+
+                await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/api/game/upload');
+                    xhr.upload.onprogress = e => {
+                        if (e.lengthComputable) {
+                            const pct = Math.round((e.loaded / e.total) * 100);
+                            progressFill.style.width = pct + '%';
+                            statusText.textContent = `Uploading… ${pct}%`;
+                        }
+                    };
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            const result = JSON.parse(xhr.responseText);
+                            statusText.textContent = ` Uploaded ${result.filesUploaded} files. Entry point: ${result.entryPoint}`;
+                            statusText.style.color = '#4ade80';
+                            progressFill.style.width = '100%';
+                            approvedGame.game_files_path = `games/${approvedGame.id}/`;
+                            renderGameCard();
+                            resolve();
+                        } else {
+                            const err = JSON.parse(xhr.responseText || '{}');
+                            reject(new Error(err.error || 'Upload failed'));
+                        }
+                    };
+                    xhr.onerror = () => reject(new Error('Network error'));
+                    xhr.send(formData);
+                });
+            } catch (err) {
+                statusText.textContent = `Error: ${err.message}`;
+                statusText.style.color = '#f87171';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Drop zone events
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('upload-drop-zone');
+            const fileInput = document.getElementById('upload-file-input');
+
+            fileInput.addEventListener('change', e => {
+                if (e.target.files[0]) setUploadFile(e.target.files[0]);
+            });
+
+            dropZone.addEventListener('dragover', e => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+
+            dropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                if (e.dataTransfer.files[0]) setUploadFile(e.dataTransfer.files[0]);
+            });
+
+            document.getElementById('upload-modal').addEventListener('click', e => {
+                if (e.target === e.currentTarget) closeUploadModal();
+            });
+        });
+
+        //  Helpers 
+        function show(id) {
+            ['state-not-connected','state-loading','state-not-approved','portal-content']
+                .forEach(s => document.getElementById(s).style.display = s === id ? 'block' : 'none');
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+    </script>
+</body>
+
+</html>

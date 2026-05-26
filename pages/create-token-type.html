@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Choose between launching a new token or using an existing token for your DexHero.">
+    <title>Token Type | DexHero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <style>
+        .select-chain-container {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .select-chain-header {
+            margin-bottom: 48px;
+        }
+
+        .select-chain-header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .select-chain-header p {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            margin-bottom: 24px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--text-primary); }
+
+        .token-types-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .token-type-card {
+            padding: 40px 28px;
+            background: var(--bg-glass);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .token-type-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-6px);
+            box-shadow: 0 12px 40px rgba(6, 182, 212, 0.15);
+        }
+
+        .token-type-icon {
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(6, 182, 212, 0.1);
+            border-radius: 16px;
+            color: var(--accent-cyan);
+            margin-bottom: 24px;
+        }
+
+        .token-type-name {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .token-type-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            flex: 1;
+        }
+
+        .token-type-cost {
+            margin-top: 20px;
+            padding: 10px 14px;
+            background: rgba(6, 182, 212, 0.08);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        .token-type-arrow {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 20px;
+            color: var(--accent-cyan);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Step breadcrumb */
+        .step-breadcrumb {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 40px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .step-breadcrumb .step-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .step-breadcrumb .step-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .step-breadcrumb .step-dot.done {
+            background: rgba(6, 182, 212, 0.2);
+            color: var(--accent-cyan);
+        }
+        .step-breadcrumb .step-dot.active {
+            background: var(--accent-cyan);
+            color: #000;
+        }
+        .step-breadcrumb .step-dot.pending {
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+        }
+        .step-breadcrumb .step-line {
+            width: 40px;
+            height: 2px;
+            background: var(--border-color);
+        }
+        .step-breadcrumb .step-line.done {
+            background: var(--accent-cyan);
+        }
+        .step-breadcrumb .step-label { font-size: 12px; }
+
+        @media (max-width: 768px) {
+            .select-chain-header h1 { font-size: 26px; }
+            .select-chain-header p { font-size: 14px; }
+            .token-types-grid { grid-template-columns: 1fr; gap: 16px; max-width: 100%; }
+            .token-type-card { padding: 24px 20px; }
+            .token-type-icon { width: 52px; height: 52px; margin-bottom: 16px; }
+            .token-type-name { font-size: 18px; }
+            .step-breadcrumb { display: none; }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <div class="select-chain-container">
+            <a href="create-index.html" class="back-link" id="back-link">← Back</a>
+
+            <!-- Step breadcrumb -->
+            <div class="step-breadcrumb">
+                <div class="step-item">
+                    <div class="step-dot done">✓</div>
+                    <span class="step-label">Model Method</span>
+                </div>
+                <div class="step-line done"></div>
+                <div class="step-item">
+                    <div class="step-dot active">2</div>
+                    <span class="step-label">Token Type</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-dot pending">3</div>
+                    <span class="step-label" id="step3-label">Generate Model</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step-item">
+                    <div class="step-dot pending">4</div>
+                    <span class="step-label">Launch</span>
+                </div>
+            </div>
+
+            <div class="select-chain-header">
+                <h1>Choose Your <span class="gradient-text">Token Type</span></h1>
+                <p>Are you launching a brand new token, or connecting an existing one?</p>
+            </div>
+
+            <div class="token-types-grid">
+                <a href="#" class="token-type-card" id="card-new">
+                    <div class="token-type-icon">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                        </svg>
+                    </div>
+                    <div class="token-type-name">Launch New Token</div>
+                    <div class="token-type-cost">$100 USDC flat fee + 1% of supply to treasury</div>
+                    <div class="token-type-arrow">
+                        Get Started
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                </a>
+
+                <a href="#" class="token-type-card" id="card-existing">
+                    <div class="token-type-icon">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        </svg>
+                    </div>
+                    <div class="token-type-name">Use Existing Token</div>
+                    <div class="token-type-cost">1% of your token supply to treasury — no flat fee</div>
+                    <div class="token-type-arrow">
+                        Get Started
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const method = urlParams.get('method') || 'generate'; // 'generate' or 'upload'
+
+        // Update step 3 label based on method
+        const step3Label = document.getElementById('step3-label');
+        if (step3Label) step3Label.textContent = method === 'upload' ? 'Upload Model' : 'Generate Model';
+
+        // Wire card hrefs based on method
+        const cardNew      = document.getElementById('card-new');
+        const cardExisting = document.getElementById('card-existing');
+
+        if (method === 'upload') {
+            cardNew.href      = 'create-dexhero.html?launchType=new';
+            cardExisting.href = 'create-dexhero.html?launchType=existing';
+        } else {
+            cardNew.href      = 'generate-model.html?launchType=new';
+            cardExisting.href = 'generate-model.html?launchType=existing';
+        }
+    </script>
+</body>
+
+</html>

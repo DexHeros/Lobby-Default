@@ -1,0 +1,214 @@
+/* V3Labs — Sovereign Lobby design tokens.
+   Single source of truth for color, spacing, type, motion.
+   All panels and shell chrome consume from here.
+
+   ── Responsive breakpoint contract ─────────────────────────
+   Every CSS file in this project uses these four tiers only — see
+   the canonical comment block at the top of shell.css for the full
+   migration mapping. Quick reference:
+     @media (max-width: 1200px) →  Small desktop (chrome adjustments)
+     @media (max-width: 960px)  →  Tablet  (large tablet; wing-grid collapse)
+     @media (max-width: 768px)  →  Small tablet (desktop nav → hamburger)
+     @media (max-width: 640px)  →  Phone   (grids stack, side panels go full-screen, lobby wing collapses)
+   Exception: @media (max-width: 360px) is allowed for ultra-narrow
+   compose dock / modal padding overrides only.
+   Do not introduce other breakpoints; fold new rules into the nearest standard. */
+
+:root {
+    /* ── Layout ───────────────────────────────────────────────── */
+    /* Right-wing geometry — global so the arrow toggle button
+     * (.lobby-stage__nav--next) can stick to the wing's left edge,
+     * and so the resize handles (8-way) + header-drag (move) all
+     * write to the same source of truth.
+     * app/ui/right-wing-resize.js writes all four to
+     * document.documentElement and persists to localStorage so the
+     * wing re-opens at the same position + size next visit.
+     *
+     *   top    + height → vertical position / N / S handles
+     *   left   + width  → horizontal position / W / E handles + header drag
+     *
+     * The --wing-right-left default computes from the current width
+     * so the wing initially sits 16px from the viewport right edge. */
+    --wing-right-width:  320px;
+    /* Height fits between the top chrome (ticker + nav, anchored at 11vh)
+     * and the bottom bar (--bar-h = 56px) with a small breathing gap on
+     * each side so the wing visibly clears both. Without subtracting
+     * --bar-h, the wing's lower portion gets hidden behind the lobby-bar
+     * on first load. */
+    --wing-right-height: calc(100vh - 11vh - var(--bar-h, 56px) - 16px);
+    --wing-right-top:    11vh;
+    --wing-right-left:   calc(100vw - var(--wing-right-width) - 16px);
+
+    /* ── Surface ──────────────────────────────────────────────── */
+    --surf-0:        #000000;
+    --surf-1:        rgba(255, 255, 255, 0.03);
+    --surf-2:        rgba(255, 255, 255, 0.06);
+    --surf-3:        rgba(255, 255, 255, 0.10);
+    --glass-bg:      rgba(10, 10, 14, 0.55);
+    --glass-blur:    20px;
+    --rule:          rgba(255, 255, 255, 0.06);
+    --rule-strong:   rgba(255, 255, 255, 0.12);
+
+    /* ── Ink ──────────────────────────────────────────────────── */
+    --ink-0:         #ffffff;
+    --ink-1:         rgba(255, 255, 255, 0.78);
+    --ink-2:         rgba(255, 255, 255, 0.55);
+    --ink-3:         rgba(255, 255, 255, 0.38);
+    --ink-4:         rgba(255, 255, 255, 0.22);
+
+    /* ── Brand accent (glow, not fill) ───────────────────────── */
+    --acc-cyan:      #06b6d4;
+    --acc-blue:      #3b82f6;
+    --acc-gradient:  linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+    --glow-cyan-sm:  0 0 12px rgba(6, 182, 212, 0.25);
+    --glow-cyan-md:  0 0 24px rgba(6, 182, 212, 0.30);
+    --glow-cyan-lg:  0 0 48px rgba(6, 182, 212, 0.22);
+    --acc-soft:      rgba(6, 182, 212, 0.12);
+
+    /* ── Semantic ────────────────────────────────────────────── */
+    --ok:            #22c55e;
+    --warn:          #fbbf24;
+    --err:           #ef4444;
+    --tier-gold:     #f59e0b;
+    --tier-silver:   #cbd5e1;
+    --tier-bronze:   #d97706;
+
+    /* ── Type ────────────────────────────────────────────────── */
+    --font-display:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono:     ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+    --fs-hero:       clamp(28px, 4.5vw, 56px);
+    --fs-h1:         clamp(20px, 2.4vw, 32px);
+    --fs-h2:         clamp(17px, 1.6vw, 20px);
+    --fs-body:       15px;
+    --fs-small:      13px;
+    --fs-mono:       12px;
+    --fs-mono-sm:    10.5px;
+
+    --ls-hero:       0.16em;
+    --ls-nav:        0.32em;
+    --ls-label:      0.28em;
+    --ls-chip:       0.22em;
+
+    /* ── Space ───────────────────────────────────────────────── */
+    --sp-1: 4px;
+    --sp-2: 8px;
+    --sp-3: 12px;
+    --sp-4: 16px;
+    --sp-5: 24px;
+    --sp-6: 32px;
+    --sp-7: 48px;
+    --sp-8: 72px;
+    --sp-9: 96px;
+
+    /* ── Layout ─────────────────────────────────────────────── */
+    --ticker-h:      28px;
+    --nav-h:         60px;
+    --bar-h:         56px;
+    --shell-max:     1600px;
+    --wing-w:        clamp(220px, 22vw, 320px);
+    --stage-min:     clamp(280px, 32vw, 480px);
+    /* Right offset for the bubble dock + title strip + right wing.
+       At wide viewports it pulls the right overlay in from the
+       viewport edge so it sits just past the centred model, instead
+       of drifting to the far corner. The model is centred and
+       capped at 560px wide (≈280px half-width); 40px gap; 296px
+       wing width → total offset from centre = 616px. The max(16px)
+       fallback pins the overlay to the right edge when the viewport
+       is narrow enough that the calc would push it off-screen. */
+    --overlay-right: max(16px, calc(50vw - 616px));
+
+    /* ── Radius ─────────────────────────────────────────────── */
+    --r-0: 0;
+    --r-1: 2px;
+    --r-2: 4px;
+    --r-3: 8px;
+    --r-full: 999px;
+
+    /* ── Motion ─────────────────────────────────────────────── */
+    --ease-out:      cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in-out:   cubic-bezier(0.65, 0, 0.35, 1);
+    --dur-xs:        120ms;
+    --dur-sm:        200ms;
+    --dur-md:        280ms;
+    --dur-lg:        360ms;
+    --dur-xl:        500ms;
+
+    /* Panel-specific */
+    --pnl-ease:      cubic-bezier(0.22, 1, 0.36, 1);
+    --pnl-dur-in:    360ms;
+    --pnl-dur-out:   240ms;
+    --pnl-veil:      rgba(0, 0, 0, 0.55);
+
+    /* Z-stack.
+       Nav must sit ABOVE panel so the wallet/Steam chip dropdowns
+       (children of the nav) can extend down over open panels. The nav
+       creates a stacking context via backdrop-filter, so children are
+       clamped to the nav's effective z-index regardless of their own
+       value. Nav + panel never visually overlap (panel slides in below
+       --nav-h), so promoting nav above panel is safe. */
+    --z-stage:       1;
+    --z-chrome:      10;
+    --z-bar:         20;
+    --z-panel:       30;
+    --z-nav:         35;
+    --z-overlay:     40;
+    --z-toast:       50;
+    --z-modal:       60;
+}
+
+/* Legacy aliases — keeps /styles.css and legacy page selectors functional.
+   Do not add new code that depends on these; use the --acc-* / --ink-* tokens. */
+:root {
+    --bg-primary:    var(--surf-0);
+    --bg-secondary:  var(--surf-1);
+    --bg-card:       var(--surf-1);
+    --bg-glass:      var(--glass-bg);
+    --border-color:  var(--rule);
+    --text-primary:  var(--ink-0);
+    --text-secondary: var(--ink-2);
+    --text-muted:    var(--ink-3);
+    --accent-cyan:   var(--acc-cyan);
+    --accent-blue:   var(--acc-blue);
+    --gradient-primary: var(--acc-gradient);
+    --success:       var(--ok);
+    --danger:        var(--err);
+    --font-family:   var(--font-display);
+}
+
+/* ── Mobile token overrides ─────────────────────────────────
+   Files that consume --wing-w, --stage-min, --overlay-right, or
+   --bar-h automatically pick up these shrunk values on phones.
+   Per-file rules still override these where they need to. */
+@media (max-width: 640px) {
+    :root {
+        --wing-w:        100vw;
+        --stage-min:     280px;
+        --overlay-right: 0px;
+        --bar-h:         48px;
+        --nav-h:         52px;
+        --fs-body:       14px;
+        --fs-small:      12px;
+    }
+}
+@media (max-width: 360px) {
+    :root {
+        --ticker-h:      24px;
+        --nav-h:         48px;
+        --bar-h:         44px;
+    }
+}
+
+/* Reduced motion respect — global */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --dur-xs: 1ms; --dur-sm: 1ms; --dur-md: 1ms;
+        --dur-lg: 1ms; --dur-xl: 1ms;
+        --pnl-dur-in: 1ms; --pnl-dur-out: 1ms;
+    }
+    *, *::before, *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+    }
+}

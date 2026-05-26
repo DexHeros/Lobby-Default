@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Browse all tokens in the DexHero ecosystem. Find tokens by name, symbol, or address.">
+    <title>All DexHeros | DexHero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <!-- Skeleton UI and Static Images used for optimization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <!-- Token Explorer Badge -->
+        <div class="page-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+            </svg>
+            Token Explorer
+        </div>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title-section">
+                <h1 class="page-title">All DexHeros</h1>
+                <p class="page-subtitle">Browse all DexHero characters in the REVSHARE ecosystem</p>
+            </div>
+            <div class="search-large">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                </svg>
+                <input type="text" id="token-search" class="search-input-large"
+                    placeholder="Search by name, symbol, or address...">
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <div class="filter-group">
+                <span class="filter-label">SORT:</span>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-sort="date">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14"
+                            height="14">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                        Date
+                    </button>
+                    <button class="filter-btn" data-sort="name">Name</button>
+                    <button class="filter-btn" data-sort="bonding">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14"
+                            height="14">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                        </svg>
+                        Bonding
+                    </button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">VERIFIED:</span>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="verified">Verified</button>
+                    <button class="filter-btn" data-filter="gold">Gold</button>
+                    <button class="filter-btn" data-filter="blue">Blue</button>
+                </div>
+            </div>
+            <div class="view-toggle">
+                <button class="toggle-btn active" data-view="grid" id="grid-view-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                    </svg>
+                </button>
+                <button class="toggle-btn" data-view="list" id="list-view-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="8" y1="6" x2="21" y2="6" />
+                        <line x1="8" y1="12" x2="21" y2="12" />
+                        <line x1="8" y1="18" x2="21" y2="18" />
+                        <line x1="3" y1="6" x2="3.01" y2="6" />
+                        <line x1="3" y1="12" x2="3.01" y2="12" />
+                        <line x1="3" y1="18" x2="3.01" y2="18" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tokens Grid View -->
+        <div class="tokens-container" id="tokens-grid">
+            <!-- Tokens will be populated by JS -->
+        </div>
+
+        <!-- Tokens List View (hidden by default) -->
+        <div class="tokens-table-container hidden" id="tokens-list">
+            <table class="tokens-table">
+                <thead>
+                    <tr>
+                        <th>TOKEN</th>
+                        <th>PRICE</th>
+                        <th>24H</th>
+                        <th>VOLUME</th>
+                        <th>MCAP</th>
+                        <th>ACTION</th>
+                    </tr>
+                </thead>
+                <tbody id="tokens-table-body">
+                    <!-- Rows will be populated by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <div class="pagination-info">
+                Showing <span id="showing-count">1-12</span> of <span id="total-count">5,124</span> tokens
+            </div>
+            <div class="pagination-controls">
+                <button class="pagination-btn" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="m15 18-6-6 6-6" />
+                    </svg>
+                </button>
+                <button class="pagination-btn active">1</button>
+                <button class="pagination-btn">2</button>
+                <button class="pagination-btn">3</button>
+                <span class="pagination-dots">...</span>
+                <button class="pagination-btn">427</button>
+                <button class="pagination-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="m9 18 6-6-6-6" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+
+    <script src="/js/utils.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="../js/sprite-turntable.js"></script>
+    <script src="../js/token-creation.js"></script>
+    <script>
+        // Initialize sprite turntables on token cards
+        function _initCardSprites(container) {
+            if (typeof SpriteTurntable === 'undefined') return;
+            container.querySelectorAll('.token-card[data-sprite-url]').forEach(card => {
+                const url = card.dataset.spriteUrl;
+                const frames = parseInt(card.dataset.spriteFrames) || 36;
+                if (!url) return;
+                const modelBox = card.querySelector('.token-card-model');
+                if (!modelBox) return;
+                const turntable = new SpriteTurntable(modelBox, url, frames);
+                turntable.onReady(() => {
+                    const thumb = modelBox.querySelector('.token-card-thumb');
+                    if (thumb) thumb.style.display = 'none';
+                    const sprite = modelBox.querySelector('.featured-hero-sprite');
+                    if (sprite) sprite.classList.add('loaded');
+                });
+            });
+        }
+
+        // Global tokens data
+        let allTokensData = [];
+        let filteredTokens = [];
+        let currentPage = 1;
+        const itemsPerPage = 12;
+        let currentSort = 'date';
+        let currentFilter = 'all';
+
+        // Fetch tokens from database
+        async function loadTokens() {
+            try {
+                const result = await window.DexHeroTokens.getAllTokens();
+
+                if (result.success) {
+                    allTokensData = result.tokens;
+                    applyFiltersAndSort();
+                } else {
+                    console.error('Failed to load tokens:', result.error);
+                    // Show empty state
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('Error loading tokens:', error);
+                showEmptyState();
+            }
+        }
+
+        function showEmptyState() {
+            const gridContainer = document.getElementById('tokens-grid');
+            const tableBody = document.getElementById('tokens-table-body');
+            const emptyMessage = `<div style="text-align:center;padding:48px;color:var(--text-muted);">No tokens found. <a
+                href="create-dexhero.html" style="color:var(--accent-cyan);text-decoration:none;">Create the first one →</a>
+        </div>`;
+
+            if (gridContainer) gridContainer.innerHTML = emptyMessage;
+            if (tableBody) tableBody.innerHTML = `<tr>
+            <td colspan="6" style="text-align:center;padding:48px;color:var(--text-muted);">No tokens found</td>
+        </tr>`;
+        }
+
+        // Create token card for grid view (DexHero Style)
+        function createTokenCard(token) {
+            const logoUrl = sanitizeUrl(token.image_url) || 'https://via.placeholder.com/40';
+            const chainBadge = (token.chain || 'ETH').toUpperCase();
+
+            // Determine Change/Price display
+            // If we don't have real 24h change, show Symbol or Price if available
+            const changeClass = 'positive'; // Default to green for aesthetic
+            const changeText = token.symbol ? `$${escapeHtml(token.symbol)}` : '+0.00%';
+
+            // Address formatting
+            const shortAddress = token.contract_address ? `${escapeHtml(token.contract_address.slice(0,
+                4))}...${escapeHtml(token.contract_address.slice(-4))}` : 'N/A';
+
+            const spriteUrl = sanitizeUrl(token.sprite_url || '');
+            const spriteFrames = parseInt(token.sprite_frame_count) || 36;
+
+            return `
+    <div class="token-card" onclick="window.location.href='token-detail.html?id=${token.id}'" style="cursor: pointer;"
+        ${spriteUrl ? `data-sprite-url="${spriteUrl}" data-sprite-frames="${spriteFrames}"` : ''}>
+        <div class="token-card-model" style="overflow:hidden;">
+            <img class="token-card-thumb" src="${logoUrl}" alt="${escapeHtml(token.name)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+            ${spriteUrl ? '<div class="featured-hero-sprite" style="position:absolute;inset:0;width:100%;height:100%;"></div>' : ''}
+        </div>
+
+        <div class="token-card-header">
+            <div class="token-card-info">
+                <div class="token-card-name">${escapeHtml(token.name)}</div>
+                <div class="token-card-change ${changeClass}">${changeText}</div>
+            </div>
+            <div class="token-card-address">
+                <span>${shortAddress}</span>
+                <button onclick="event.stopPropagation(); copyAddress('${escapeHtml(token.contract_address)}')"
+                    title="Copy address">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="token-card-stats">
+            <div class="token-stat">
+                <div class="token-stat-label">CHAIN</div>
+                <div class="token-stat-value">${escapeHtml(chainBadge)}</div>
+            </div>
+            <div class="token-stat">
+                <div class="token-stat-label">SUPPLY</div>
+                <div class="token-stat-value">${token.total_supply ? parseInt(token.total_supply).toLocaleString() :
+                    'N/A'}</div>
+            </div>
+        </div>
+
+        <button class="btn-view-details"
+            onclick="event.stopPropagation(); window.location.href='token-detail.html?id=${token.id}'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                <polyline points="7 10 12 15 17 10" />
+            </svg>
+            View Details
+        </button>
+    </div>
+    `;
+        }
+
+        // Create token row for list view
+        function createTokenRow(token) {
+            const logoUrl = sanitizeUrl(token.image_url) || 'https://via.placeholder.com/40';
+            const chainBadge = (token.chain || 'ETH').toUpperCase();
+
+            return `
+    <tr onclick="window.location.href='token-detail.html?id=${token.id}'" style="cursor:pointer;">
+        <td class="token-cell">
+            <img src="${logoUrl}" alt="${escapeHtml(token.name)}" class="token-row-logo"
+                onerror="this.src='https://via.placeholder.com/40'">
+            <div class="token-row-info">
+                <span class="token-row-name">${escapeHtml(token.name)} ($${escapeHtml(token.symbol)})</span>
+                <span class="token-row-address">${escapeHtml(token.contract_address.slice(0,
+                8))}...${escapeHtml(token.contract_address.slice(-6))}</span>
+            </div>
+        </td>
+        <td>${escapeHtml(chainBadge)}</td>
+        <td>${token.tax_percentage}%</td>
+        <td>${token.total_supply ? token.total_supply.toLocaleString() : 'N/A'}</td>
+        <td>${new Date(token.created_at).toLocaleDateString()}</td>
+        <td>
+            <a href="token-detail.html?id=${token.id}" class="btn-view-details-sm"
+                onclick="event.stopPropagation();">View Details</a>
+        </td>
+    </tr>
+    `;
+        }
+
+        // Populate tokens
+        function populateTokens() {
+            const gridContainer = document.getElementById('tokens-grid');
+            const tableBody = document.getElementById('tokens-table-body');
+
+            if (filteredTokens.length === 0) {
+                showEmptyState();
+                renderPagination(); // Update pagination to show 0
+                return;
+            }
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageTokens = filteredTokens.slice(startIndex, endIndex);
+
+            if (gridContainer) {
+                gridContainer.innerHTML = pageTokens.map(createTokenCard).join('');
+                _initCardSprites(gridContainer);
+            }
+
+            if (tableBody) {
+                tableBody.innerHTML = pageTokens.map(createTokenRow).join('');
+            }
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const totalTokens = filteredTokens.length;
+            const totalPages = Math.ceil(totalTokens / itemsPerPage);
+
+            // Update info text
+            const start = totalTokens === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+            const end = Math.min(currentPage * itemsPerPage, totalTokens);
+
+            const showingCount = document.getElementById('showing-count');
+            const totalCount = document.getElementById('total-count');
+
+            if (showingCount) showingCount.textContent = `${start}-${end}`;
+            if (totalCount) totalCount.textContent = totalTokens.toLocaleString();
+
+            // Update controls
+            const controls = document.querySelector('.pagination-controls');
+            if (!controls) return;
+
+            let paginationHTML = '';
+
+            // Prev Button
+            paginationHTML += `
+                    <button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="m15 18-6-6 6-6" />
+                        </svg>
+                    </button>
+                `;
+
+            // Page Numbers logic
+            let pages = [];
+            if (totalPages <= 7) {
+                for (let i = 1; i <= totalPages; i++) pages.push(i);
+            } else {
+                if (currentPage <= 4) {
+                    pages = [1, 2, 3, 4, 5, '...', totalPages];
+                } else if (currentPage >= totalPages - 3) {
+                    pages = [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+                } else {
+                    pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+                }
+            }
+
+            pages.forEach(p => {
+                if (p === '...') {
+                    paginationHTML += `<span class="pagination-dots">...</span>`;
+                } else {
+                    paginationHTML += `<button class="pagination-btn ${p === currentPage ? 'active' : ''}" onclick="changePage(${p})">${p}</button>`;
+                }
+            });
+
+            // Next Button
+            paginationHTML += `
+                    <button class="pagination-btn" ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <path d="m9 18 6-6-6-6" />
+                        </svg>
+                    </button>
+                `;
+
+            controls.innerHTML = paginationHTML;
+        }
+
+        function changePage(page) {
+            if (page < 1 || page > Math.ceil(filteredTokens.length / itemsPerPage)) return;
+            currentPage = page;
+            populateTokens();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // View toggle functionality
+        function initViewToggle() {
+            const gridBtn = document.getElementById('grid-view-btn');
+            const listBtn = document.getElementById('list-view-btn');
+            const gridView = document.getElementById('tokens-grid');
+            const listView = document.getElementById('tokens-list');
+
+            gridBtn.addEventListener('click', () => {
+                gridBtn.classList.add('active');
+                listBtn.classList.remove('active');
+                gridView.classList.remove('hidden');
+                listView.classList.add('hidden');
+            });
+
+            listBtn.addEventListener('click', () => {
+                listBtn.classList.add('active');
+                gridBtn.classList.remove('active');
+                listView.classList.remove('hidden');
+                gridView.classList.add('hidden');
+            });
+        }
+
+        // Filter and Sort functionality
+        function applyFiltersAndSort() {
+            let result = [...allTokensData];
+
+            // Apply Search Status (if search input has value)
+            const searchInput = document.getElementById('token-search');
+            if (searchInput && searchInput.value) {
+                const query = searchInput.value.toLowerCase();
+                result = result.filter(token => {
+                    return (token.name && token.name.toLowerCase().includes(query)) ||
+                        (token.symbol && token.symbol.toLowerCase().includes(query)) ||
+                        (token.contract_address && token.contract_address.toLowerCase().includes(query));
+                });
+            }
+
+            // Apply Sort
+            if (currentSort === 'date') {
+                result.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+            } else if (currentSort === 'name') {
+                result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            } else if (currentSort === 'bonding') {
+                // Assuming market_cap or liquidity is a proxy for bonding if real bonding percent isn't available
+                result.sort((a, b) => (b.market_cap || b.volume_24h || 0) - (a.market_cap || a.volume_24h || 0));
+            }
+
+            // Apply Filter
+            if (currentFilter !== 'all') {
+                // Just mock filtering since we don't have these attributes in DB yet
+                // But structure is here when we add metadata verification
+                result = result.filter(token => {
+                    const meta = token.metadata || {};
+                    if (currentFilter === 'verified') return meta.verified === true;
+                    if (currentFilter === 'gold') return meta.badge === 'gold';
+                    if (currentFilter === 'blue') return meta.badge === 'blue';
+                    return true;
+                });
+            }
+
+            filteredTokens = result;
+            currentPage = 1; // Reset to page 1 on filter/sort change
+            populateTokens();
+        }
+
+        function initFilters() {
+            const filterBtns = document.querySelectorAll('.filter-btn');
+
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const group = btn.closest('.filter-group');
+                    if (group) {
+                        group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+
+                        // Check if it's a sort or filter button
+                        if (btn.hasAttribute('data-sort')) {
+                            currentSort = btn.getAttribute('data-sort');
+                        } else if (btn.hasAttribute('data-filter')) {
+                            currentFilter = btn.getAttribute('data-filter');
+                        }
+
+                        applyFiltersAndSort();
+                    }
+                });
+            });
+        }
+
+        // Search functionality
+        function initSearch() {
+            const searchInput = document.getElementById('token-search');
+
+            searchInput.addEventListener('input', () => {
+                applyFiltersAndSort();
+            });
+        }
+
+        // Copy address
+        function copyAddress(address) {
+            navigator.clipboard.writeText(address);
+            console.log('Copied:', address);
+        }
+
+        // Show skeleton state while loading
+        function showSkeletonState() {
+            const gridContainer = document.getElementById('tokens-grid');
+            const tableBody = document.getElementById('tokens-table-body');
+            
+            if (gridContainer) {
+                gridContainer.innerHTML = Array(12).fill(0).map(() => `
+                    <div class="token-card skeleton" style="border: none;">
+                        <div class="token-card-model skeleton skeleton-img"></div>
+                        <div class="token-card-header" style="margin-top: 12px; display: flex; align-items: flex-start; gap: 12px; width: 100%;">
+                            <div style="flex: 1;">
+                                <div class="skeleton skeleton-text long"></div>
+                                <div class="skeleton skeleton-text short"></div>
+                            </div>
+                            <div class="skeleton skeleton-badge"></div>
+                        </div>
+                        <div class="token-card-stats" style="margin-top: 12px; display: flex; gap: 12px; width: 100%;">
+                            <div style="flex: 1;">
+                                <div class="skeleton skeleton-text short"></div>
+                                <div class="skeleton skeleton-text"></div>
+                            </div>
+                            <div style="flex: 1;">
+                                <div class="skeleton skeleton-text short"></div>
+                                <div class="skeleton skeleton-text"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton skeleton-text" style="height: 36px; border-radius: 8px; margin-top: auto;"></div>
+                    </div>
+                `).join('');
+            }
+            if (tableBody) {
+                tableBody.innerHTML = Array(12).fill(0).map(() => `
+                    <tr>
+                        <td class="token-cell" style="display:flex;align-items:center;">
+                            <div class="skeleton skeleton-img" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 12px;"></div>
+                            <div class="token-row-info" style="flex: 1;">
+                                <div class="skeleton skeleton-text long"></div>
+                                <div class="skeleton skeleton-text short"></div>
+                            </div>
+                        </td>
+                        <td><div class="skeleton skeleton-text short"></div></td>
+                        <td><div class="skeleton skeleton-text short"></div></td>
+                        <td><div class="skeleton skeleton-text short"></div></td>
+                        <td><div class="skeleton skeleton-text short"></div></td>
+                        <td><div class="skeleton skeleton-badge" style="width: 80px;"></div></td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize Supabase
+            if (window.DexHeroSupabase) window.DexHeroSupabase.init();
+
+            // Inject Skeletons Instantly
+            showSkeletonState();
+
+            // Load tokens from database
+            await loadTokens();
+
+            initViewToggle();
+            initFilters();
+            initSearch();
+        });
+    </script>
+</body>
+
+</html>

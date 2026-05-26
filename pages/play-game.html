@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play Game | DexHero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <style>
+        .play-layout {
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 140px);
+        }
+
+        .game-header-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 24px;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+
+        .game-icon-sm {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: rgba(37, 99, 235,0.2);
+            flex-shrink: 0;
+        }
+
+        .game-title-bar {
+            flex: 1;
+        }
+
+        .game-title-bar h1 {
+            font-size: 16px;
+            font-weight: 700;
+            margin: 0 0 2px;
+        }
+
+        .game-meta {
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tier-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .tier-bronze { background: rgba(180,83,9,0.2); color: #f59e0b; border: 1px solid rgba(180,83,9,0.4); }
+        .tier-silver { background: rgba(100,116,139,0.2); color: #cbd5e1; border: 1px solid rgba(100,116,139,0.4); }
+        .tier-gold   { background: rgba(161,127,0,0.2); color: #fbbf24; border: 1px solid rgba(161,127,0,0.4); }
+
+        .game-frame-wrapper {
+            flex: 1;
+            position: relative;
+            background: #000;
+            min-height: 500px;
+        }
+
+        #game-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+        }
+
+        .game-loading-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a0f;
+            z-index: 10;
+            gap: 16px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(37, 99, 235,0.2);
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .countdown-screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a0f;
+            z-index: 10;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .countdown-time {
+            font-size: 48px;
+            font-weight: 800;
+            color: #60a5fa;
+            font-variant-numeric: tabular-nums;
+            margin: 16px 0 8px;
+        }
+
+        .dexhero-selector {
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.03);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            display: none;
+        }
+
+        .dexhero-selector-inner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .dexhero-selector-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+            white-space: nowrap;
+        }
+
+        .hero-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(37, 99, 235,0.12);
+            border: 1px solid rgba(37, 99, 235,0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.15s;
+        }
+
+        .hero-chip:hover, .hero-chip.active {
+            background: rgba(37, 99, 235,0.3);
+            border-color: rgba(37, 99, 235,0.6);
+        }
+
+        .hero-chip img {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .not-found-screen {
+            text-align: center;
+            padding: 80px 24px;
+        }
+
+        .no-access-screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a0f;
+            z-index: 10;
+            text-align: center;
+            padding: 40px;
+            gap: 12px;
+        }
+
+        .no-access-screen h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .no-access-screen p {
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+            max-width: 380px;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .no-access-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .light-node-widget {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: rgba(59,130,246,0.1);
+            border: 1px solid rgba(59,130,246,0.25);
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: default;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .light-node-widget.active { display: flex; }
+
+        .light-node-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse-dot 2s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .light-node-progress {
+            color: rgba(255,255,255,0.7);
+            font-weight: 500;
+        }
+
+        /* Cloud Gaming Mode Toggle */
+        .play-mode-toggle {
+            display: flex;
+            gap: 4px;
+            padding: 3px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .play-mode-btn {
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            color: rgba(255,255,255,0.5);
+            border: none;
+            background: transparent;
+            transition: all 0.2s;
+        }
+
+        .play-mode-btn.active {
+            background: rgba(37, 99, 235,0.3);
+            color: #fff;
+        }
+
+        /* Cloud Matchmaking Overlay */
+        .cloud-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 10;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px;
+        }
+
+        .cloud-overlay.visible { display: flex; }
+
+        .cloud-overlay .spinner-ring {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(37, 99, 235,0.2);
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .cloud-overlay h3 {
+            font-size: 18px;
+            margin: 0 0 8px;
+        }
+
+        .cloud-overlay p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+            margin: 0 0 16px;
+        }
+
+        .cloud-overlay .cancel-btn {
+            padding: 8px 20px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: transparent;
+            color: rgba(255,255,255,0.6);
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        /* Quality HUD */
+        .quality-hud {
+            display: none;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 15;
+            background: rgba(0,0,0,0.7);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 11px;
+            font-family: monospace;
+            color: rgba(255,255,255,0.7);
+            pointer-events: none;
+        }
+
+        .quality-hud.visible { display: block; }
+
+        .quality-hud .hud-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .quality-hud .hud-label { color: rgba(255,255,255,0.4); }
+        .quality-hud .hud-val { font-weight: 700; }
+        .quality-hud .hud-val.good { color: #4ade80; }
+        .quality-hud .hud-val.warn { color: #fbbf24; }
+        .quality-hud .hud-val.bad { color: #f87171; }
+
+        /* Session End Overlay */
+        .session-end-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 20;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px;
+        }
+
+        .session-end-overlay.visible { display: flex; }
+
+        .rating-stars {
+            display: flex;
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .rating-star {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.4);
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .rating-star.selected { background: rgba(251,191,36,0.2); border-color: #fbbf24; color: #fbbf24; }
+
+        /* Fallback banner */
+        .cloud-fallback-banner {
+            display: none;
+            padding: 10px 20px;
+            background: rgba(251,191,36,0.08);
+            border-bottom: 1px solid rgba(251,191,36,0.2);
+            font-size: 13px;
+            color: rgba(255,255,255,0.7);
+            text-align: center;
+        }
+
+        .cloud-fallback-banner.visible { display: block; }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content" style="padding: 0;">
+        <div class="play-layout" id="play-layout">
+
+            <!-- Game header bar -->
+            <div class="game-header-bar" id="game-header" style="display:none;">
+                <img id="game-icon-img" class="game-icon-sm" src="" alt="">
+                <div class="game-title-bar">
+                    <h1 id="game-title-text"></h1>
+                    <div class="game-meta">
+                        <span id="game-category-text"></span>
+                        <span>·</span>
+                        <span id="game-tier-badge" class="tier-badge"></span>
+                    </div>
+                </div>
+                <!-- Play mode toggle (Cloud / Local) -->
+                <div class="play-mode-toggle" id="play-mode-toggle" style="display:none;">
+                    <button class="play-mode-btn active" data-mode="local" onclick="setPlayMode('local')">Local</button>
+                    <button class="play-mode-btn" data-mode="cloud" onclick="setPlayMode('cloud')">Cloud</button>
+                </div>
+                <!-- Light node contribution widget -->
+                <div class="light-node-widget" id="light-node-widget">
+                    <div class="light-node-dot"></div>
+                    <span class="light-node-progress" id="node-progress-text">Powering Network</span>
+                </div>
+                <a href="/pages/all-games.html" style="font-size:13px; color:rgba(255,255,255,0.4); text-decoration:none;">← All Games</a>
+            </div>
+
+            <!-- Game iframe area -->
+            <div class="game-frame-wrapper" id="game-frame-wrapper">
+
+                <!-- Loading overlay -->
+                <div class="game-loading-overlay" id="loading-overlay">
+                    <div class="spinner"></div>
+                    <div style="font-size:14px; color:rgba(255,255,255,0.5);">Loading game…</div>
+                </div>
+
+                <!-- Countdown screen (shown if game not live yet) -->
+                <div class="countdown-screen" id="countdown-screen" style="display:none;">
+                    <h2 id="countdown-title" style="font-size:24px; margin-bottom:4px;"></h2>
+                    <p style="color:rgba(255,255,255,0.45); font-size:14px; margin-bottom:0;">Goes live in:</p>
+                    <div class="countdown-time" id="countdown-display">48:00:00</div>
+                    <a href="/pages/all-games.html" style="margin-top:24px; color:#2563eb; font-size:14px; text-decoration:none;">← Browse other games</a>
+                </div>
+
+                <!-- No access screen -->
+                <div class="no-access-screen" id="no-access-screen" style="display:none;">
+                    <div style="font-size:40px; margin-bottom:4px;">🎮</div>
+                    <h2>Access Required</h2>
+                    <p id="no-access-msg">You need an accepted DexHero (SBT access pass or unlocked NFT) to play this game.</p>
+                    <div class="no-access-actions" id="no-access-actions"></div>
+                </div>
+
+                <!-- Not found -->
+                <div class="not-found-screen" id="not-found-screen" style="display:none;">
+                    <h2 style="margin-bottom:8px;">Game Not Found</h2>
+                    <p style="color:rgba(255,255,255,0.5);">This game may have been removed or the link is incorrect.</p>
+                    <a href="/pages/all-games.html" class="btn-primary" style="display:inline-block; margin-top:24px; padding:12px 24px; background:linear-gradient(135deg,#2563eb,#2563eb); color:#fff; text-decoration:none; border-radius:8px; font-weight:600;">Browse Games</a>
+                </div>
+
+                <!-- Cloud gaming matchmaking overlay -->
+                <div class="cloud-overlay" id="cloud-overlay">
+                    <div class="spinner-ring"></div>
+                    <h3 id="cloud-status-title">Finding a server near you...</h3>
+                    <p id="cloud-status-msg">This usually takes a few seconds</p>
+                    <button class="cancel-btn" onclick="cancelCloudMatch()">Cancel</button>
+                </div>
+
+                <!-- Quality HUD (shown during cloud streaming) -->
+                <div class="quality-hud" id="quality-hud">
+                    <div class="hud-row"><span class="hud-label">FPS</span><span class="hud-val" id="hud-fps">--</span></div>
+                    <div class="hud-row"><span class="hud-label">Res</span><span class="hud-val" id="hud-res">--</span></div>
+                    <div class="hud-row"><span class="hud-label">RTT</span><span class="hud-val" id="hud-rtt">--</span></div>
+                    <div class="hud-row"><span class="hud-label">Kbps</span><span class="hud-val" id="hud-bitrate">--</span></div>
+                </div>
+
+                <!-- Session end overlay -->
+                <div class="session-end-overlay" id="session-end-overlay">
+                    <h3>Session Ended</h3>
+                    <p id="session-end-duration">Duration: --</p>
+                    <p id="session-end-quality" style="font-size:13px; color:rgba(255,255,255,0.4);"></p>
+                    <p style="font-size:14px; color:rgba(255,255,255,0.6); margin-top:12px;">Rate your experience:</p>
+                    <div class="rating-stars" id="rating-stars">
+                        <div class="rating-star" data-rating="1" onclick="rate(1)">1</div>
+                        <div class="rating-star" data-rating="2" onclick="rate(2)">2</div>
+                        <div class="rating-star" data-rating="3" onclick="rate(3)">3</div>
+                        <div class="rating-star" data-rating="4" onclick="rate(4)">4</div>
+                        <div class="rating-star" data-rating="5" onclick="rate(5)">5</div>
+                    </div>
+                    <button onclick="closeSessionEnd()" style="padding:10px 24px; background:linear-gradient(135deg,#2563eb,#2563eb); color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; margin-top:8px;">Done</button>
+                </div>
+
+                <!-- The actual game iframe -->
+                <iframe id="game-iframe" style="display:none;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock" allowfullscreen></iframe>
+            </div>
+
+            <!-- Cloud fallback banner -->
+            <div class="cloud-fallback-banner" id="cloud-fallback-banner">
+                No cloud servers available for this game right now. Playing locally.
+            </div>
+
+            <!-- DexHero character selector bar (shown when wallet connected + has heroes) -->
+            <div class="dexhero-selector" id="hero-selector">
+                <div class="dexhero-selector-inner">
+                    <span class="dexhero-selector-label">Your DexHeros:</span>
+                    <div id="hero-chips" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+                    <span id="no-heroes-msg" style="font-size:12px; color:rgba(255,255,255,0.3); display:none;">Connect your wallet to use your DexHero characters in this game</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+
+    <script src="../supabase-config.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="/js/webtorrent.min.js"></script>
+    <script src="/js/cloud-session.js"></script>
+    <script>
+        const SUPABASE_STORAGE_BASE = 'https://gwwwvclyiyyjyohrvhaa.supabase.co/storage/v1/object/public/game-files';
+        let gameData = null;
+        let selectedHeroId = null;
+        let countdownInterval = null;
+
+        // Light node state
+        let wtClient = null;
+        let sessionBytesUploaded = 0;
+        let heartbeatInterval = null;
+        const MAX_UPLOAD_BYTES_PER_HOUR = 5 * 1024 * 1024 * 1024; // 5 GB/hr cap
+
+        // Token id of the DexHero the user came from (e.g. clicked a linked game on that
+        // DexHero's detail page). If set, the no-access CTA becomes a single link back to
+        // that specific DexHero; otherwise we show the full roster of accepted DexHeros.
+        let dexheroContext = null;
+
+        async function init() {
+            const params = new URLSearchParams(window.location.search);
+            const slug = params.get('slug');
+            dexheroContext = params.get('dexhero') || null;
+
+            if (!slug) {
+                showScreen('not-found');
+                return;
+            }
+
+            try {
+                const resp = await fetch(`/api/game/play/${encodeURIComponent(slug)}`);
+                if (!resp.ok) {
+                    showScreen('not-found');
+                    return;
+                }
+                const data = await resp.json();
+
+                if (!data.live) {
+                    // Show countdown
+                    showScreen('countdown');
+                    document.getElementById('countdown-title').textContent = data.title || 'Coming Soon';
+                    if (data.goes_live_at) startCountdown(data.goes_live_at);
+                    if (data.icon_url) {
+                        document.getElementById('game-header').style.display = 'flex';
+                        document.getElementById('game-icon-img').src = data.icon_url;
+                        document.getElementById('game-title-text').textContent = data.title || '';
+                    }
+                    return;
+                }
+
+                gameData = data;
+                document.title = `${data.title} | DexHero`;
+
+                // Populate header
+                document.getElementById('game-header').style.display = 'flex';
+                document.getElementById('game-icon-img').src = data.icon_url || '';
+                document.getElementById('game-title-text').textContent = data.title;
+                document.getElementById('game-category-text').textContent = data.category || '';
+                const tierBadge = document.getElementById('game-tier-badge');
+                const tier = (data.tier || 'bronze').toLowerCase();
+                tierBadge.textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
+                tierBadge.className = `tier-badge tier-${tier}`;
+
+                if (!data.game_url) {
+                    // No files uploaded yet
+                    showScreen('not-found');
+                    document.getElementById('not-found-screen').innerHTML = `
+                        <h2 style="margin-bottom:8px;">Game Files Not Uploaded Yet</h2>
+                        <p style="color:rgba(255,255,255,0.5);">The developer hasn't uploaded the game files yet. Check back soon.</p>
+                        <a href="/pages/all-games.html" style="display:inline-block;margin-top:24px;padding:12px 24px;background:linear-gradient(135deg,#2563eb,#2563eb);color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">Browse Games</a>
+                    `;
+                    return;
+                }
+
+                // Check access before loading iframe
+                const wallet = sessionStorage.getItem('walletAddress');
+                const hasAccess = await checkAccess(wallet, data.id);
+                if (!hasAccess) {
+                    showScreen('no-access');
+                    renderNoAccessCTA(wallet, data.accepted_dexheros || []);
+                    return;
+                }
+
+                // Load game iframe
+                const iframe = document.getElementById('game-iframe');
+                iframe.onload = () => {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    iframe.style.display = 'block';
+                    // Send initial DexHero context to game
+                    sendHeroContext();
+                    // Start light node if game has torrent data
+                    if (data.torrent_magnet) {
+                        initLightNode(data.torrent_magnet, data.id);
+                    }
+                    // Check if cloud gaming is available for this game
+                    checkCloudAvailability();
+                };
+                iframe.src = data.game_url;
+
+                // Load user's DexHero characters
+                loadUserHeroes();
+
+            } catch (err) {
+                console.error('Play page error:', err);
+                showScreen('not-found');
+            }
+        }
+
+        function showScreen(screen) {
+            document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('countdown-screen').style.display = 'none';
+            document.getElementById('not-found-screen').style.display = 'none';
+            document.getElementById('no-access-screen').style.display = 'none';
+            document.getElementById('game-iframe').style.display = 'none';
+
+            if (screen === 'countdown') document.getElementById('countdown-screen').style.display = 'flex';
+            else if (screen === 'not-found') document.getElementById('not-found-screen').style.display = 'block';
+            else if (screen === 'no-access') document.getElementById('no-access-screen').style.display = 'flex';
+        }
+
+        // Check if the wallet holds an accepted DexHero (owned NFT or per-DexHero SBT)
+        // for this game. The Play Pass does not grant play access.
+        async function checkAccess(wallet, gameId) {
+            if (!wallet) return false;
+            if (!gameId) return true; // If no gameId, can't filter — allow through
+
+            try {
+                const resp = await fetch(
+                    `/api/game/player/dexheros?wallet=${encodeURIComponent(wallet)}&gameId=${encodeURIComponent(gameId)}`,
+                    { headers: { 'X-Internal-Game-Request': '1' } }
+                );
+                if (!resp.ok) return false;
+                const data = await resp.json();
+                return !!(data.dexheros && data.dexheros.length > 0);
+            } catch (_) {
+                // On error, fail open (don't block legitimate players on network error)
+                return true;
+            }
+        }
+
+        // Build the no-access CTA. Two shapes depending on how the user got here:
+        //  - Came from a specific DexHero's detail page (?dexhero=<id>) → single link
+        //    back to that DexHero's token-detail, labelled with its name.
+        //  - Came from the marketplace / direct link → roster of all accepted DexHeros
+        //    for this game, each a "Get Access" link to its token-detail.
+        function renderNoAccessCTA(wallet, acceptedDexheros) {
+            const msg = document.getElementById('no-access-msg');
+            const container = document.getElementById('no-access-actions');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!wallet) {
+                msg.textContent = 'Connect your wallet to check access.';
+                const connectBtn = document.createElement('a');
+                connectBtn.href = '#';
+                connectBtn.className = 'btn-primary';
+                connectBtn.setAttribute('style', 'padding:12px 24px; background:linear-gradient(135deg,#2563eb,#2563eb); color:#fff; text-decoration:none; border-radius:8px; font-weight:600; font-size:14px;');
+                connectBtn.textContent = 'Connect Wallet';
+                connectBtn.onclick = (e) => {
+                    e.preventDefault();
+                    if (window.openConnectModal) openConnectModal();
+                };
+                container.appendChild(connectBtn);
+                container.appendChild(browseGamesLink());
+                return;
+            }
+
+            // Came from a specific DexHero's detail page — send them straight back to it.
+            if (dexheroContext) {
+                const ctxToken = acceptedDexheros.find(d => d && d.id === dexheroContext);
+                const label = ctxToken?.name
+                    ? `Get ${ctxToken.name} Access Pass`
+                    : 'Get Access Pass';
+                const a = document.createElement('a');
+                a.href = `/pages/token-detail.html?id=${encodeURIComponent(dexheroContext)}`;
+                a.className = 'btn-primary';
+                a.setAttribute('style', 'padding:12px 24px; background:linear-gradient(135deg,#2563eb,#2563eb); color:#fff; text-decoration:none; border-radius:8px; font-weight:600; font-size:14px;');
+                a.textContent = label;
+                container.appendChild(a);
+                container.appendChild(browseGamesLink());
+                return;
+            }
+
+            // Generic path (marketplace / direct link) — show the roster.
+            if (!acceptedDexheros.length) {
+                msg.textContent = 'This game has no accepted DexHeros yet. Check back soon.';
+                container.appendChild(browseGamesLink());
+                return;
+            }
+
+            const list = document.createElement('div');
+            list.setAttribute('style', 'display:flex; flex-direction:column; gap:8px; width:100%; max-width:360px; margin:0 auto;');
+            acceptedDexheros.forEach(token => {
+                if (!token || !token.id) return;
+                const row = document.createElement('a');
+                row.href = `/pages/token-detail.html?id=${encodeURIComponent(token.id)}`;
+                row.setAttribute('style', 'display:flex; align-items:center; gap:12px; padding:10px 14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:10px; text-decoration:none; color:#fff;');
+                const img = token.image_url
+                    ? `<img src="${token.image_url}" alt="" style="width:32px;height:32px;border-radius:6px;object-fit:cover;">`
+                    : '<div style="width:32px;height:32px;border-radius:6px;background:rgba(255,255,255,0.1);"></div>';
+                row.innerHTML = `
+                    ${img}
+                    <div style="flex:1; text-align:left; font-weight:600;">${token.name || 'DexHero'}</div>
+                    <div style="color:#2563eb; font-size:13px; font-weight:600;">Get Access →</div>
+                `;
+                list.appendChild(row);
+            });
+            container.appendChild(list);
+            container.appendChild(browseGamesLink());
+        }
+
+        function browseGamesLink() {
+            const a = document.createElement('a');
+            a.href = '/pages/all-games.html';
+            a.setAttribute('style', 'padding:12px 24px; background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.7); text-decoration:none; border-radius:8px; font-weight:600; font-size:14px; margin-top:8px; text-align:center;');
+            a.textContent = 'Browse Games';
+            return a;
+        }
+
+        function startCountdown(goesLiveAt) {
+            const deadline = new Date(goesLiveAt).getTime();
+            function tick() {
+                const remaining = deadline - Date.now();
+                if (remaining <= 0) {
+                    document.getElementById('countdown-display').textContent = 'LIVE NOW — Refresh!';
+                    document.getElementById('countdown-display').style.color = '#4ade80';
+                    clearInterval(countdownInterval);
+                    return;
+                }
+                const h = Math.floor(remaining / 3600000);
+                const m = Math.floor((remaining % 3600000) / 60000);
+                const s = Math.floor((remaining % 60000) / 1000);
+                document.getElementById('countdown-display').textContent =
+                    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            }
+            tick();
+            countdownInterval = setInterval(tick, 1000);
+        }
+
+        async function loadUserHeroes() {
+            const selectorBar = document.getElementById('hero-selector');
+            const chipsContainer = document.getElementById('hero-chips');
+            const noHeroesMsg = document.getElementById('no-heroes-msg');
+
+            const wallet = sessionStorage.getItem('walletAddress');
+            if (!wallet) {
+                selectorBar.style.display = 'flex';
+                noHeroesMsg.style.display = 'inline';
+                return;
+            }
+
+            if (!gameData?.id) return;
+
+            try {
+                const resp = await fetch(
+                    `/api/game/player/dexheros?wallet=${encodeURIComponent(wallet.toLowerCase())}&gameId=${encodeURIComponent(gameData.id)}`,
+                    { headers: { 'X-Internal-Game-Request': '1' } }
+                );
+                if (!resp.ok) return;
+                const data = await resp.json();
+                const heroes = data.dexheros || [];
+
+                if (heroes.length === 0) {
+                    selectorBar.style.display = 'flex';
+                    noHeroesMsg.style.display = 'inline';
+                    noHeroesMsg.textContent = 'No DexHero characters found for this wallet';
+                    return;
+                }
+
+                selectorBar.style.display = 'flex';
+                chipsContainer.innerHTML = '';
+
+                heroes.forEach(hero => {
+                    const chip = document.createElement('div');
+                    chip.className = 'hero-chip';
+                    chip.dataset.heroId = hero.id;
+                    chip.innerHTML = `
+                        ${hero.image_url ? `<img src="${hero.image_url}" alt="">` : ''}
+                        <span>${hero.name || 'DexHero'}</span>
+                    `;
+                    chip.onclick = () => selectHero(hero.id, chip);
+                    chipsContainer.appendChild(chip);
+                });
+
+                // Auto-select first hero
+                selectHero(heroes[0].id, chipsContainer.firstChild);
+
+                // Load contribution progress for the first hero in this game's allowlist
+                if (heroes[0]?.id) loadNodeProgress(wallet, heroes[0].id);
+            } catch (err) {
+                console.warn('Could not load heroes:', err.message);
+            }
+        }
+
+        // Fetch on-chain contribution progress and update the light node widget label
+        async function loadNodeProgress(wallet, dexheroId) {
+            try {
+                const resp = await fetch(`/api/node/status?wallet=${encodeURIComponent(wallet)}`);
+                if (!resp.ok) return;
+                const { progress } = await resp.json();
+                const entry = (progress || []).find(p => p.token_id === dexheroId);
+                if (!entry) return;
+                const gbServed = (entry.bytes_served / 1e9).toFixed(1);
+                const gbThreshold = (entry.threshold_bytes / 1e9).toFixed(0);
+                document.getElementById('node-progress-text').textContent =
+                    `${gbServed} GB / ${gbThreshold} GB`;
+                document.getElementById('light-node-widget').classList.add('active');
+            } catch (_) {}
+        }
+
+        // Initialize WebTorrent light node for this game
+        async function initLightNode(magnetUri, gameId) {
+            // Skip on slow connections or no wallet
+            const conn = navigator.connection;
+            if (conn?.saveData || ['2g', 'slow-2g'].includes(conn?.effectiveType)) return;
+            const wallet = sessionStorage.getItem('walletAddress');
+            if (!wallet) return;
+
+            // WebTorrent may not be bundled yet — skip gracefully
+            if (typeof WebTorrent === 'undefined') return;
+
+            try {
+                wtClient = new WebTorrent();
+                wtClient.add(magnetUri, { maxWebConns: 10 }, (torrent) => {
+                    // Cap upload to not impact gaming performance (~5 MB/s)
+                    if (torrent.uploadSpeed !== undefined) {
+                        torrent.maxUploadSpeed = 5 * 1024 * 1024;
+                    }
+
+                    // Report bytes contributed every 60 seconds
+                    heartbeatInterval = setInterval(() => {
+                        const uploaded = torrent.uploaded || 0;
+                        const delta = uploaded - sessionBytesUploaded;
+                        sessionBytesUploaded = uploaded;
+                        if (delta >= 1024 * 1024) { // min 1 MB per report
+                            reportContribution(delta, gameId, wallet);
+                        }
+                    }, 60_000);
+                });
+            } catch (err) {
+                console.warn('Light node init failed:', err.message);
+            }
+        }
+
+        async function reportContribution(bytes, gameId, wallet) {
+            // Enforce client-side hourly cap (server enforces too, but avoid wasted calls)
+            if (bytes > MAX_UPLOAD_BYTES_PER_HOUR) bytes = MAX_UPLOAD_BYTES_PER_HOUR;
+
+            try {
+                // Get a wallet signature to prove the claim is from this wallet
+                let signature = null;
+                let message = null;
+                if (window.ethereum) {
+                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    const signer = provider.getSigner();
+                    message = `DexHero node contribution: ${bytes} bytes at ${Date.now()}`;
+                    signature = await signer.signMessage(message).catch(() => null);
+                }
+                if (!signature) return; // can't prove ownership without signature
+
+                const resp = await fetch('/api/node/heartbeat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        walletAddress: wallet,
+                        signature,
+                        message,
+                        gameId,
+                        bytesServed: bytes
+                    })
+                });
+                if (!resp.ok) return;
+
+                // Refresh widget display after reporting
+                const heroId = selectedHeroId;
+                if (heroId) loadNodeProgress(wallet, heroId);
+            } catch (err) {
+                console.warn('Contribution report failed:', err.message);
+            }
+        }
+
+        function selectHero(heroId, chipEl) {
+            selectedHeroId = heroId;
+            document.querySelectorAll('.hero-chip').forEach(c => c.classList.remove('active'));
+            if (chipEl) chipEl.classList.add('active');
+            sendHeroContext();
+            // Notify SDK listeners in the hosted game
+            const iframe = document.getElementById('game-iframe');
+            if (iframe && iframe.style.display !== 'none') {
+                const wallet = sessionStorage.getItem('walletAddress') || null;
+                try {
+                    iframe.contentWindow.postMessage({ type: 'dexhero:heroSelected', heroId, wallet }, '*');
+                } catch (_) {}
+            }
+        }
+
+        // Communicate selected DexHero to the game via postMessage
+        function sendHeroContext() {
+            const iframe = document.getElementById('game-iframe');
+            if (!iframe || iframe.style.display === 'none') return;
+            const wallet = sessionStorage.getItem('walletAddress') || null;
+            try {
+                iframe.contentWindow.postMessage({
+                    type: 'dexhero:context',
+                    wallet,
+                    heroId: selectedHeroId,
+                    gameId: gameData?.id || null,
+                }, '*');
+            } catch (e) { /* cross-origin blocked — game must use DexHero API directly */ }
+        }
+
+        // Handle SDK RPC calls from hosted game iframe
+        async function handleSdkRpc({ id, method, params }, iframe) {
+            const wallet = (sessionStorage.getItem('walletAddress') || '').toLowerCase() || null;
+            let result = null;
+            let error = null;
+            try {
+                if (method === 'getPlayerDexheros') {
+                    if (!wallet) { result = { dexheros: [] }; }
+                    else if (!gameData?.id) { result = { dexheros: [] }; }
+                    else {
+                        const resp = await fetch(
+                            `/api/game/player/dexheros?wallet=${encodeURIComponent(wallet)}&gameId=${encodeURIComponent(gameData.id)}`,
+                            { headers: { 'X-Internal-Game-Request': '1' } }
+                        );
+                        result = await resp.json();
+                    }
+                } else if (method === 'getSelectedDexhero') {
+                    result = { heroId: selectedHeroId || null, wallet };
+                } else if (method === 'getDexhero') {
+                    const heroId = params?.id;
+                    if (!heroId) { error = 'id param required'; }
+                    else {
+                        const resp = await fetch(`/api/game/dexheros/${encodeURIComponent(heroId)}`);
+                        result = await resp.json();
+                    }
+                } else {
+                    error = 'Unknown SDK method: ' + method;
+                }
+            } catch (err) {
+                error = err.message;
+            }
+            try {
+                iframe.contentWindow.postMessage({ type: 'dexhero:rpcResponse', id, result, error }, '*');
+            } catch (_) {}
+        }
+
+        // Listen for messages from the game iframe
+        window.addEventListener('message', (e) => {
+            if (!e.data || typeof e.data !== 'object') return;
+            if (e.data.type === 'dexhero:requestContext') {
+                sendHeroContext();
+            }
+            if (e.data.type === 'dexhero:rpc') {
+                const iframe = document.getElementById('game-iframe');
+                if (iframe) handleSdkRpc(e.data, iframe);
+            }
+        });
+
+        // Re-send hero context when wallet changes
+        window.addEventListener('walletChanged', () => {
+            loadUserHeroes();
+        });
+
+        // Clean up light node on page unload
+        window.addEventListener('beforeunload', () => {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            if (wtClient) wtClient.destroy();
+        });
+
+        // ── Cloud Gaming Mode ────────────────────────────────────────
+
+        let playMode = 'local';
+        let cloudSessionId = null;
+
+        function setPlayMode(mode) {
+            playMode = mode;
+            document.querySelectorAll('.play-mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+            if (mode === 'cloud') {
+                startCloudSession();
+            } else {
+                if (CloudSession.isActive()) CloudSession.disconnect();
+                document.getElementById('cloud-overlay').classList.remove('visible');
+                document.getElementById('quality-hud').classList.remove('visible');
+            }
+        }
+
+        async function startCloudSession() {
+            if (!gameData?.id) return;
+            const wallet = sessionStorage.getItem('walletAddress');
+            if (!wallet) {
+                alert('Connect your wallet to play via Project WarpStream.');
+                setPlayMode('local');
+                return;
+            }
+
+            document.getElementById('cloud-overlay').classList.add('visible');
+            document.getElementById('cloud-status-title').textContent = 'Finding a server near you...';
+            document.getElementById('cloud-status-msg').textContent = 'This usually takes a few seconds';
+
+            try {
+                cloudSessionId = await CloudSession.requestSession(gameData.id, selectedHeroId, wallet);
+            } catch (err) {
+                document.getElementById('cloud-status-title').textContent = 'WarpStream unavailable';
+                document.getElementById('cloud-status-msg').textContent = err.message || 'Try playing locally.';
+                setTimeout(() => {
+                    document.getElementById('cloud-overlay').classList.remove('visible');
+                    document.getElementById('cloud-fallback-banner').classList.add('visible');
+                    setPlayMode('local');
+                }, 3000);
+            }
+        }
+
+        function cancelCloudMatch() {
+            CloudSession.cancelMatch();
+            document.getElementById('cloud-overlay').classList.remove('visible');
+            setPlayMode('local');
+        }
+
+        // Listen to cloud session status changes
+        CloudSession.on('status', (data) => {
+            if (data.state === 'connected') {
+                document.getElementById('cloud-overlay').classList.remove('visible');
+                document.getElementById('quality-hud').classList.add('visible');
+                document.getElementById('cloud-status-title').textContent = `Connected! ${data.message}`;
+            } else if (data.state === 'queued') {
+                document.getElementById('cloud-status-title').textContent = 'In queue...';
+                document.getElementById('cloud-status-msg').textContent = data.message;
+            } else if (data.state === 'ended') {
+                document.getElementById('quality-hud').classList.remove('visible');
+                document.getElementById('session-end-overlay').classList.add('visible');
+                document.getElementById('session-end-duration').textContent =
+                    `Duration: ${Math.round(data.duration / 60)} minutes`;
+                document.getElementById('session-end-quality').textContent =
+                    `${data.quality.resolution} | ${data.quality.fps} FPS | ${data.quality.latency}ms`;
+                cloudSessionId = data.sessionId || cloudSessionId;
+            } else if (data.state === 'timeout' || data.state === 'error') {
+                document.getElementById('cloud-overlay').classList.remove('visible');
+                document.getElementById('cloud-fallback-banner').classList.add('visible');
+                setPlayMode('local');
+            }
+        });
+
+        CloudSession.on('quality', (q) => {
+            const fps = document.getElementById('hud-fps');
+            fps.textContent = q.fps || '--';
+            fps.className = `hud-val ${q.fps >= 50 ? 'good' : q.fps >= 30 ? 'warn' : 'bad'}`;
+
+            document.getElementById('hud-res').textContent = q.resolution || '--';
+
+            const rtt = document.getElementById('hud-rtt');
+            rtt.textContent = q.latency ? `${q.latency}ms` : '--';
+            rtt.className = `hud-val ${q.latency <= 40 ? 'good' : q.latency <= 80 ? 'warn' : 'bad'}`;
+
+            document.getElementById('hud-bitrate').textContent = q.bitrate ? `${q.bitrate}` : '--';
+        });
+
+        let sessionRating = 0;
+        function rate(r) {
+            sessionRating = r;
+            document.querySelectorAll('.rating-star').forEach(s => {
+                s.classList.toggle('selected', parseInt(s.dataset.rating) <= r);
+            });
+        }
+
+        function closeSessionEnd() {
+            const wallet = sessionStorage.getItem('walletAddress');
+            if (sessionRating > 0 && cloudSessionId && wallet) {
+                CloudSession.submitFeedback(cloudSessionId, wallet, sessionRating);
+            }
+            document.getElementById('session-end-overlay').classList.remove('visible');
+            sessionRating = 0;
+        }
+
+        // Check cloud availability and show toggle
+        async function checkCloudAvailability() {
+            if (!gameData?.id) return;
+            const avail = await CloudSession.checkAvailability(gameData.id);
+            if (avail.available) {
+                document.getElementById('play-mode-toggle').style.display = 'flex';
+            }
+        }
+
+        // Track input entropy for anti-fraud attestation
+        document.addEventListener('keydown', () => CloudSession.recordInput('key'));
+        document.addEventListener('mousemove', () => CloudSession.recordInput('mouse'));
+        document.addEventListener('click', () => CloudSession.recordInput('click'));
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

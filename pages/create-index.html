@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Choose between generating or uploading a 3D model for your DexHero.">
+    <title>Create DexHero | DexHero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <style>
+        .select-chain-container {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .select-chain-header {
+            margin-bottom: 48px;
+        }
+
+        .select-chain-header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .select-chain-header p {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        .chains-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            max-width: 700px;
+            margin: 0 auto 48px;
+        }
+
+        .chain-card {
+            padding: 48px 32px;
+            background: var(--bg-glass);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .chain-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-6px);
+            box-shadow: 0 12px 40px rgba(6, 182, 212, 0.15);
+        }
+
+        .beta-stamp {
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            background: #FF2A5F;
+            color: white;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 8px;
+            transform: rotate(12deg);
+            box-shadow: 0 4px 12px rgba(255, 42, 95, 0.4);
+            z-index: 10;
+            letter-spacing: 1px;
+            font-size: 11px;
+        }
+
+        .chain-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            object-fit: contain;
+        }
+
+        .chain-name {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .chain-desc {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .select-chain-container {
+                max-width: 100%;
+            }
+
+            .select-chain-header {
+                margin-bottom: 32px;
+            }
+
+            .select-chain-header h1 {
+                font-size: 26px;
+            }
+
+            .select-chain-header p {
+                font-size: 14px;
+            }
+
+            .chains-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                max-width: 100%;
+            }
+
+            .chain-card {
+                padding: 24px 20px;
+            }
+
+            .chain-logo {
+                width: 60px;
+                height: 60px;
+                margin-bottom: 16px;
+            }
+
+            .chain-name {
+                font-size: 20px;
+            }
+
+            .chain-desc {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .select-chain-header h1 {
+                font-size: 22px;
+            }
+
+            .chain-card {
+                padding: 20px 16px;
+            }
+
+            .chain-logo {
+                width: 48px;
+                height: 48px;
+            }
+
+            .chain-name {
+                font-size: 18px;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <div class="select-chain-container">
+            <div class="select-chain-header">
+                <h1>Create Your <span class="gradient-text">DexHero</span></h1>
+                <p>Choose a method to provide your 3D avatar model</p>
+            </div>
+
+            <div class="chains-grid">
+                <a href="create-token-type.html?method=generate" class="chain-card" style="position: relative;">
+                    <div class="beta-stamp">BETA</div>
+                    <svg class="chain-logo" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)"
+                        stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                    </svg>
+                    <div class="chain-name">Generate 3D Model</div>
+                    <div class="chain-desc">Use AI to generate a brand new 3D avatar from text or an image.</div>
+                </a>
+
+                <a href="create-token-type.html?method=upload" class="chain-card">
+                    <svg class="chain-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                    <div class="chain-name">Upload 3D Model</div>
+                    <div class="chain-desc">Already have a .glb file? Use your existing 3D model.</div>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+</body>
+
+</html>

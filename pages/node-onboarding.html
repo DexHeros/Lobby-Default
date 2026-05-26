@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Become a Server Host | DexHero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <style>
+        .onboard-container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        .onboard-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .onboard-header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0 0 8px;
+        }
+
+        .onboard-header p {
+            color: rgba(255,255,255,0.5);
+            font-size: 15px;
+            margin: 0;
+        }
+
+        /* Stepper */
+        .stepper {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .stepper::before {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: 24px;
+            right: 24px;
+            height: 2px;
+            background: rgba(255,255,255,0.08);
+            z-index: 0;
+        }
+
+        .step-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            border: 2px solid rgba(255,255,255,0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.3);
+            z-index: 1;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .step-dot.active {
+            background: linear-gradient(135deg, #2563eb, #2563eb);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        .step-dot.done {
+            background: #4ade80;
+            border-color: transparent;
+            color: #fff;
+        }
+
+        /* Step Panels */
+        .step-panel {
+            display: none;
+        }
+
+        .step-panel.active {
+            display: block;
+        }
+
+        .panel-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 20px;
+        }
+
+        .panel-card h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0 0 8px;
+        }
+
+        .panel-card .subtitle {
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+            margin: 0 0 24px;
+        }
+
+        /* Pre-flight checks */
+        .check-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
+        }
+
+        .check-item:last-child { border-bottom: none; }
+
+        .check-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .check-icon.pass { background: rgba(74,222,128,0.15); color: #4ade80; }
+        .check-icon.fail { background: rgba(248,113,113,0.15); color: #f87171; }
+        .check-icon.pending { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.3); }
+
+        .check-detail {
+            flex: 1;
+        }
+
+        .check-name {
+            font-weight: 600;
+        }
+
+        .check-value {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            margin-top: 2px;
+        }
+
+        .check-req {
+            font-size: 12px;
+            color: rgba(255,255,255,0.3);
+        }
+
+        /* Buttons */
+        .btn-next {
+            display: inline-flex;
+            align-items: center;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #2563eb, #2563eb);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-next:hover { opacity: 0.9; }
+        .btn-next:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            padding: 14px 28px;
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.8);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        /* Earnings calc */
+        .earnings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .earnings-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .earnings-card .big { font-size: 22px; font-weight: 800; }
+        .earnings-card .label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+            margin-top: 4px;
+        }
+
+        /* Mobile banner */
+        .mobile-banner {
+            display: none;
+            background: rgba(255,165,0,0.1);
+            border: 1px solid rgba(255,165,0,0.25);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.5;
+        }
+
+        /* Download buttons */
+        .download-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+
+        .download-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .download-card:hover {
+            border-color: rgba(37, 99, 235,0.4);
+        }
+
+        .download-card .os-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+        .download-card .os-note { font-size: 12px; color: rgba(255,255,255,0.4); }
+
+        /* Status message */
+        .status-msg {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .status-msg.info { background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2); }
+        .status-msg.success { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.2); }
+        .status-msg.error { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.2); }
+
+        @media (max-width: 540px) {
+            .earnings-grid { grid-template-columns: 1fr; }
+            .download-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content" id="main-content">
+        <a href="/" style="display:inline-flex;align-items:center;gap:6px;color:var(--text-secondary);font-size:13px;text-decoration:none;margin-bottom:24px;opacity:0.7;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to Home
+        </a>
+
+        <div class="mobile-banner" id="mobile-banner">
+            ⚠️ Server hosting requires a desktop or laptop with a discrete GPU. You can browse this page, but you'll need a computer to run the hardware check and host games.
+        </div>
+
+        <div class="onboard-container">
+            <div class="onboard-header">
+                <h1>Become a Server Host</h1>
+                <p>Earn by powering Project WarpStream with your GPU. 6 steps to start.</p>
+            </div>
+
+            <!-- Stepper -->
+            <div class="stepper">
+                <div class="step-dot active" data-step="1">1</div>
+                <div class="step-dot" data-step="2">2</div>
+                <div class="step-dot" data-step="3">3</div>
+                <div class="step-dot" data-step="4">4</div>
+                <div class="step-dot" data-step="5">5</div>
+                <div class="step-dot" data-step="6">6</div>
+                <div class="step-dot" data-step="7">7</div>
+            </div>
+
+            <!-- Step 1: Introduction -->
+            <div class="step-panel active" data-step="1">
+                <div class="panel-card">
+                    <h2>What is Compute Providing?</h2>
+                    <p class="subtitle">Your powerful GPU renders games for players with weaker devices. They stream, you earn.</p>
+
+                    <div class="earnings-grid">
+                        <div class="earnings-card">
+                            <div class="big">$100</div>
+                            <div class="label">One-time Play Pass (permanent)</div>
+                        </div>
+                        <div class="earnings-card">
+                            <div class="big">3-6 mo</div>
+                            <div class="label">Time to unlock Common DexHero</div>
+                        </div>
+                        <div class="earnings-card">
+                            <div class="big">4 hrs/day</div>
+                            <div class="label">Typical compute schedule</div>
+                        </div>
+                        <div class="earnings-card">
+                            <div class="big">Multi-DexHero</div>
+                            <div class="label">One Pass, unlimited networks</div>
+                        </div>
+                    </div>
+
+                    <p style="font-size:13px; color:rgba(255,255,255,0.5); line-height:1.6;">
+                        Your Play Pass is permanent and works across every DexHero network. Buy once, provide compute anywhere.
+                        After reaching the threshold, your DexHero unlocks and becomes tradeable.
+                        The longer you provide, the rarer (and more valuable) your unlock.
+                    </p>
+
+                    <div class="btn-row">
+                        <button class="btn-next" onclick="goToStep(2)">Get Started</button>
+                        <a href="/pages/threshold-estimator.html" class="btn-secondary">See Earnings Calculator</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Hardware Pre-Flight -->
+            <div class="step-panel" data-step="2">
+                <div class="panel-card">
+                    <h2>Hardware Qualification Check</h2>
+                    <p class="subtitle">Let's see if your machine has what it takes. No wallet needed — just click the button.</p>
+
+                    <ul class="check-list" id="preflight-list">
+                        <li class="check-item">
+                            <div class="check-icon pending" id="check-gpu-icon">?</div>
+                            <div class="check-detail">
+                                <div class="check-name">GPU</div>
+                                <div class="check-value" id="check-gpu-value">Not tested</div>
+                                <div class="check-req">Discrete GPU, Tier 3 (RTX 3080 / RTX 4070 Ti / RX 7800 XT or better)</div>
+                            </div>
+                        </li>
+                        <li class="check-item">
+                            <div class="check-icon pending" id="check-vram-icon">?</div>
+                            <div class="check-detail">
+                                <div class="check-name">VRAM</div>
+                                <div class="check-value" id="check-vram-value">Not tested</div>
+                                <div class="check-req">12 GB minimum</div>
+                            </div>
+                        </li>
+                        <li class="check-item">
+                            <div class="check-icon pending" id="check-ram-icon">?</div>
+                            <div class="check-detail">
+                                <div class="check-name">System RAM</div>
+                                <div class="check-value" id="check-ram-value">Not tested</div>
+                                <div class="check-req">32 GB recommended — agent verifies full capacity</div>
+                            </div>
+                        </li>
+                        <li class="check-item">
+                            <div class="check-icon pending" id="check-cpu-icon">?</div>
+                            <div class="check-detail">
+                                <div class="check-name">CPU Cores</div>
+                                <div class="check-value" id="check-cpu-value">Not tested</div>
+                                <div class="check-req">8+ logical cores</div>
+                            </div>
+                        </li>
+                        <li class="check-item">
+                            <div class="check-icon pending" id="check-encoder-icon">?</div>
+                            <div class="check-detail">
+                                <div class="check-name">Hardware Encoding</div>
+                                <div class="check-value" id="check-encoder-value">Not tested</div>
+                                <div class="check-req">Hardware-accelerated H.264 or HEVC (NVENC / AMF / QSV)</div>
+                            </div>
+                        </li>
+                        <li class="check-item">
+                            <div class="check-icon pending" id="check-upload-icon">?</div>
+                            <div class="check-detail">
+                                <div class="check-name">Upload Bandwidth</div>
+                                <div class="check-value" id="check-upload-value">Not tested</div>
+                                <div class="check-req">50 Mbps minimum, wired connection</div>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div class="btn-row">
+                        <button class="btn-next" id="run-preflight-btn" onclick="runPreflight()">Run Qualification Check</button>
+                        <button class="btn-secondary" onclick="goToStep(1)">Back</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Connect Wallet + Buy Play Pass -->
+            <div class="step-panel" data-step="3">
+                <div class="panel-card">
+                    <h2>Purchase Platform Play Pass</h2>
+                    <p class="subtitle">$100 USDC one-time, non-refundable. Permanent license for all DexHero networks.</p>
+
+                    <div id="pass-status"></div>
+
+                    <div id="wallet-section">
+                        <button class="btn-next" id="connect-wallet-btn" onclick="connectAndCheckPass()">Connect Wallet</button>
+                    </div>
+
+                    <div id="purchase-section" style="display:none;">
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+                            <span style="font-size:14px; color:rgba(255,255,255,0.6);">Connected:</span>
+                            <span style="font-weight:600;" id="wallet-display"></span>
+                        </div>
+                        <button class="btn-next" id="buy-pass-btn" onclick="purchasePlayPass()">Approve & Purchase ($100 USDC)</button>
+                    </div>
+
+                    <div id="pass-owned" style="display:none;">
+                        <div class="status-msg success">You already own a Platform Play Pass. You're good to go!</div>
+                        <div class="btn-row">
+                            <button class="btn-next" onclick="goToStep(4)">Continue</button>
+                        </div>
+                    </div>
+
+                    <div class="btn-row" style="margin-top:12px;">
+                        <button class="btn-secondary" onclick="goToStep(2)">Back</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Download Server App -->
+            <div class="step-panel" data-step="4">
+                <div class="panel-card">
+                    <h2>Download Server App</h2>
+                    <p class="subtitle">Install the DexHero Server App (powered by Tauri + Sunshine).</p>
+
+                    <div class="download-grid">
+                        <div class="download-card" onclick="downloadClient('windows')">
+                            <div class="os-name">Windows</div>
+                            <div class="os-note">Windows 10+ (64-bit)</div>
+                        </div>
+                        <div class="download-card" onclick="downloadClient('mac')">
+                            <div class="os-name">macOS</div>
+                            <div class="os-note">macOS 12+ (Apple Silicon/Intel)</div>
+                        </div>
+                        <div class="download-card" onclick="downloadClient('linux')">
+                            <div class="os-name">Linux</div>
+                            <div class="os-note">Ubuntu 22.04+ / Fedora 38+</div>
+                        </div>
+                    </div>
+
+                    <p style="font-size:13px; color:rgba(255,255,255,0.4); margin-top:16px; line-height:1.6;">
+                        The server app runs in the background and uses Sunshine to capture, encode, and stream games via WebRTC.
+                        ~5 MB download. Open-source.
+                    </p>
+
+                    <div class="btn-row">
+                        <button class="btn-next" onclick="goToStep(5)">I've Installed It</button>
+                        <button class="btn-secondary" onclick="goToStep(3)">Back</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Network Reachability (MANDATORY) -->
+            <div class="step-panel" data-step="5">
+                <div class="panel-card">
+                    <h2>Network Reachability</h2>
+                    <p class="subtitle">DexHero hosts relay traffic for each other — it's how the network avoids any centralized TURN server. Your node must be reachable on UDP for the matchmaker to trust it. This is mandatory.</p>
+
+                    <div id="relay-probe-status">
+                        <div class="status-msg info">
+                            <div class="hud-spin" style="display:inline-block;margin-right:8px;"></div>
+                            Waiting for the DexHero Host agent to report its probe result…
+                        </div>
+                    </div>
+
+                    <div id="relay-remediation" style="display:none; margin-top:12px; padding:14px; border:1px solid rgba(239,68,68,0.4); border-radius:6px; background:rgba(239,68,68,0.08);">
+                        <strong style="color:#ef4444;">Probe failed</strong>
+                        <p style="margin:8px 0 4px;color:rgba(255,255,255,0.7);font-size:13px;">Try these fixes in order:</p>
+                        <ol style="margin:4px 0 0 20px;color:rgba(255,255,255,0.7);font-size:13px;line-height:1.7;">
+                            <li>Forward UDP port 47989 in your router settings.</li>
+                            <li>Enable UPnP on your router (auto-opens ports).</li>
+                            <li>Enable IPv6 on your connection — no NAT required.</li>
+                            <li>Ensure you're not behind carrier-grade NAT (CGNAT) — some mobile / budget ISPs use it.</li>
+                        </ol>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="btn-next" id="probe-continue-btn" disabled onclick="goToStep(6)">Continue</button>
+                        <button class="btn-secondary" id="probe-retest-btn" onclick="recheckRelayProbe()">Re-check</button>
+                        <button class="btn-secondary" onclick="goToStep(4)">Back</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 6: Register on Monad -->
+            <div class="step-panel" data-step="6">
+                <div class="panel-card">
+                    <h2>Register on Monad</h2>
+                    <p class="subtitle">LayerZero verifies your Play Pass across chains, then registers your server on Monad.</p>
+
+                    <div id="registration-status"></div>
+
+                    <div class="btn-row">
+                        <button class="btn-next" id="register-btn" onclick="registerOnMonad()">Register Server</button>
+                        <button class="btn-secondary" onclick="goToStep(5)">Back</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 7: Ready -->
+            <div class="step-panel" data-step="7">
+                <div class="panel-card" style="text-align:center;">
+                    <h2 style="font-size:24px;">You're Ready!</h2>
+                    <p class="subtitle">Your server is registered and ready to serve players.</p>
+
+                    <div class="earnings-grid" style="margin-top:24px;">
+                        <div class="earnings-card">
+                            <div class="big" style="color:#4ade80;">Active</div>
+                            <div class="label">Play Pass Status</div>
+                        </div>
+                        <div class="earnings-card">
+                            <div class="big" style="color:#4ade80;">Registered</div>
+                            <div class="label">Server Status</div>
+                        </div>
+                    </div>
+
+                    <p style="font-size:14px; color:rgba(255,255,255,0.5); line-height:1.6; margin:20px 0;">
+                        Open your Server App, connect to the matchmaker, and start serving players.
+                        Track your compute progress and legitimacy score on your dashboard.
+                    </p>
+
+                    <div class="btn-row" style="justify-content:center;">
+                        <a href="/pages/node-dashboard.html" class="btn-next" style="text-decoration:none;">Go to Server Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/blockchain/constants.js"></script>
+    <script src="/js/hardware-detect.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="../components/footer.js"></script>
+    <script>
+        let currentStep = 1;
+        let connectedWallet = null;
+
+        // Mobile detection — show banner but don't block the page
+        if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) {
+            document.getElementById('mobile-banner').style.display = 'block';
+        }
+
+        function goToStep(step) {
+            document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.step-dot').forEach(d => {
+                const s = parseInt(d.dataset.step);
+                d.classList.remove('active', 'done');
+                if (s < step) d.classList.add('done');
+                if (s === step) d.classList.add('active');
+            });
+            const panel = document.querySelector(`.step-panel[data-step="${step}"]`);
+            if (panel) panel.classList.add('active');
+            currentStep = step;
+        }
+
+        // Read the site-wide connected wallet (persisted by modals.js after the
+        // canonical connect flow). Returns null if none.
+        function getShellWallet() {
+            try {
+                if (sessionStorage.getItem('walletConnected') === 'true') {
+                    return sessionStorage.getItem('walletAddress') || null;
+                }
+            } catch {}
+            return null;
+        }
+
+        // Return the provider the user actually connected with (MetaMask,
+        // Phantom, or any injected EVM wallet) — not a blind reach for
+        // window.ethereum which can point at whichever extension hijacked
+        // the global when multiple wallets are installed.
+        function getActiveProvider() {
+            try {
+                if (window.UnifiedWallet && window.UnifiedWallet.evmWallet) return window.UnifiedWallet.evmWallet;
+            } catch {}
+            if (!window.ethereum) return null;
+            const list = (window.ethereum.providers && window.ethereum.providers.length)
+                ? window.ethereum.providers
+                : [window.ethereum];
+            const type = sessionStorage.getItem('walletType');
+            if (type === 'phantom') return list.find(p => p.isPhantom) || window.ethereum;
+            if (type === 'metamask') return list.find(p => p.isMetaMask && !p.isPhantom) || window.ethereum;
+            return list[0] || window.ethereum;
+        }
+
+        // Step 2: Route through the shell's wallet flow (same one the header
+        // uses) so the connection persists site-wide. When embedded in the
+        // lobby shell, call the parent's openConnectModal; otherwise fall
+        // back to the in-page modal. DO NOT call eth_requestAccounts here —
+        // that would connect in isolation and leave the shell unaware.
+        function connectAndCheckPass() {
+            try {
+                if (window.top && window.top !== window && typeof window.top.openConnectModal === 'function') {
+                    window.top.openConnectModal();
+                    return;
+                }
+            } catch {}
+            if (typeof openConnectModal === 'function') {
+                openConnectModal();
+            } else if (typeof window.openConnectModal === 'function') {
+                window.openConnectModal();
+            } else {
+                alert('Wallet modal unavailable. Refresh and try again.');
+            }
+        }
+
+        // Reacts to both initial page load and to site-wide wallet events —
+        // if the shell wallet is connected, check the Play Pass and swap the
+        // Step 2 UI (wallet section → purchase section or pass-owned).
+        async function reflectPassState() {
+            const addr = getShellWallet();
+            if (!addr) {
+                document.getElementById('wallet-section').style.display = 'block';
+                document.getElementById('purchase-section').style.display = 'none';
+                document.getElementById('pass-owned').style.display = 'none';
+                connectedWallet = null;
+                return;
+            }
+
+            connectedWallet = addr;
+            document.getElementById('wallet-display').textContent =
+                addr.slice(0, 6) + '...' + addr.slice(-4);
+            document.getElementById('wallet-section').style.display = 'none';
+
+            try {
+                const passAddr = CONTRACT_ADDRESSES.sepolia?.platformPlayPass;
+                if (passAddr) {
+                    // Always read against Sepolia, never the wallet's current
+                    // chain — going through Web3Provider against e.g. mainnet
+                    // hits a chain where the pass contract doesn't exist and
+                    // reverts, which used to silently report "no pass".
+                    // Multi-RPC fallback: publicnode rate-limits browsers so
+                    // we cycle through additional public Sepolia endpoints.
+                    const rpcs = [
+                        'https://ethereum-sepolia-rpc.publicnode.com',
+                        'https://eth-sepolia.public.blastapi.io',
+                        'https://endpoints.omniatech.io/v1/eth/sepolia/public',
+                        'https://rpc.sepolia.org',
+                    ];
+                    let hasPass = false;
+                    let lastErr = null;
+                    for (const rpc of rpcs) {
+                        try {
+                            const provider = new ethers.providers.JsonRpcProvider(rpc);
+                            const passContract = new ethers.Contract(passAddr, PLATFORM_PLAY_PASS_ABI, provider);
+                            hasPass = await passContract.hasActivePlayPass(addr);
+                            console.log(`[play-pass] node-onboarding ${addr} via ${rpc} → ${hasPass}`);
+                            lastErr = null;
+                            break;
+                        } catch (err) {
+                            lastErr = err;
+                            console.warn(`[play-pass] rpc ${rpc} failed: ${err?.message || err}`);
+                        }
+                    }
+                    if (lastErr) throw lastErr;
+                    if (hasPass) {
+                        document.getElementById('pass-owned').style.display = 'block';
+                        document.getElementById('purchase-section').style.display = 'none';
+                        return;
+                    }
+                }
+                document.getElementById('purchase-section').style.display = 'block';
+                document.getElementById('pass-owned').style.display = 'none';
+            } catch (err) {
+                console.error('Pass check failed:', err);
+                document.getElementById('purchase-section').style.display = 'block';
+            }
+        }
+
+        window.addEventListener('walletChanged', reflectPassState);
+        window.addEventListener('walletAccountChanged', reflectPassState);
+        window.addEventListener('DOMContentLoaded', reflectPassState);
+        // Fired by the SPA panel-stub once the parent shell's wallet
+        // sessionStorage has been mirrored into this iframe — re-check so
+        // pass detection still works when the page boots before that mirror.
+        window.addEventListener('parentWalletSynced', reflectPassState);
+
+        // Step 2: Purchase Play Pass — single wallet popup. User signs ONE
+        // plain USDC.transfer($100, treasury); the server (contract owner)
+        // mints the pass to the sender via /api/play-pass/relay-mint.
+        async function purchasePlayPass() {
+            const btn = document.getElementById('buy-pass-btn');
+            const status = document.getElementById('pass-status');
+            btn.disabled = true;
+            status.innerHTML = '';
+
+            try {
+                const active = getActiveProvider();
+                if (!active) throw new Error('No wallet detected. Install MetaMask or Phantom to continue.');
+
+                const SEPOLIA_HEX   = '0xaa36a7';
+                const TREASURY_ADDR = '0x5cb65422ed872b9c37c5e2e35d27c929d6ca90a8';
+                const chainIdHex = await active.request({ method: 'eth_chainId' });
+                if (chainIdHex.toLowerCase() !== SEPOLIA_HEX) {
+                    btn.textContent = 'Switching network…';
+                    status.innerHTML = `<div class="status-msg info">Switching wallet to Sepolia…</div>`;
+                    try {
+                        await active.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: SEPOLIA_HEX }] });
+                    } catch (swErr) {
+                        if (swErr && swErr.code === 4902) {
+                            await active.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: SEPOLIA_HEX, chainName: 'Sepolia',
+                                    rpcUrls: ['https://ethereum-sepolia-rpc.publicnode.com'],
+                                    nativeCurrency: { name: 'SepoliaETH', symbol: 'ETH', decimals: 18 },
+                                    blockExplorerUrls: ['https://sepolia.etherscan.io'],
+                                }],
+                            });
+                        } else { throw swErr; }
+                    }
+                }
+
+                const provider = new ethers.providers.Web3Provider(active);
+                const signer = provider.getSigner();
+                const net = CONTRACT_ADDRESSES.sepolia;
+                const usdc = new ethers.Contract(
+                    net.usdc,
+                    ['function balanceOf(address) view returns (uint256)', 'function transfer(address to, uint256 amount) returns (bool)'],
+                    signer,
+                );
+                const amount = ethers.utils.parseUnits('100', 6);
+                const signerAddr = await signer.getAddress();
+
+                // Pre-flight: gas + USDC balance.
+                const [ethBal, usdcBal] = await Promise.all([
+                    provider.getBalance(signerAddr),
+                    usdc.balanceOf(signerAddr),
+                ]);
+                if (ethBal.lt(ethers.utils.parseUnits('0.001', 18))) throw new Error('Low Gas Error');
+                if (usdcBal.lt(amount)) throw new Error('Need 100 USDC.');
+
+                // The single wallet popup — plain USDC transfer.
+                btn.textContent = 'Confirm transfer…';
+                status.innerHTML = `<div class="status-msg info">Confirm the $100 transfer in your wallet…</div>`;
+                const tx = await usdc.transfer(TREASURY_ADDR, amount);
+                btn.textContent = 'Sending…';
+                status.innerHTML = `<div class="status-msg info">Transfer sent — waiting for confirmation…</div>`;
+                await tx.wait();
+
+                btn.textContent = 'Activating…';
+                status.innerHTML = `<div class="status-msg info">Activating your Play Pass…</div>`;
+                const r = await fetch('/api/play-pass/relay-mint', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ txHash: tx.hash, wallet: signerAddr }),
+                    credentials: 'include',
+                });
+                const data = await r.json().catch(() => ({}));
+                if (!r.ok) throw new Error(data?.error || 'Mint relay failed');
+
+                document.getElementById('purchase-section').style.display = 'none';
+                document.getElementById('pass-owned').style.display = 'block';
+            } catch (err) {
+                console.error('Purchase failed:', err);
+                btn.disabled = false;
+                btn.textContent = 'Buy Play Pass ($100 USDC)';
+                status.innerHTML = `<div class="status-msg error">${err.reason || err.data?.message || err.message || 'Transaction failed'}</div>`;
+            }
+        }
+
+        // Step 3: Hardware pre-flight
+        async function runPreflight() {
+            const btn = document.getElementById('run-preflight-btn');
+            btn.disabled = true;
+            btn.textContent = 'Detecting hardware...';
+
+            // GPU + VRAM + RAM + CPU + Encoder (fast, parallel)
+            const gpu = HardwareDetect.detectGPU();
+            updateCheck('gpu', gpu.supported, `${gpu.renderer} (Tier ${gpu.tier}: ${gpu.tierLabel})`);
+
+            const vram = HardwareDetect.estimateVRAM();
+            updateCheck('vram', vram.supported, `~${vram.estimatedGB} GB (${vram.method})`);
+
+            const ram = HardwareDetect.detectSystemRam();
+            updateCheck('ram', ram.supported, ram.reportedGB != null ? `${ram.reportedGB}+ GB detected` : 'Unable to detect');
+
+            const cpu = HardwareDetect.detectCpuCores();
+            updateCheck('cpu', cpu.supported, cpu.cores ? `${cpu.cores} logical cores` : 'Unable to detect');
+
+            const encoder = await HardwareDetect.detectEncoder();
+            const encoderPass = encoder.encoderAvailable && encoder.hardwareAccelerated;
+            updateCheck('encoder', encoderPass,
+                encoder.bestCodec
+                    ? `${encoder.bestCodec}${encoder.hardwareAccelerated ? ' (HW accelerated)' : ' (software only)'}`
+                    : 'None detected');
+
+            // Upload bandwidth (takes time)
+            btn.textContent = 'Testing upload speed (10s)...';
+            updateCheck('upload', null, 'Testing...');
+            const bw = await HardwareDetect.testUploadBandwidth(10);
+            updateCheck('upload', bw.supported, `${bw.avgMbps} Mbps sustained`);
+
+            const allPass = gpu.supported && vram.supported && ram.supported && cpu.supported && encoderPass && bw.supported;
+            btn.textContent = allPass ? 'All Checks Passed!' : 'Some Checks Failed';
+            btn.disabled = !allPass;
+
+            if (allPass) {
+                btn.textContent = 'Continue';
+                btn.onclick = () => goToStep(3);
+            } else {
+                btn.textContent = 'Re-run Check';
+                btn.disabled = false;
+            }
+        }
+
+        function updateCheck(name, pass, value) {
+            const icon = document.getElementById(`check-${name}-icon`);
+            const val = document.getElementById(`check-${name}-value`);
+            if (pass === null) {
+                icon.className = 'check-icon pending';
+                icon.textContent = '...';
+            } else if (pass) {
+                icon.className = 'check-icon pass';
+                icon.textContent = '\u2713';
+            } else {
+                icon.className = 'check-icon fail';
+                icon.textContent = '\u2717';
+            }
+            val.textContent = value;
+        }
+
+        // Step 4: Download
+        function downloadClient(os) {
+            // Placeholder — will link to actual Tauri releases
+            alert(`Server app for ${os} coming soon. This will download the Tauri installer.`);
+        }
+
+        // Step 5: Relay reachability probe — polls /api/node/games (which returns
+        // the node_capabilities row including relay_capable + relay_test_passed_at)
+        // until the agent reports a passing probe or the user dismisses.
+        let _relayPollTimer = null;
+        async function recheckRelayProbe() {
+            const wallet = (sessionStorage.getItem('walletAddress') || '').toLowerCase();
+            const statusEl = document.getElementById('relay-probe-status');
+            const remEl = document.getElementById('relay-remediation');
+            const continueBtn = document.getElementById('probe-continue-btn');
+            if (!wallet) {
+                statusEl.innerHTML = `<div class="status-msg error">Connect a wallet first.</div>`;
+                return;
+            }
+            try {
+                const r = await fetch(`/api/node/games?wallet=${encodeURIComponent(wallet)}`);
+                const j = await r.json();
+                const node = j.node;
+                if (!node) {
+                    statusEl.innerHTML = `<div class="status-msg info"><div class="hud-spin" style="display:inline-block;margin-right:8px;"></div>Start the DexHero Host agent on your machine. It will self-probe automatically.</div>`;
+                    remEl.style.display = 'none';
+                    continueBtn.disabled = true;
+                    return;
+                }
+                if (node.relayCapable) {
+                    statusEl.innerHTML = `<div class="status-msg success">✓ Probe passed — qualified to host. Public endpoint: ${node.publicIp}:${node.relayPort}, NAT type: ${node.natType}</div>`;
+                    remEl.style.display = 'none';
+                    continueBtn.disabled = false;
+                } else {
+                    statusEl.innerHTML = `<div class="status-msg error">✗ Probe failed — node is registered but unreachable on UDP from the public internet.</div>`;
+                    remEl.style.display = '';
+                    continueBtn.disabled = true;
+                }
+            } catch (e) {
+                statusEl.innerHTML = `<div class="status-msg error">Check failed: ${e.message}</div>`;
+                continueBtn.disabled = true;
+            }
+        }
+
+        // Auto-poll whenever step 5 is visible.
+        const _origGoToStep = typeof goToStep === 'function' ? goToStep : null;
+        if (_origGoToStep) {
+            window.goToStep = function(step) {
+                _origGoToStep(step);
+                if (_relayPollTimer) { clearInterval(_relayPollTimer); _relayPollTimer = null; }
+                if (step === 5) {
+                    recheckRelayProbe();
+                    _relayPollTimer = setInterval(recheckRelayProbe, 5000);
+                }
+            };
+        }
+
+        // Step 6: Register on Monad — gasless via the platform's registration relay.
+        // Flow:
+        //   1. GET /digest with the user's wallet + dexheroId + gpuTier
+        //      → relay bot returns the EIP-191 digest the user must sign
+        //   2. window.ethereum.request("personal_sign", [digest, user])
+        //      → MetaMask popup, user clicks Sign (no gas, no MON needed)
+        //   3. POST /register with the signature
+        //      → relay submits registerNodeFor on Monad with its own MON
+        //   4. Wait a couple of LayerZero blocks; verify-response-bot flips
+        //      registrations[user][dexheroId].verified = true on Monad.
+        const REGISTRATION_RELAY_URL = (window.REGISTRATION_RELAY_URL
+            || (location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+                ? 'http://127.0.0.1:4099'
+                : '/api/registration-relay')); // proxy-via-server for prod
+
+        async function registerOnMonad() {
+            const btn = document.getElementById('register-btn');
+            const status = document.getElementById('registration-status');
+            btn.disabled = true;
+            btn.textContent = 'Registering...';
+            status.innerHTML = '';
+
+            const append = (cls, msg) => {
+                status.innerHTML += `<div class="status-msg ${cls}">${msg}</div>`;
+            };
+
+            try {
+                // 1. Get the user's wallet address.
+                const user = await getActiveWallet();
+                if (!user) throw new Error('No connected wallet — connect your wallet on Step 2 first.');
+
+                // 2. Pull the dexheroId + gpuTier from the page state.
+                //    For the initial onboarding flow, dexheroId is the network the
+                //    host wants to serve. The page sets window.__selectedDexheroId
+                //    before this step. If no dexheroId is available we MUST
+                //    fail loudly — silently substituting a placeholder
+                //    bytes32(1) on Base mainnet would produce a registration
+                //    that points at a non-existent hero, which the audit
+                //    fix C-3 path would then accept on-chain. (P2.8/B4)
+                const dexheroIdRaw = window.__selectedDexheroId
+                    || (new URLSearchParams(location.search).get('dexheroId'));
+                if (!dexheroIdRaw) {
+                    throw new Error(
+                        'No DexHero selected — register a hero first, then return to this page. '
+                        + 'Pass ?dexheroId=0x… in the URL or set window.__selectedDexheroId.'
+                    );
+                }
+
+                const gpuTier = (window.__detectedGpuTier
+                    || parseInt(localStorage.getItem('hwGpuTier') || '2', 10));
+
+                append('info', `Wallet: <code>${user}</code>`);
+                append('info', `DexHero: <code>${dexheroIdRaw}</code> &middot; GPU tier ${gpuTier}`);
+
+                // 3. Ask the relay for the digest to sign.
+                append('info', 'Fetching registration digest from relay…');
+                const digestRes = await fetch(
+                    `${REGISTRATION_RELAY_URL}/digest?user=${user}&dexheroId=${dexheroIdRaw}&gpuTier=${gpuTier}`
+                );
+                if (!digestRes.ok) {
+                    const err = await digestRes.json().catch(() => ({}));
+                    throw new Error(err.error || `relay /digest returned HTTP ${digestRes.status}`);
+                }
+                const { digest, nonce } = await digestRes.json();
+
+                // 4. Sign the digest in the wallet.
+                append('info', 'Open your wallet and sign the registration message…');
+                const provider = getActiveProvider();
+                if (!provider) throw new Error('No EVM wallet provider — install MetaMask or similar.');
+                const signature = await provider.request({
+                    method: 'personal_sign',
+                    params: [digest, user],
+                });
+
+                // 5. Submit to the relay.
+                append('info', 'Relaying signed registration to Monad…');
+                const regRes = await fetch(`${REGISTRATION_RELAY_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({ user, dexheroId: dexheroIdRaw, gpuTier, nonce, signature }),
+                });
+                const regJson = await regRes.json();
+                if (!regRes.ok) throw new Error(regJson.error || `relay /register returned HTTP ${regRes.status}`);
+
+                append('success', `Registered on Monad — tx <code>${regJson.txHash.slice(0,10)}…${regJson.txHash.slice(-6)}</code>`);
+                append('info', 'LayerZero is verifying your Play Pass on Ethereum (1–2 minutes)…');
+
+                // 6. Poll until verified flag flips on-chain. (Optional — UX nicety.)
+                //    For now we just enable Continue; full polling can be added later.
+                btn.textContent = 'Continue';
+                btn.disabled = false;
+                btn.onclick = () => goToStep(7);
+            } catch (e) {
+                append('error', `✗ ${e.message}`);
+                btn.textContent = 'Try Again';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

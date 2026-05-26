@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How It Works | DexHero</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" type="application/javascript"></script>
+    <style>
+        .manifesto-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .manifesto-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .manifesto-header h1 {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 16px;
+        }
+
+        .manifesto-header p {
+            font-size: 17px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Comparison table */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            margin-bottom: 64px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .comparison-col {
+            padding: 32px 28px;
+            background: var(--bg-glass);
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .comparison-col.dexhero {
+            background: rgba(59, 130, 246, 0.06);
+            border-left: 1px solid rgba(59, 130, 246, 0.3);
+            border-right: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .comparison-col-header {
+            margin-bottom: 24px;
+        }
+
+        .comparison-col-header .label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .comparison-col.dexhero .comparison-col-header .label {
+            color: #3b82f6;
+        }
+
+        .comparison-col-header h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .comparison-col-header .tagline {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .comparison-col.dexhero .comparison-col-header .tagline {
+            color: var(--text-secondary);
+        }
+
+        .comparison-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 20px 0;
+        }
+
+        .comparison-point {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 6px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .comparison-point .icon {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .icon-check {
+            color: #22c55e;
+        }
+
+        .icon-x {
+            color: #ef4444;
+        }
+
+        .icon-warn {
+            color: #f59e0b;
+        }
+
+        /* How it works loop */
+        .loop-section {
+            margin-bottom: 64px;
+        }
+
+        .loop-section h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .loop-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .loop-card {
+            padding: 28px 24px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+        }
+
+        .loop-card .step-num {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .loop-card h4 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .loop-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .loop-card.dev { border-top: 2px solid #3b82f6; }
+        .loop-card.player { border-top: 2px solid #3b82f6; }
+        .loop-card.earn { border-top: 2px solid #22c55e; }
+
+        /* CTA section */
+        .cta-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 48px;
+        }
+
+        .cta-card {
+            padding: 36px 32px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .cta-card.dev-cta {
+            border-color: rgba(59, 130, 246, 0.4);
+            background: rgba(59, 130, 246, 0.04);
+        }
+
+        .cta-card.player-cta {
+            border-color: rgba(59, 130, 246, 0.4);
+            background: rgba(59, 130, 246, 0.04);
+        }
+
+        .cta-card .cta-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .cta-card.dev-cta .cta-icon { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+        .cta-card.player-cta .cta-icon { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+
+        .cta-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .cta-card p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .btn-cta {
+            display: inline-block;
+            padding: 13px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .btn-cta:hover { opacity: 0.85; }
+
+        .btn-cta.dev { background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%); color: #fff; border: none; }
+        .btn-cta.player { background: #3b82f6; color: #fff; }
+
+        @media (max-width: 900px) {
+            .comparison-grid { grid-template-columns: 1fr; }
+            .comparison-col.dexhero { border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 12px; }
+            .loop-grid { grid-template-columns: 1fr; }
+            .cta-section { grid-template-columns: 1fr; }
+            .manifesto-header h1 { font-size: 32px; }
+        }
+
+        @media (max-width: 480px) {
+            .manifesto-header h1 { font-size: 26px; }
+            .comparison-col, .loop-card, .cta-card { padding: 22px 18px; }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+    <main class="main-content page-content">
+        <div class="manifesto-container">
+
+            <div class="manifesto-header">
+                <h1>Zero hosting cost.<br><span class="gradient-text">Players power it. Players earn it.</span></h1>
+                <p>Register your game for free. Players contribute bandwidth and earn permanent DexHero characters. No servers, no subscriptions, no platform cut.</p>
+            </div>
+
+            <!-- Comparison columns -->
+            <div class="comparison-grid">
+                <div class="comparison-col">
+                    <div class="comparison-col-header">
+                        <div class="label">Traditional</div>
+                        <h3>Self-Host</h3>
+                        <p class="tagline">You pay for servers, uptime, and scaling — forever.</p>
+                    </div>
+                    <div class="comparison-divider"></div>
+                    <div class="comparison-point">
+                        <span class="icon icon-x"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                        Monthly server bill
+                    </div>
+                    <div class="comparison-point">
+                        <span class="icon icon-x"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                        You manage uptime and scaling
+                    </div>
+                    <div class="comparison-point">
+                        <span class="icon icon-x"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                        Players get nothing for playing
+                    </div>
+                </div>
+
+                <div class="comparison-col dexhero">
+                    <div class="comparison-col-header">
+                        <div class="label">DexHero Network</div>
+                        <h3>Players Power It</h3>
+                        <p class="tagline">Zero hosting cost. Players earn permanent DexHero characters by contributing bandwidth.</p>
+                    </div>
+                    <div class="comparison-divider"></div>
+                    <div class="comparison-point">
+                        <span class="icon icon-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>
+                        Zero hosting cost to game devs
+                    </div>
+                    <div class="comparison-point">
+                        <span class="icon icon-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>
+                        Players earn unlocked DexHeros
+                    </div>
+                    <div class="comparison-point">
+                        <span class="icon icon-check"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>
+                        Access to all DexHero communities
+                    </div>
+                    <div class="comparison-divider"></div>
+                    <button class="btn-cta dev" onclick="handleRegistration()" style="width:100%;margin-top:4px;">Register Your Game</button>
+                </div>
+
+                <div class="comparison-col">
+                    <div class="comparison-col-header">
+                        <div class="label">Platform</div>
+                        <h3>Steam / Xbox</h3>
+                        <p class="tagline">30% cut on every sale. No ownership. Locked in forever.</p>
+                    </div>
+                    <div class="comparison-divider"></div>
+                    <div class="comparison-point">
+                        <span class="icon icon-x"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                        30% revenue share
+                    </div>
+                    <div class="comparison-point">
+                        <span class="icon icon-x"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                        Platform owns distribution
+                    </div>
+                    <div class="comparison-point">
+                        <span class="icon icon-x"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                        Players don't own what they buy
+                    </div>
+                </div>
+            </div>
+
+            <!-- How it works -->
+            <div class="loop-section">
+                <h2>How It Works</h2>
+                <div class="loop-grid">
+                    <div class="loop-card dev">
+                        <div class="step-num">For Game Devs</div>
+                        <h4>Register for $100 USDC</h4>
+                        <p>Register your game for a one-time $100 USDC fee and add DexHero characters to your allowlist. Your game is hosted on the player-powered P2P network with zero recurring costs — no servers, no subscriptions, ever.</p>
+                    </div>
+                    <div class="loop-card player">
+                        <div class="step-num">For Players</div>
+                        <h4>Deposit Once, Access Everything</h4>
+                        <p>Play Pass holders contribute compute power to the DexHero network and help host games for every connected player. Only qualified machines that meet the network's compute threshold are eligible to participate and earn.</p>
+                    </div>
+                    <div class="loop-card earn">
+                        <div class="step-num">The Reward</div>
+                        <h4>Earn Permanent DexHero Characters</h4>
+                        <p>Contribute enough compute and permanently unlock that DexHero. Hold it for cross-game access forever, or sell it on any marketplace.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cloud Gaming Value Prop -->
+            <div style="margin-bottom:48px;padding:36px 32px;background:linear-gradient(135deg,rgba(37, 99, 235,0.06),rgba(37,99,235,0.06));border:1px solid rgba(37, 99, 235,0.2);border-radius:20px;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                    <h2 style="font-size:22px;font-weight:800;margin:0;">Project WarpStream Included</h2>
+                </div>
+                <p style="font-size:15px;color:rgba(255,255,255,0.6);line-height:1.7;margin-bottom:20px;">
+                    When you register your game, it becomes eligible for Project WarpStream — DexHero's decentralized streaming network. Players with weak devices can stream your game from community GPU servers — no downloads, no hardware requirements. Your game reaches every player, not just those with powerful machines.
+                </p>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+                    <div style="padding:16px;background:rgba(255,255,255,0.03);border-radius:10px;text-align:center;">
+                        <div style="font-size:24px;margin-bottom:6px;">🎮</div>
+                        <div style="font-size:13px;font-weight:600;">Instant Play</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Players stream from a browser — no install needed</div>
+                    </div>
+                    <div style="padding:16px;background:rgba(255,255,255,0.03);border-radius:10px;text-align:center;">
+                        <div style="font-size:24px;margin-bottom:6px;">🌍</div>
+                        <div style="font-size:13px;font-weight:600;">Wider Reach</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Laptops, tablets, Chromebooks — any device with a browser</div>
+                    </div>
+                    <div style="padding:16px;background:rgba(255,255,255,0.03);border-radius:10px;text-align:center;">
+                        <div style="font-size:24px;margin-bottom:6px;">💸</div>
+                        <div style="font-size:13px;font-weight:600;">Zero Server Costs</div>
+                        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Community servers provide the compute — not your infrastructure</div>
+                    </div>
+                </div>
+                <div style="text-align:center;margin-top:20px;">
+                    <a href="/pages/cloud-gaming.html" style="color:#60a5fa;text-decoration:none;font-size:14px;font-weight:600;">Learn more about Project WarpStream →</a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script>
+        function handleRegistration() {
+            const isConnected = sessionStorage.getItem('walletConnected') === 'true';
+            if (!isConnected) {
+                openConnectModal();
+                return;
+            }
+            window.location.href = '/pages/register-game-form.html';
+        }
+    </script>
+</body>
+
+</html>

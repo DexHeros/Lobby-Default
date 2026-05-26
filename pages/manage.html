@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage DexHero | DexHero</title>
+    <meta name="description" content="Manage your DexHero — update pricing, metadata, and liquidity.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <style>
+        .manage-container { max-width: 760px; margin: 0 auto; }
+
+        .manage-header { text-align: center; margin-bottom: 48px; }
+        .manage-header h1 { font-size: 36px; font-weight: 700; margin-bottom: 10px; }
+        .manage-header p  { font-size: 15px; color: var(--text-secondary); }
+
+        /* Connect prompt */
+        .connect-prompt {
+            text-align: center;
+            padding: 80px 24px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+        }
+        .connect-prompt svg { color: var(--accent-cyan); margin-bottom: 20px; }
+        .connect-prompt h2  { font-size: 22px; font-weight: 600; margin-bottom: 10px; }
+        .connect-prompt p   { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+
+        /* Lookup card */
+        .lookup-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .lookup-card h3 {
+            font-size: 13px; font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.08em;
+            margin-bottom: 12px;
+        }
+        .lookup-row {
+            display: flex;
+            gap: 10px;
+        }
+        .lookup-input {
+            flex: 1;
+            padding: 11px 14px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: 'Fira Code', monospace, inherit;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        .lookup-input:focus { outline: none; border-color: var(--accent-cyan); }
+        .lookup-input::placeholder { color: var(--text-muted); font-family: inherit; }
+        .lookup-btn {
+            padding: 11px 22px;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            border: none; border-radius: 10px;
+            color: #fff; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: opacity 0.2s;
+            white-space: nowrap;
+        }
+        .lookup-btn:hover:not(:disabled) { opacity: 0.88; }
+        .lookup-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        .lookup-status {
+            font-size: 13px; padding: 10px 14px; border-radius: 8px;
+            margin-top: 12px; display: none;
+        }
+        .lookup-status.error   { background: rgba(239,68,68,0.12); color: var(--danger);  border: 1px solid rgba(239,68,68,0.25);  display: block; }
+        .lookup-status.info    { background: rgba(6,182,212,0.08); color: var(--accent-cyan); border: 1px solid rgba(6,182,212,0.2); display: block; }
+
+        /* Spinner */
+        .spinner {
+            display: inline-block; width: 14px; height: 14px;
+            border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+            border-radius: 50%; animation: spin 0.7s linear infinite;
+            vertical-align: -3px; margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Management panel */
+        .management-panel {
+            background: rgba(0,0,0,0.35);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .panel-title { font-size: 14px; font-weight: 600; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px; }
+        .panel-title-meta { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+        .panel-clear-btn {
+            background: none; border: none;
+            color: var(--text-muted); font-size: 13px;
+            cursor: pointer; padding: 4px 10px; border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .panel-clear-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+
+        .panel-tabs { display: flex; border-bottom: 1px solid var(--border-color); }
+        .panel-tab {
+            padding: 12px 20px;
+            font-size: 13px; font-weight: 500;
+            color: var(--text-muted);
+            background: none; border: none;
+            cursor: pointer; border-bottom: 2px solid transparent;
+            transition: all 0.2s; margin-bottom: -1px;
+        }
+        .panel-tab:hover { color: var(--text-primary); }
+        .panel-tab.active { color: var(--accent-cyan); border-bottom-color: var(--accent-cyan); }
+
+        .panel-body { padding: 24px; }
+
+        /* Panel form elements */
+        .panel-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .panel-form-group { margin-bottom: 16px; }
+        .panel-form-group label {
+            display: block;
+            font-size: 12px; font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+        .panel-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .panel-input:focus { outline: none; border-color: var(--accent-cyan); }
+        textarea.panel-input { resize: vertical; min-height: 80px; }
+
+        .panel-btn {
+            padding: 10px 22px;
+            border-radius: 9px;
+            font-size: 13px; font-weight: 600;
+            cursor: pointer; border: none;
+            transition: opacity 0.2s;
+        }
+        .panel-btn-primary {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: #fff;
+        }
+        .panel-btn-primary:hover:not(:disabled) { opacity: 0.88; }
+        .panel-btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        .panel-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+        .panel-actions { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+
+        .panel-status {
+            font-size: 13px; padding: 8px 14px;
+            border-radius: 8px; display: none;
+        }
+        .panel-status.success { background: rgba(34,197,94,0.12); color: var(--success); border: 1px solid rgba(34,197,94,0.25); display: block; }
+        .panel-status.error   { background: rgba(239,68,68,0.12); color: var(--danger);  border: 1px solid rgba(239,68,68,0.25);  display: block; }
+        .panel-status.info    { background: rgba(6,182,212,0.08); color: var(--accent-cyan); border: 1px solid rgba(6,182,212,0.2); display: block; }
+
+        /* Image upload in panel */
+        .panel-image-wrap { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+        .panel-img-preview {
+            width: 72px; height: 72px; border-radius: 12px;
+            object-fit: cover;
+            background: rgba(6,182,212,0.08);
+            border: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .panel-upload-btn {
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.06);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary); font-size: 12px; font-weight: 500;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .panel-upload-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+
+        /* Callout */
+        .panel-callout {
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-size: 13px; line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        .panel-callout.info    { background: rgba(6,182,212,0.07); border: 1px solid rgba(6,182,212,0.2); color: var(--text-secondary); }
+        .panel-callout.warning { background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); color: var(--text-secondary); }
+        .panel-callout strong  { color: var(--text-primary); }
+
+        /* Liquidity tab */
+        .liq-action {
+            display: flex; align-items: center; gap: 12px;
+            padding: 16px;
+            background: rgba(6,182,212,0.06);
+            border: 1px solid rgba(6,182,212,0.2);
+            border-radius: 12px;
+            text-decoration: none; color: var(--text-primary);
+            transition: all 0.2s; margin-bottom: 12px;
+        }
+        .liq-action:hover { border-color: var(--accent-cyan); background: rgba(6,182,212,0.1); }
+        .liq-action-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: rgba(6,182,212,0.15); color: var(--accent-cyan);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .liq-action-text strong { display: block; font-size: 14px; font-weight: 600; }
+        .liq-action-text span   { font-size: 12px; color: var(--text-muted); }
+
+        @media (max-width: 640px) {
+            .manage-header h1 { font-size: 26px; }
+            .lookup-row { flex-direction: column; }
+            .panel-form-row { grid-template-columns: 1fr; }
+            .lookup-card { padding: 20px; }
+            .panel-body { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <div class="manage-container">
+
+            <div class="manage-header">
+                <h1>Manage <span class="gradient-text">DexHero</span></h1>
+                <p>Paste a contract address to update pricing, metadata, and liquidity</p>
+            </div>
+
+            <!-- Disconnected -->
+            <div id="connect-prompt" class="connect-prompt" style="display:none">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <h2>Connect Your Wallet</h2>
+                <p>Connect your wallet to manage the DexHero tokens you've created.</p>
+                <button class="btn-primary" onclick="openConnectModal()">Connect Wallet</button>
+            </div>
+
+            <!-- Lookup -->
+            <div id="lookup-section" style="display:none">
+                <div class="lookup-card">
+                    <h3>Contract Address</h3>
+                    <div class="lookup-row">
+                        <input type="text" class="lookup-input" id="contract-input"
+                            placeholder="0x..."
+                            onkeydown="if(event.key==='Enter') findToken()">
+                        <button class="lookup-btn" id="lookup-btn" onclick="findToken()">Find DexHero</button>
+                    </div>
+                    <div class="lookup-status" id="lookup-status"></div>
+                </div>
+
+                <!-- Management panel -->
+                <div id="management-panel" style="display:none" class="management-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                            </svg>
+                            <span id="panel-token-name">—</span>
+                            <span class="panel-title-meta" id="panel-token-meta"></span>
+                        </span>
+                        <button class="panel-clear-btn" onclick="clearPanel()">✕ Clear</button>
+                    </div>
+                    <div class="panel-tabs">
+                        <button class="panel-tab active" id="tab-pricing" onclick="activateTab('pricing')">Pricing</button>
+                        <button class="panel-tab" id="tab-metadata" onclick="activateTab('metadata')">Metadata</button>
+                        <button class="panel-tab" id="tab-liquidity" onclick="activateTab('liquidity')">Liquidity</button>
+                    </div>
+                    <div class="panel-body" id="panel-body"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="../supabase-config.js"></script>
+    <script src="../js/token-creation.js"></script>
+    <script src="../js/blockchain-integration.js"></script>
+    <script src="../js/unified-wallet.js"></script>
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+
+    <script>
+    const MANAGER_PRICE_ABI = [
+        'function setPurchasePrice(uint256 price) external',
+        'function setRentalPrice(uint256 price) external'
+    ];
+
+    let _token = null;        // currently loaded token
+    let _pendingImageFile = null;
+
+    const _esc = typeof escapeHtml === 'function'
+        ? escapeHtml
+        : s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+    // Init
+    function initPage() {
+        if (window.DexHeroSupabase && !window.DexHeroSupabase.get()) window.DexHeroSupabase.init();
+        checkWalletState();
+
+        // Auto-fill from URL param
+        const addr = new URLSearchParams(window.location.search).get('address') ||
+                     new URLSearchParams(window.location.search).get('contract');
+        if (addr) {
+            document.getElementById('contract-input').value = addr;
+            findToken();
+        }
+    }
+
+    function checkWalletState() {
+        const connected = sessionStorage.getItem('walletConnected') === 'true';
+        document.getElementById('connect-prompt').style.display  = connected ? 'none'  : 'block';
+        document.getElementById('lookup-section').style.display  = connected ? 'block' : 'none';
+        if (!connected) clearPanel();
+    }
+
+    // Lookup
+    async function findToken() {
+        const raw = document.getElementById('contract-input').value.trim();
+        if (!raw) return;
+
+        const walletAddress = sessionStorage.getItem('walletAddress');
+        if (!walletAddress) { checkWalletState(); return; }
+
+        const btn = document.getElementById('lookup-btn');
+        const statusEl = document.getElementById('lookup-status');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Searching...';
+        setLookupStatus('info', 'Looking up token...');
+        clearPanel();
+
+        try {
+            const supabase = window.DexHeroSupabase.get();
+            const { data, error } = await supabase
+                .from('tokens')
+                .select('*')
+                .ilike('contract_address', raw)
+                .maybeSingle();
+
+            if (error) throw new Error(error.message);
+            if (!data) {
+                setLookupStatus('error', 'No DexHero found for that contract address.');
+                return;
+            }
+
+            // Verify ownership
+            const creatorWallet = (data.creator_wallet || '').toLowerCase();
+            if (creatorWallet && creatorWallet !== walletAddress.toLowerCase()) {
+                setLookupStatus('error', 'This DexHero was not created by your connected wallet.');
+                return;
+            }
+
+            _token = data;
+            setLookupStatus('', '');
+            showPanel();
+
+        } catch (err) {
+            setLookupStatus('error', err.message || 'Lookup failed. Check the address and try again.');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Find DexHero';
+        }
+    }
+
+    function setLookupStatus(type, msg) {
+        const el = document.getElementById('lookup-status');
+        if (!type) { el.className = 'lookup-status'; el.textContent = ''; return; }
+        el.className = `lookup-status ${type}`;
+        el.textContent = msg;
+    }
+
+    function showPanel() {
+        if (!_token) return;
+        document.getElementById('panel-token-name').textContent = _token.name || 'Unnamed';
+        document.getElementById('panel-token-meta').textContent =
+            [_token.symbol, chainLabel(_token.chain)].filter(Boolean).join(' · ');
+        document.getElementById('management-panel').style.display = 'block';
+        activateTab('pricing');
+    }
+
+    function clearPanel() {
+        _token = null;
+        _pendingImageFile = null;
+        document.getElementById('management-panel').style.display = 'none';
+        document.getElementById('panel-body').innerHTML = '';
+    }
+
+    // Tab switching
+    function activateTab(tab) {
+        ['pricing','metadata','liquidity'].forEach(t => {
+            const el = document.getElementById(`tab-${t}`);
+            if (el) el.classList.toggle('active', t === tab);
+        });
+        const body = document.getElementById('panel-body');
+        if (!body || !_token) return;
+        if (tab === 'pricing')   body.innerHTML = buildPricingTab();
+        if (tab === 'metadata')  body.innerHTML = buildMetadataTab();
+        if (tab === 'liquidity') body.innerHTML = buildLiquidityTab();
+    }
+
+    // PRICING TAB
+    function buildPricingTab() {
+        if (!_token.manager_address) {
+            return `<div class="panel-callout warning">
+                <strong>No manager contract found.</strong> This token doesn't have an associated manager address and cannot have its prices updated on-chain from here.
+            </div>`;
+        }
+        const purchaseVal = _token.purchase_price_usdc ? parseFloat(_token.purchase_price_usdc).toFixed(4) : '';
+        const rentalVal   = _token.rental_price_usdc   ? parseFloat(_token.rental_price_usdc).toFixed(4)   : '';
+        return `
+        <div class="panel-callout info">
+            Updating prices sends two transactions to the <strong>${_esc(_token.network || 'network')}</strong> manager contract. Make sure MetaMask is connected to the correct network.
+        </div>
+        <div class="panel-form-row">
+            <div class="panel-form-group">
+                <label>Purchase Price (USDC)</label>
+                <input type="number" class="panel-input" id="price-purchase" value="${_esc(purchaseVal)}" min="0.0001" step="0.0001" placeholder="e.g. 0.5000">
+                <div class="panel-hint">Amount in USDC per purchase</div>
+            </div>
+            <div class="panel-form-group">
+                <label>Rental Price (USDC)</label>
+                <input type="number" class="panel-input" id="price-rental" value="${_esc(rentalVal)}" min="0.0001" step="0.0001" placeholder="e.g. 0.1000">
+                <div class="panel-hint">Amount in USDC per rental period</div>
+            </div>
+        </div>
+        <div class="panel-actions">
+            <button class="panel-btn panel-btn-primary" id="btn-price" onclick="handlePriceUpdate()">Update Prices</button>
+            <div class="panel-status" id="status-price"></div>
+        </div>`;
+    }
+
+    async function handlePriceUpdate() {
+        if (!_token?.manager_address) return;
+
+        const purchaseInput = document.getElementById('price-purchase');
+        const rentalInput   = document.getElementById('price-rental');
+        const btn    = document.getElementById('btn-price');
+        const status = document.getElementById('status-price');
+
+        const purchaseVal = parseFloat(purchaseInput.value);
+        const rentalVal   = parseFloat(rentalInput.value);
+
+        if (isNaN(purchaseVal) || purchaseVal <= 0) { showPanelStatus(status, 'error', 'Invalid purchase price'); return; }
+        if (isNaN(rentalVal)   || rentalVal <= 0)   { showPanelStatus(status, 'error', 'Invalid rental price');   return; }
+
+        if (!window.DexHeroBlockchain?.signer) {
+            try { await window.DexHeroBlockchain.connectWallet(); }
+            catch { showPanelStatus(status, 'error', 'Please connect MetaMask to update on-chain prices'); return; }
+        }
+
+        if (_token.network) {
+            try { await window.DexHeroBlockchain.switchNetwork(_token.network); }
+            catch { showPanelStatus(status, 'error', `Failed to switch to ${_token.network}`); return; }
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Sending transactions...';
+        showPanelStatus(status, 'info', 'Waiting for MetaMask confirmation...');
+
+        try {
+            const signer  = window.DexHeroBlockchain.signer;
+            const manager = new ethers.Contract(_token.manager_address, MANAGER_PRICE_ABI, signer);
+            const purchaseRaw = ethers.utils.parseUnits(purchaseVal.toFixed(6), 6);
+            const rentalRaw   = ethers.utils.parseUnits(rentalVal.toFixed(6),   6);
+
+            const [tx1, tx2] = await Promise.all([
+                manager.setPurchasePrice(purchaseRaw),
+                manager.setRentalPrice(rentalRaw)
+            ]);
+
+            showPanelStatus(status, 'info', 'Transactions submitted — waiting for confirmation...');
+            await Promise.all([tx1.wait(), tx2.wait()]);
+
+            _token.purchase_price_usdc = purchaseVal;
+            _token.rental_price_usdc   = rentalVal;
+            showPanelStatus(status, 'success', '✓ Prices updated on-chain');
+        } catch (err) {
+            showPanelStatus(status, 'error', err?.reason || err?.data?.message || err.message || 'Transaction failed');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Update Prices';
+        }
+    }
+
+    // METADATA TAB
+    function buildMetadataTab() {
+        const thumb  = _token.image_url || _token.thumbnail_url || '';
+        const imgSrc = thumb ? `src="${_esc(thumb)}"` : '';
+        return `
+        <div class="panel-image-wrap">
+            <img class="panel-img-preview" id="meta-img-preview" ${imgSrc}
+                onerror="this.src=''" alt="Token image"
+                style="${thumb ? '' : 'background:rgba(6,182,212,0.08)'}">
+            <div>
+                <button class="panel-upload-btn" onclick="document.getElementById('meta-img-input').click()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:-2px">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Upload Image
+                </button>
+                <input type="file" id="meta-img-input" accept="image/*" style="display:none" onchange="handleMetaImageChange(this)">
+                <div class="panel-hint" style="margin-top:6px">512×512 recommended · max 5MB</div>
+            </div>
+        </div>
+        <div class="panel-form-group">
+            <label>Description</label>
+            <textarea class="panel-input" id="meta-desc" maxlength="1000" rows="3">${_esc(_token.description || '')}</textarea>
+        </div>
+        <div class="panel-form-row">
+            <div class="panel-form-group">
+                <label>Website</label>
+                <input type="url" class="panel-input" id="meta-website" value="${_esc(_token.website_url || _token.metadata?.website || '')}" placeholder="https://...">
+            </div>
+            <div class="panel-form-group">
+                <label>Twitter / X</label>
+                <input type="url" class="panel-input" id="meta-twitter" value="${_esc(_token.twitter_url || _token.metadata?.twitter || '')}" placeholder="https://x.com/...">
+            </div>
+        </div>
+        <div class="panel-form-group">
+            <label>Telegram</label>
+            <input type="url" class="panel-input" id="meta-telegram" value="${_esc(_token.telegram_url || _token.metadata?.telegram || '')}" placeholder="https://t.me/...">
+        </div>
+        <div class="panel-actions">
+            <button class="panel-btn panel-btn-primary" id="btn-meta" onclick="handleMetadataUpdate()">Save Metadata</button>
+            <div class="panel-status" id="status-meta"></div>
+        </div>`;
+    }
+
+    function handleMetaImageChange(input) {
+        const file = input.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { alert('Please select an image file'); return; }
+        if (file.size > 5 * 1024 * 1024) { alert('Image must be under 5MB'); return; }
+        _pendingImageFile = file;
+        const preview = document.getElementById('meta-img-preview');
+        if (preview) preview.src = URL.createObjectURL(file);
+    }
+
+    async function handleMetadataUpdate() {
+        if (!_token) return;
+        const btn    = document.getElementById('btn-meta');
+        const status = document.getElementById('status-meta');
+
+        const desc     = document.getElementById('meta-desc')?.value?.trim();
+        const website  = document.getElementById('meta-website')?.value?.trim();
+        const twitter  = document.getElementById('meta-twitter')?.value?.trim();
+        const telegram = document.getElementById('meta-telegram')?.value?.trim();
+
+        for (const [field, val] of [['Website', website], ['Twitter', twitter], ['Telegram', telegram]]) {
+            if (val && !val.startsWith('https://')) {
+                showPanelStatus(status, 'error', `${field} URL must start with https://`); return;
+            }
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+        const walletAddress = sessionStorage.getItem('walletAddress');
+
+        try {
+            let imageUrl = _token.image_url;
+
+            if (_pendingImageFile) {
+                btn.innerHTML = '<span class="spinner"></span>Uploading image...';
+                const supabase = window.DexHeroSupabase.get();
+                const file = _pendingImageFile;
+                const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                const filePath = `tokens/images/${walletAddress}_${Date.now()}_${cleanName}`;
+                const { error: upErr } = await supabase.storage.from(window.DexHeroSupabase.bucket).upload(filePath, file);
+                if (upErr) throw new Error('Image upload failed: ' + upErr.message);
+                const { data: urlData } = supabase.storage.from(window.DexHeroSupabase.bucket).getPublicUrl(filePath);
+                imageUrl = urlData.publicUrl;
+                _pendingImageFile = null;
+            }
+
+            btn.innerHTML = '<span class="spinner"></span>Saving metadata...';
+            const res = await fetch('/api/tokens/update-metadata', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contract_address: _token.contract_address,
+                    creator_wallet: walletAddress,
+                    name: _token.name,
+                    description: desc, image_url: imageUrl,
+                    website_url: website, twitter_url: twitter, telegram_url: telegram
+                })
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error);
+
+            Object.assign(_token, { description: desc, image_url: imageUrl, website_url: website, twitter_url: twitter, telegram_url: telegram });
+            showPanelStatus(status, 'success', '✓ Metadata updated successfully');
+        } catch (err) {
+            showPanelStatus(status, 'error', err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Save Metadata';
+        }
+    }
+
+    // LIQUIDITY TAB
+    function buildLiquidityTab() {
+        const chain = _token.chain || 'ethereum';
+        const dexMap = { ethereum: ['Uniswap V3', 'https://app.uniswap.org'], base: ['Uniswap V3', 'https://app.uniswap.org'], bnb: ['PancakeSwap', 'https://pancakeswap.finance'] };
+        const [dexName, dexUrl] = dexMap[chain] || ['Your DEX', '#'];
+        return `
+        <div class="panel-callout info">
+            EVM liquidity is managed directly through the DEX. Use ${_esc(dexName)} to add or remove liquidity for your token's trading pool.
+        </div>
+        <a href="${_esc(dexUrl)}" target="_blank" rel="noopener noreferrer" class="liq-action">
+            <div class="liq-action-icon" style="background:rgba(59,130,246,0.15);color:#3b82f6">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+            </div>
+            <div class="liq-action-text">
+                <strong>Open ${_esc(dexName)}</strong>
+                <span>Manage your ${_esc(chainLabel(chain))} liquidity pool</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;color:var(--text-muted)">
+                <polyline points="9 18 15 12 9 6"/>
+            </svg>
+        </a>`;
+    }
+
+    // Helpers
+    function chainLabel(chain) {
+        return { ethereum: 'Ethereum', bnb: 'BNB', base: 'Base' }[chain] || chain || '—';
+    }
+
+    function showPanelStatus(el, type, msg) {
+        if (!el) return;
+        el.className = `panel-status ${type}`;
+        el.textContent = msg;
+        if (type === 'success') setTimeout(() => { el.className = 'panel-status'; el.textContent = ''; }, 6000);
+    }
+
+    // Wallet events
+    document.addEventListener('DOMContentLoaded', () => {
+        const _orig = window.updateConnectButton;
+        window.updateConnectButton = function () { if (_orig) _orig(); checkWalletState(); };
+        initPage();
+    });
+    </script>
+</body>
+</html>

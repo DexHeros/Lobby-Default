@@ -1,0 +1,212 @@
+/* bubble-md — rich rendering inside DexHero chat bubbles.
+ *
+ * Pairs with app/ui/bubble-renderer.js. Every class is scoped under the
+ * bubble-md__ prefix so it can't leak into surrounding lobby chrome.
+ *
+ * Goals:
+ *   - readable code blocks (monospace, mild background, no horizontal
+ *     scroll bleed)
+ *   - links match the V3Labs accent color without being shouty
+ *   - embedded media stays inside the bubble width
+ *   - markdown spacing feels tight (chat) rather than article-like
+ */
+
+.bubble-md__p {
+    margin: 0 0 8px 0;
+    line-height: 1.45;
+}
+.bubble-md__p:last-child { margin-bottom: 0; }
+
+.bubble-md__h {
+    margin: 6px 0 4px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+h1.bubble-md__h { font-size: 1.25em; }
+h2.bubble-md__h { font-size: 1.15em; }
+h3.bubble-md__h { font-size: 1.08em; }
+h4.bubble-md__h, h5.bubble-md__h, h6.bubble-md__h { font-size: 1em; }
+
+.bubble-md__link {
+    color: var(--color-accent, #5ad);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+.bubble-md__link:hover { text-decoration-thickness: 2px; }
+
+.bubble-md__code-inline {
+    font-family: ui-monospace, SF Mono, Menlo, Consolas, monospace;
+    font-size: 0.92em;
+    padding: 0 4px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* IDE-style fenced code block — top bar with language pill + Copy
+ * button, then the monospace body underneath. Mirrors VS Code Copilot
+ * Chat / Cursor / Claude Code's standard code presentation. */
+.bubble-md__code-wrap {
+    margin: 8px 0 10px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    max-width: 100%;
+}
+.bubble-md__code-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-family: ui-monospace, SF Mono, Menlo, Consolas, monospace;
+    font-size: 11px;
+}
+.bubble-md__code-lang {
+    color: var(--ink-3, rgba(255, 255, 255, 0.55));
+    text-transform: lowercase;
+    letter-spacing: 0.04em;
+}
+.bubble-md__code-copy {
+    all: unset;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: inherit;
+    font-size: 10.5px;
+    color: var(--ink-2, rgba(255, 255, 255, 0.65));
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.bubble-md__code-copy:hover {
+    background: rgba(6, 182, 212, 0.10);
+    border-color: rgba(6, 182, 212, 0.35);
+    color: #67e8f9;
+}
+.bubble-md__pre {
+    margin: 0;
+    padding: 10px 12px;
+    overflow-x: auto;
+    max-width: 100%;
+}
+.bubble-md__code-block {
+    font-family: ui-monospace, SF Mono, Menlo, Consolas, monospace;
+    font-size: 0.88em;
+    line-height: 1.5;
+    color: #e6e6e6;
+    white-space: pre;
+    display: block;
+}
+
+.bubble-md__list {
+    margin: 4px 0 8px;
+    padding-left: 22px;
+}
+.bubble-md__li {
+    margin: 2px 0;
+    line-height: 1.4;
+}
+
+.bubble-md__quote {
+    margin: 6px 0;
+    padding: 4px 10px;
+    border-left: 3px solid rgba(255, 255, 255, 0.25);
+    opacity: 0.85;
+    font-style: italic;
+}
+
+.bubble-md__hr {
+    margin: 8px 0;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.bubble-md__table {
+    border-collapse: collapse;
+    margin: 8px 0;
+    width: 100%;
+    font-size: 0.88em;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.bubble-md__table th,
+.bubble-md__table td {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 5px 9px;
+    text-align: left;
+    vertical-align: top;
+}
+.bubble-md__table th {
+    background: rgba(255, 255, 255, 0.06);
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+}
+.bubble-md__table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.bubble-md__embed {
+    display: block;
+    max-width: 100%;
+    margin: 6px 0;
+    border-radius: 6px;
+}
+.bubble-md__embed--video {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: none;
+    background: #000;
+}
+.bubble-md__embed--image {
+    max-height: 240px;
+    object-fit: contain;
+    cursor: zoom-in;
+}
+
+/* Make sure the bubble container can fit embeds without bursting the
+ * lobby's right-anchored dock. The stage-chat dock caps width via
+ * shell.css; reinforce here so a wide YouTube embed inside a small
+ * bubble doesn't escape the rounded rect. */
+.lobby-stage__bubble-body .bubble-md__pre,
+.topic-chat__bubble-text .bubble-md__pre { max-width: 100%; }
+
+/* ─── Bubble spill → Activity ───
+ * The "continued in Activity" pill that appears at the bottom of a
+ * chat bubble when its reply overflowed past SPILL_AT_CHARS. Sits as
+ * a separate child of the bubble item, below the body span. */
+.lobby-stage__bubble-spill-cta {
+    display: inline-block;
+    margin: 6px 0 2px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 0.8em;
+    font-weight: 500;
+    color: var(--color-accent, #5ad);
+    background: rgba(90, 170, 220, 0.08);
+    border: 1px solid rgba(90, 170, 220, 0.32);
+    cursor: pointer;
+    transition: background 120ms ease, transform 120ms ease;
+}
+.lobby-stage__bubble-spill-cta:hover {
+    background: rgba(90, 170, 220, 0.18);
+    transform: translateX(1px);
+}
+
+/* Live activity entry (mid-stream). Gives a subtle pulse so the user
+ * notices the long reply is being written there in real time. */
+.activity__row--live {
+    box-shadow: inset 2px 0 0 var(--color-accent, #5ad);
+}
+.activity__row--live .activity__row-source {
+    color: var(--color-accent, #5ad);
+    animation: bubble-md-pulse 1.4s ease-in-out infinite;
+}
+@keyframes bubble-md-pulse {
+    0%, 100% { opacity: 0.6; }
+    50%      { opacity: 1.0; }
+}

@@ -1,0 +1,30 @@
+# DexHeros — Crawl Policy
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /pages/
+
+# Block source code and config directories
+Disallow: /js/
+Disallow: /components/
+Disallow: /db/
+Disallow: /blockchain/
+Disallow: /lib/
+Disallow: /middleware/
+Disallow: /node_modules/
+Disallow: /.env
+Disallow: /server.js
+Disallow: /package.json
+
+# Block scraper-specific crawlers
+User-agent: HTTrack
+Disallow: /
+
+User-agent: SiteSucker
+Disallow: /
+
+User-agent: WebCopier
+Disallow: /
+
+User-agent: wget
+Disallow: /

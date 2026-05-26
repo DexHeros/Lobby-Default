@@ -1,0 +1,46 @@
+DexHero Lobby — Third-Party Licenses
+====================================
+
+The DexHero Lobby is licensed GPL-3.0 (see LICENSE). It loads or bundles
+the following third-party assets and libraries at runtime. Each carries
+its own license, listed below.
+
+
+Runtime libraries (loaded from CDN, not bundled)
+------------------------------------------------
+
+  Inter (font)
+    License: SIL Open Font License v1.1
+    Source:  https://fonts.google.com/specimen/Inter
+
+  ethers.js (UMD build)
+    License: MIT
+    Source:  https://github.com/ethers-io/ethers.js
+
+  supabase-js
+    License: MIT
+    Source:  https://github.com/supabase/supabase-js
+
+  model-viewer
+    License: Apache-2.0
+    Source:  https://github.com/google/model-viewer
+
+  lightweight-charts (TradingView)
+    License: Apache-2.0
+    Source:  https://github.com/tradingview/lightweight-charts
+
+
+Trust boundary notice
+---------------------
+
+The DexHero platform serves forks of this repository from a single
+origin (`v3labs.onrender.com`). By forking and modifying this lobby —
+either directly or through an LLM brain you have connected to your
+DexHero — you accept that any code in your fork executes in the same
+browser origin as platform APIs (wallet signing, brain dispatch,
+DexHero state).
+
+The platform applies a path allowlist, syntax checks, a static
+JS-lint, a per-wallet commit rate limit, and brand-anchor verification
+before serving your fork at runtime. These are defense-in-depth
+measures; they are not a sandbox.

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Generate a 3D DexHero character using AI — describe your character or upload images.">
+    <title>Generate DexHero | DexHero</title>
+
+    <!-- Wallet-state sync: when this page is embedded inside the lobby shell
+         (same-origin iframe), copy the shell's wallet sessionStorage into
+         this iframe BEFORE any other script runs, so the play-pass overlay
+         and friends see the connected address on first check. The stub's
+         cross-frame bridge also syncs later via walletChanged events, but
+         this inline copy prevents the brief "Connect Wallet" flash on load. -->
+    <script>
+        try {
+            if (window.top && window.top !== window && window.top.sessionStorage) {
+                ['walletConnected', 'walletAddress', 'walletChain', 'walletType', 'dexhero_wallet_base'].forEach(function (k) {
+                    var v = window.top.sessionStorage.getItem(k);
+                    if (v != null) sessionStorage.setItem(k, v);
+                });
+            }
+        } catch (_) {}
+        // Wipe any non-wallet sessionStorage from a previous flow. The model
+        // URL flows via URL params now; nothing else is cached client-side.
+        try {
+            sessionStorage.removeItem('dexhero_generated_model');
+            sessionStorage.removeItem('dexhero_pending_model_url');
+            sessionStorage.removeItem('dexhero_launch_type');
+            sessionStorage.removeItem('pass_verified_addr');
+        } catch (_) {}
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    
+    <style>
+        /* ── Layout ─────────────────────────────────────────── */
+        .generate-container { max-width: 960px; margin: 0 auto; text-align: center; }
+        .generate-wrapper { position: relative; background: transparent; border-radius: 16px; }
+
+        /* ── Beta ────────────────────────────────────────────── */
+        .beta-stamp {
+            position: absolute; top: -15px; right: -15px;
+            background: #FF2A5F; color: white; font-weight: 800;
+            padding: 6px 14px; border-radius: 8px; transform: rotate(12deg);
+            box-shadow: 0 4px 12px rgba(255,42,95,.4); z-index: 30;
+            letter-spacing: 2px; font-size: 13px;
+        }
+        .beta-lock-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10,10,15,.88); backdrop-filter: blur(10px);
+            z-index: 20; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            border-radius: 16px; text-align: center; padding: 30px;
+        }
+        .beta-lock-overlay.hidden { display: none; }
+        .beta-lock-overlay h3 { font-size: 24px; margin-bottom: 10px; color: #fff; }
+        .beta-lock-overlay p  { color: var(--text-secondary); margin-bottom: 24px; max-width: 400px; }
+        .password-group { display: flex; gap: 10px; width: 100%; max-width: 320px; }
+        .password-group input {
+            flex: 1; padding: 12px 16px; border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: rgba(0,0,0,.4); color: #fff; font-family: 'Inter',sans-serif;
+        }
+        .password-group input:focus { outline: none; border-color: var(--accent-cyan); }
+        .password-group button {
+            padding: 12px 20px; border-radius: 8px; background: var(--accent-cyan);
+            color: #000; font-weight: 600; border: none; cursor: pointer; transition: all .2s;
+        }
+        .password-group button:hover { background: #00d4fb; transform: translateY(-2px); }
+
+        /* ── Tabs ────────────────────────────────────────────── */
+        .tabs { display: flex; justify-content: center; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
+        .tab-btn {
+            padding: 11px 22px; font-size: 15px; font-weight: 600;
+            background: var(--bg-glass); border: 2px solid var(--border-color);
+            border-radius: 12px; cursor: pointer; color: var(--text-secondary); transition: all .25s;
+        }
+        .tab-btn.active {
+            border-color: var(--accent-cyan); color: var(--text-primary);
+            background: rgba(6,182,212,.12); box-shadow: 0 0 16px rgba(6,182,212,.15);
+        }
+        .tab-btn:hover:not(.active) { border-color: rgba(6,182,212,.4); color: var(--text-primary); }
+        .tab-content { display: none; text-align: left; }
+        .tab-content.active { display: block; }
+
+        /* ── Input ───────────────────────────────────────────── */
+        .input-group { margin-bottom: 22px; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-primary); }
+        .input-group textarea {
+            width: 100%; height: 110px; padding: 14px 16px;
+            background: rgba(0,0,0,.25); border: 1px solid var(--border-color);
+            border-radius: 12px; color: var(--text-primary);
+            font-family: 'Inter',sans-serif; resize: vertical; transition: border-color .2s;
+        }
+        .input-group textarea:focus { outline: none; border-color: var(--accent-cyan); }
+        .input-group .hint { font-size: 13px; color: var(--text-secondary); margin-top: 6px; }
+        .action-container { display: flex; justify-content: center; margin-top: 24px; gap: 12px; flex-wrap: wrap; }
+
+        /* ── View Upload Zone (generic) ──────────────────────── */
+        .view-upload-zone {
+            position: relative; border-radius: 14px; border: 2px dashed;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            overflow: hidden; user-select: none;
+        }
+        /* Per-view colours */
+        .view-upload-zone[data-view="front"]  { border-color: #10b981; background: rgba(16,185,129,.06); }
+        .view-upload-zone[data-view="left"]   { border-color: rgba(59, 130, 246,.7); background: rgba(59, 130, 246,.06); }
+        .view-upload-zone[data-view="right"]  { border-color: rgba(245,158,11,.7); background: rgba(245,158,11,.06); }
+        .view-upload-zone[data-view="back"]   { border-color: rgba(239,68,68,.7); background: rgba(239,68,68,.06); }
+
+        .view-upload-zone[data-view="front"]:hover  { border-color: #10b981; background: rgba(16,185,129,.12); }
+        .view-upload-zone[data-view="left"]:hover   { border-color: #3b82f6; background: rgba(59, 130, 246,.12); }
+        .view-upload-zone[data-view="right"]:hover  { border-color: #f59e0b; background: rgba(245,158,11,.12); }
+        .view-upload-zone[data-view="back"]:hover   { border-color: #ef4444; background: rgba(239,68,68,.12); }
+
+        .view-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; position: relative; z-index: 1; transition: opacity .2s; }
+        [data-view="front"] .view-label  { color: #10b981; }
+        [data-view="left"]  .view-label  { color: #3b82f6; }
+        [data-view="right"] .view-label  { color: #f59e0b; }
+        [data-view="back"]  .view-label  { color: #ef4444; }
+
+        .view-placeholder { display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; z-index: 1; transition: opacity .2s; }
+        .view-placeholder span { font-size: 12px; color: var(--text-secondary); }
+
+        /* Hide labels/placeholders when loading or showing image */
+        .view-upload-zone:has(.view-loading-overlay.visible) .view-label,
+        .view-upload-zone:has(.view-loading-overlay.visible) .view-placeholder,
+        .view-upload-zone:has(.view-image-preview.visible) .view-label,
+        .view-upload-zone:has(.view-image-preview.visible) .view-placeholder {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Image preview — covers entire zone including label */
+        .view-image-preview {
+            position: absolute; inset: 0;
+            display: none; align-items: center; justify-content: center;
+            background: #0a0a10; /* solid — hides all text beneath */
+            z-index: 10;
+            border-radius: 12px;
+        }
+        .view-image-preview.visible { display: flex; }
+        .view-image-preview img { width: 100%; height: 100%; object-fit: contain; border-radius: 12px; }
+
+        /* Loading overlay */
+        .view-loading-overlay {
+            position: absolute; inset: 0; display: none;
+            align-items: center; justify-content: center;
+            flex-direction: column; gap: 8px;
+            background: #0a0a10; border-radius: 12px; z-index: 15;
+        }
+        .view-loading-overlay.visible { display: flex; }
+        .mini-spinner {
+            width: 28px; height: 28px;
+            border: 3px solid rgba(255,255,255,.2); border-top-color: var(--accent-cyan);
+            border-radius: 50%; animation: spin .9s linear infinite;
+        }
+        .view-loading-overlay span { font-size: 11px; color: rgba(255,255,255,.8); font-weight: 500; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Remove badge */
+        .view-remove-badge {
+            position: absolute; top: 8px; right: 8px; width: 24px; height: 24px;
+            background: #ef4444; border-radius: 50%; display: none;
+            align-items: center; justify-content: center;
+            cursor: pointer; z-index: 20;
+            box-shadow: 0 2px 8px rgba(239,68,68,.5); font-size: 12px; color: white; font-weight: 700;
+        }
+        .view-remove-badge.visible { display: flex; }
+        .view-remove-badge:hover { background: #dc2626; transform: scale(1.1); }
+
+        /* Drag active */
+        .view-upload-zone.drag-over { transform: scale(1.03); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+
+        /* AI badge */
+        .ai-badge {
+            position: absolute; bottom: 8px; left: 8px;
+            background: linear-gradient(135deg,#3b82f6,#3b82f6);
+            color: white; font-size: 9px; font-weight: 700;
+            padding: 2px 7px; border-radius: 10px; letter-spacing: .5px;
+            pointer-events: none; z-index: 20;
+        }
+
+        /* ── 4-panel thumbnail strip ─────────────────────────── */
+        .thumb-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-top: 20px; }
+        .thumb-zone {
+            position: relative; height: 80px; border-radius: 10px;
+            border: 2px dashed; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; overflow: hidden;
+        }
+        .thumb-zone[data-view="front"] { border-color: rgba(16,185,129,.4);  background: rgba(16,185,129,.04);  }
+        .thumb-zone[data-view="left"]  { border-color: rgba(59, 130, 246,.4);  background: rgba(59, 130, 246,.04);  }
+        .thumb-zone[data-view="right"] { border-color: rgba(245,158,11,.4);  background: rgba(245,158,11,.04);  }
+        .thumb-zone[data-view="back"]  { border-color: rgba(239,68,68,.4);   background: rgba(239,68,68,.04);   }
+        .thumb-zone.approved[data-view="front"] { border-color: #10b981; }
+        .thumb-zone.approved[data-view="left"]  { border-color: #3b82f6; }
+        .thumb-zone.approved[data-view="right"] { border-color: #f59e0b; }
+        .thumb-zone.approved[data-view="back"]  { border-color: #ef4444; }
+        .thumb-label { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; opacity: .5; transition: opacity .2s; }
+        .thumb-zone:has(.thumb-img.visible) .thumb-label { opacity: 0; visibility: hidden; }
+        [data-view="front"] .thumb-label { color: #10b981; }
+        [data-view="left"]  .thumb-label { color: #3b82f6; }
+        [data-view="right"] .thumb-label { color: #f59e0b; }
+        [data-view="back"]  .thumb-label { color: #ef4444;  }
+        .thumb-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; border-radius: 8px; display: none; background: #0a0a10; }
+        .thumb-img.visible { display: block; }
+        .thumb-check { position: absolute; top: 4px; right: 4px; font-size: 10px; display: none; }
+        .thumb-check.visible { display: block; }
+
+        /* ── Seq secondary btn ───────────────────────────────── */
+        .btn-secondary-outline {
+            padding: 12px 24px; border-radius: 12px;
+            background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.18);
+            color: var(--text-primary); font-weight: 600; cursor: pointer;
+            font-size: 15px; font-family: 'Inter',sans-serif; transition: all .2s;
+        }
+        .btn-secondary-outline:hover { background: rgba(255,255,255,.12); }
+        .btn-secondary-outline:disabled { opacity: .4; cursor: not-allowed; }
+
+        /* ── Status Box ──────────────────────────────────────── */
+        .status-box {
+            margin-top: 24px; padding: 20px; border-radius: 12px;
+            background: rgba(0,0,0,.3); border: 1px solid var(--border-color); display: none;
+        }
+        .status-box.visible { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .loader {
+            width: 30px; height: 30px;
+            border: 3px solid rgba(6,182,212,.3); border-top: 3px solid var(--accent-cyan);
+            border-radius: 50%; animation: spin 1s linear infinite;
+        }
+
+        /* ── 3D Viewer ───────────────────────────────────────── */
+        .model-viewer-container {
+            width: 100%; height: 60vh; min-height: 400px;
+            margin-top: 24px; border-radius: 16px; overflow: hidden; display: none; background: #111;
+        }
+        .model-viewer-container.visible { display: block; }
+        model-viewer { width: 100%; height: 100%; }
+
+        /* ── Proceed ─────────────────────────────────────────── */
+        .proceed-btn { display: none; margin-top: 24px; }
+        .proceed-btn.visible { display: inline-flex; }
+
+        /* ── Gemini progress grid (Text to Img) ──────────────── */
+        .multi-view-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+        @media (max-width:600px) { .multi-view-grid { grid-template-columns: repeat(2,1fr); } }
+
+        @media (max-width: 768px) {
+            .generate-container {
+                max-width: 100%;
+                padding: 0 12px;
+            }
+            .thumb-strip {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .multi-view-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .model-viewer-container {
+                height: 45vh;
+                min-height: 280px;
+            }
+            .tabs {
+                gap: 8px;
+            }
+            .tab-btn {
+                padding: 9px 16px;
+                font-size: 14px;
+            }
+            .beta-lock-overlay {
+                padding: 20px;
+            }
+            .beta-lock-overlay h3 {
+                font-size: 20px;
+            }
+            .action-container {
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .generate-container {
+                padding: 0 8px;
+            }
+            .thumb-strip {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6px;
+            }
+            .thumb-zone {
+                height: 60px;
+            }
+            .model-viewer-container {
+                height: 35vh;
+                min-height: 220px;
+            }
+            .tab-btn {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+            .password-group {
+                flex-direction: column;
+            }
+            .beta-lock-overlay h3 {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="main-content page-content">
+        <div class="generate-container">
+            <div style="text-align: left; margin-bottom: 24px;">
+                <a href="create-token-type.html?method=generate" id="back-link" style="color: var(--text-secondary); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; font-weight: 500; font-size: 15px; transition: all 0.2s;">
+                    ← Back
+                </a>
+            </div>
+            <div class="select-chain-header">
+                <h1>Generate <span class="gradient-text">DexHero</span></h1>
+                <p>AI-powered character creation — describe, generate, and mint your hero</p>
+            </div>
+
+            <div class="generate-wrapper" id="generate-wrapper">
+                <div class="beta-stamp">BETA</div>
+
+                <!-- Play Pass Gate -->
+                <div class="beta-lock-overlay" id="pass-lock-overlay">
+                    <h3>Play Pass Required</h3>
+                    <p>The AI DexHero generator is available to Play Pass holders. One pass unlocks hosting, generation, and every DexHero network — for life.</p>
+                    <div class="password-group" style="justify-content:center;">
+                        <button id="btn-check-pass" style="display:none;">Connect Wallet</button>
+                        <button type="button" id="btn-buy-pass" onclick="window.dexheroBuyPlayPass && window.dexheroBuyPlayPass()" style="display:none;padding:12px 20px;border-radius:8px;background:transparent;border:1px solid var(--accent-cyan);color:var(--accent-cyan);font-weight:600;cursor:pointer;align-items:center;font:inherit;">Get a Play Pass</button>
+                        <div id="pass-check-spinner" style="width:28px;height:28px;border:3px solid rgba(6,182,212,0.2);border-top-color:var(--accent-cyan);border-radius:50%;animation:pass-spin 0.9s linear infinite;"></div>
+                    </div>
+                    <p id="pass-status-msg" style="color:var(--text-secondary);margin-top:14px;font-size:14px;min-height:20px;">Checking for a Play Pass…</p>
+                </div>
+                <style>@keyframes pass-spin { to { transform: rotate(360deg); } }</style>
+
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="text-to-img">Text to 3D</button>
+                    <button class="tab-btn" data-tab="img-to-3d">Img to 3D</button>
+                </div>
+
+                <!-- ─────────────────────────────────────────────
+                     TAB 1: Text to Img (Gemini from description)
+                     ───────────────────────────────────────────── -->
+                <div class="tab-content active" id="text-to-img">
+                    <div class="input-group">
+                        <label for="gemini-prompt-input">Describe your DexHero character</label>
+                        <textarea id="gemini-prompt-input"
+                            placeholder="A futuristic cyborg ninja with glowing blue eyes, full body black armor, neon cyan accents..."></textarea>
+                        <p class="hint">Gemini generates each view one at a time — approve each before moving to the next</p>
+                    </div>
+                    <div class="action-container">
+                        <button class="btn-create pulse-glow" id="btn-start-text-generation">Start Generation</button>
+                    </div>
+
+                    <!-- Gemini progress mini-grid (shown while generating) -->
+                    <div id="gemini-progress-grid" class="multi-view-grid" style="margin-top:28px;display:none;">
+                        <div class="view-upload-zone" data-view="front" style="height:160px;cursor:default;">
+                            <span class="view-label">Front</span>
+                            <div class="view-placeholder" id="gp-placeholder-front"><span>Pending</span></div>
+                            <div class="view-loading-overlay" id="gp-loading-front"><div class="mini-spinner"></div><span>Generating...</span></div>
+                            <div class="view-image-preview" id="gp-preview-front"><img id="gp-img-front" src="" alt="Front"></div>
+                        </div>
+                        <div class="view-upload-zone" data-view="left" style="height:160px;cursor:default;">
+                            <span class="view-label">Left</span>
+                            <div class="view-placeholder" id="gp-placeholder-left"><span>Pending</span></div>
+                            <div class="view-loading-overlay" id="gp-loading-left"><div class="mini-spinner"></div><span>Generating...</span></div>
+                            <div class="view-image-preview" id="gp-preview-left"><img id="gp-img-left" src="" alt="Left"></div>
+                        </div>
+                        <div class="view-upload-zone" data-view="back" style="height:160px;cursor:default;">
+                            <span class="view-label">Back</span>
+                            <div class="view-placeholder" id="gp-placeholder-back"><span>Pending</span></div>
+                            <div class="view-loading-overlay" id="gp-loading-back"><div class="mini-spinner"></div><span>Generating...</span></div>
+                            <div class="view-image-preview" id="gp-preview-back"><img id="gp-img-back" src="" alt="Back"></div>
+                        </div>
+                        <div class="view-upload-zone" data-view="right" style="height:160px;cursor:default;">
+                            <span class="view-label">Right</span>
+                            <div class="view-placeholder" id="gp-placeholder-right"><span>Pending</span></div>
+                            <div class="view-loading-overlay" id="gp-loading-right"><div class="mini-spinner"></div><span>Generating...</span></div>
+                            <div class="view-image-preview" id="gp-preview-right"><img id="gp-img-right" src="" alt="Right"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─────────────────────────────────────────────
+                     TAB 2: Img to 3D (upload front → Gemini → approve each → Tripo)
+                     ───────────────────────────────────────────── -->
+                <div class="tab-content" id="img-to-3d">
+
+                    <!-- Step A: Upload front view -->
+                    <div id="img3d-upload-step">
+                        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:18px;">
+                            Upload your character's <strong>front view</strong>. Gemini will regenerate all 4 views one at a time for your approval before 3D generation.
+                        </p>
+                        <div style="display:flex;justify-content:center;margin-bottom:18px;">
+                            <div class="view-upload-zone" data-view="front" id="zone-front"
+                                tabindex="0" role="button" aria-label="Upload front view"
+                                style="width:220px;height:220px;cursor:pointer;">
+                                <span class="view-label" id="zone-front-label">Front View</span>
+                                <div class="view-placeholder" id="placeholder-front">
+                                    <span>Click or drag &amp; drop</span>
+                                    <span style="font-size:11px;opacity:.6;">PNG, JPG, WebP</span>
+                                </div>
+                                <div class="view-loading-overlay" id="loading-front"><div class="mini-spinner"></div><span>Loading...</span></div>
+                                <div class="view-image-preview" id="preview-front"><img id="prev-img-front" src="" alt="Front view"></div>
+                                <div class="view-remove-badge" id="remove-front">✕</div>
+                                <input type="file" id="file-front" accept="image/png,image/jpeg,image/webp" style="display:none">
+                            </div>
+                        </div>
+                        <div class="action-container" style="margin-top:0;">
+                            <button class="btn-create pulse-glow" id="btn-generate-from-image" disabled>Generate 4 Views</button>
+                        </div>
+                    </div>
+
+                    <!-- Step B: Sequential per-view approval (hidden until flow starts) -->
+                    <div id="img3d-seq-step" style="display:none;">
+
+                        <!-- Step indicator -->
+                        <p style="text-align:center;font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+                            Step <strong id="seq-step-num">1</strong> of 4 —
+                            Generating <strong id="seq-step-name" style="color:var(--text-primary);">Front</strong> view
+                        </p>
+
+                        <!-- Large current view card -->
+                        <div style="display:flex;justify-content:center;margin-bottom:18px;">
+                            <div class="view-upload-zone" id="seq-view-zone" data-view="front"
+                                style="width:280px;height:280px;cursor:default;transition:border-color .3s,background .3s;">
+                                <span class="view-label" id="seq-view-label">Front</span>
+                                <div class="view-placeholder" id="seq-placeholder" style="pointer-events:none;">
+                                </div>
+                                <div class="view-loading-overlay visible" id="seq-loading">
+                                    <div class="mini-spinner"></div>
+                                    <span id="seq-loading-text">Generating front view...</span>
+                                </div>
+                                <div class="view-image-preview" id="seq-preview">
+                                    <img id="seq-img" src="" alt="">
+                                </div>
+                                <div class="ai-badge">AI</div>
+                            </div>
+                        </div>
+
+                        <!-- Approve / Retry (shown once image is ready) -->
+                        <div class="action-container" id="seq-action-btns" style="display:none;gap:12px;">
+                            <button class="btn-secondary-outline" id="btn-retry-view" style="min-width:130px;">Retry</button>
+                            <button class="btn-create" id="btn-approve-view" style="min-width:160px;">Approve</button>
+                        </div>
+
+                        <!-- Thumbnail progress strip -->
+                        <div class="thumb-strip" style="margin-top:24px;">
+                            <div class="thumb-zone" data-view="front" id="thumb-front">
+                                <span class="thumb-label">Front</span>
+                                <img class="thumb-img" id="thumb-img-front" src="" alt="Front">
+                                <span class="thumb-check" id="thumb-check-front">OK</span>
+                            </div>
+                            <div class="thumb-zone" data-view="left" id="thumb-left">
+                                <span class="thumb-label">Left</span>
+                                <img class="thumb-img" id="thumb-img-left" src="" alt="Left">
+                                <span class="thumb-check" id="thumb-check-left">OK</span>
+                            </div>
+                            <div class="thumb-zone" data-view="back" id="thumb-back">
+                                <span class="thumb-label">Back</span>
+                                <img class="thumb-img" id="thumb-img-back" src="" alt="Back">
+                                <span class="thumb-check" id="thumb-check-back">OK</span>
+                            </div>
+                            <div class="thumb-zone" data-view="right" id="thumb-right">
+                                <span class="thumb-label">Right</span>
+                                <img class="thumb-img" id="thumb-img-right" src="" alt="Right">
+                                <span class="thumb-check" id="thumb-check-right">OK</span>
+                            </div>
+                        </div>
+
+                        <!-- Final generate (only after all 4 approved) -->
+                        <div class="action-container" id="seq-final-container" style="display:none;gap:12px;margin-top:20px;">
+                            <button class="btn-secondary-outline" id="btn-seq-start-over">Start Over</button>
+                            <button class="btn-create pulse-glow" id="btn-final-generate">Generate 3D Model</button>
+                        </div>
+
+                        <!-- Start over (before all 4 approved) -->
+                        <p style="text-align:center;margin-top:16px;">
+                            <button class="btn-secondary-outline" id="btn-seq-cancel"
+                                style="font-size:12px;padding:8px 16px;opacity:.7;">Start Over</button>
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <!-- Shared status + 3D viewer -->
+                <div class="status-box" id="status-box">
+                    <div class="loader" id="status-loader"></div>
+                    <div id="status-text" style="font-weight:600;">Processing...</div>
+                </div>
+                <div class="model-viewer-container" id="model-viewer-container" style="position: relative;">
+                    <model-viewer id="final-model-viewer" auto-rotate camera-controls autoplay
+                        shadow-intensity="1" exposure="1" environment-image="neutral"></model-viewer>
+                    <button class="btn-create" id="btn-toggle-animation" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10; padding: 8px 16px; font-size: 14px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">⏸ Pause Animation</button>
+                </div>
+                <button class="btn-create proceed-btn" id="btn-proceed">
+                    Proceed to Blockchain Selection
+                </button>
+
+            </div><!-- /generate-wrapper -->
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+    
+    <!-- Blockchain Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" type="application/javascript"></script>
+    <script src="../js/blockchain-integration.js"></script>
+
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="../js/generate-model.js?v=26"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+{
+    "schema_version": "1.1",
+    "comment": "Canonical V3Labs brain-tool catalog. The platform owns this file; every brain framework (jarjar, mcp, function_calling, langchain, ws) consumes from here rather than defining its own. When the patch shape evolves, this is the only place that needs updating — server-side validation reads the same schema the brain was told to emit, so there's no drift between 'what the brain produces' and 'what the platform accepts'.",
+    "tools": [
+        {
+            "name": "upgrades.propose",
+            "description": "Propose a UI patch in response to the user's `/upgrade <description>` request. Returns a patch payload the lobby renders as a SOCIAL POST in Genetics: every patch publishes with a Twitter-length caption (≤140 chars, plain user voice, no marketing copy) and 3-5 hashtags drawn from the patch's effect or target surface. You are the dexhero authoring this post on behalf of the user; write the caption the way the user themselves would, not the way a feature release note would. The patch is NOT committed until the user clicks Commit on the card.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "title":          { "type": "string", "maxLength": 120, "description": "Short, human-readable title." },
+                    "description":    { "type": "string", "description": "One- or two-sentence summary of the change." },
+                    "target_surface": {
+                        "enum": ["equipment-slot", "header-ticker", "chat-log", "slot", "global"],
+                        "description": "Which surface the patch primarily targets."
+                    },
+                    "manifest_version": { "type": "string", "default": "1.1" },
+                    "css": {
+                        "type": "string",
+                        "description": "Sanitized CSS. Use CSS variables when possible. Auto-scoped to the patch region by the applier."
+                    },
+                    "config": {
+                        "type": "object",
+                        "description": "Declarative overrides — microcopy.<key>, <component>.layout, etc."
+                    },
+                    "behaviors": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id":      { "type": "string" },
+                                "trigger": { "type": "string", "description": "event:dexhero:<name> | interval:<ms> | boot" },
+                                "script":  { "type": "string", "description": "JS source — runs sandboxed in a Web Worker." },
+                                "capabilities_requested": {
+                                    "type": "array",
+                                    "items": { "enum": ["dom.read", "dom.style", "events.subscribe", "chat.append"] }
+                                }
+                            },
+                            "required": ["id", "trigger"]
+                        },
+                        "description": "Optional scripted behaviors. Sandboxed at runtime."
+                    },
+                    "caption": {
+                        "type": "string",
+                        "maxLength": 140,
+                        "description": "Twitter-length social caption (≤140 chars) describing the change in plain user voice — what they'd say if they were posting this to a feed themselves. NOT marketing copy. Examples: \"Tighter, blacker, rounder. Popovers quietly disappear into the bg.\", \"Warmed up the chat replies — easier on the eyes at 2am.\", \"When you tap a slot it now breathes. Tiny detail, huge vibe.\". Required for the social-post framing on Genetics."
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": { "type": "string", "maxLength": 24 },
+                        "minItems": 3,
+                        "maxItems": 5,
+                        "description": "3-5 hashtag strings (rendered as #chips on the social card). No leading '#'; lowercase, single-word preferred. Drawn from the patch's effect (darkmode, minimal, glow, terminal…) or surface (popovers, ticker, chat, slots, theme)."
+                    }
+                },
+                "required": ["title", "description", "target_surface", "caption", "tags"]
+            },
+            "returns": {
+                "type": "object",
+                "properties": {
+                    "ok":          { "type": "boolean" },
+                    "proposal_id": { "type": "string", "description": "Client-side id; the real commit lands when the user clicks Commit." }
+                }
+            },
+            "side_effect": "platform"
+        }
+    ]
+}

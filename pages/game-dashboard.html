@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Dashboard | DexHero</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/dexhero-logo.png">
+    <link rel="apple-touch-icon" href="/dexhero-logo.png">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../pages.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" type="application/javascript"></script>
+    <script src="/js/utils.js"></script>
+    <script src="../js/blockchain-integration.js"></script>
+    <style>
+        /* ═══ SOVEREIGN LOBBY — game-dashboard (page-scoped) ═══ */
+        .lobby-page { --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace; }
+
+        .dashboard-container { max-width: 1240px; margin: 0 auto; padding: 40px 24px 140px; }
+
+        /* Top strip — breadcrumb HUD */
+        .lobby-strip {
+            display: flex; align-items: center; justify-content: flex-start;
+            font-family: var(--mono); font-size: 11px; letter-spacing: 0.4em;
+            color: rgba(255,255,255,0.45); text-transform: uppercase;
+            margin-bottom: 72px;
+        }
+        .lobby-strip a { color: rgba(255,255,255,0.45); text-decoration: none; transition: color .2s; }
+        .lobby-strip a:hover { color: #fff; }
+        .lobby-strip .sep { margin: 0 12px; opacity: 0.35; }
+        .lobby-strip .curr { color: #fff; }
+
+        /* Stage row: identity ▏ subject ▏ metrics */
+        .lobby-stage-row {
+            display: grid;
+            grid-template-columns: 1fr minmax(280px, 420px) 1fr;
+            align-items: center;
+            gap: 56px;
+            margin-bottom: 96px;
+            animation: lobby-rise 500ms ease-out both;
+        }
+        @keyframes lobby-rise {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Left Wing — identity, floating typography */
+        .lobby-identity {
+            display: flex; flex-direction: column; gap: 22px;
+            text-align: right;
+            animation: lobby-breath 7s ease-in-out infinite;
+        }
+        @keyframes lobby-breath {
+            0%,100% { transform: translateY(0); }
+            50%     { transform: translateY(-2px); }
+        }
+        .lobby-identity .title {
+            font-size: clamp(32px, 4vw, 48px); font-weight: 700;
+            letter-spacing: 0.16em; text-transform: uppercase;
+            line-height: 1.05;
+            background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.65) 100%);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+            word-break: break-word;
+        }
+        .lobby-identity .slug {
+            font-family: var(--mono); font-size: 12px;
+            color: rgba(255,255,255,0.5); letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+        .lobby-identity .badges {
+            display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
+        }
+
+        /* Stage — giant game icon with radial vignette + corner brackets */
+        .lobby-stage {
+            position: relative;
+            aspect-ratio: 1;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .lobby-stage::before {
+            content: ""; position: absolute; inset: -20%;
+            background: radial-gradient(circle at center,
+                rgba(6,182,212,0.22) 0%,
+                rgba(59,130,246,0.10) 35%,
+                transparent 65%);
+            filter: blur(32px);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .lobby-stage::after {
+            content: ""; position: absolute; inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(6,182,212,0.04) 0%, transparent 60%);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .game-identity-icon {
+            width: clamp(200px, 28vw, 320px);
+            height: clamp(200px, 28vw, 320px);
+            border-radius: 50%;
+            overflow: hidden;
+            position: relative; z-index: 1;
+            display: flex; align-items: center; justify-content: center;
+            font-size: clamp(72px, 10vw, 120px);
+            font-weight: 700; color: #fff;
+            background: rgba(255,255,255,0.03);
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.06),
+                inset 0 0 80px rgba(6,182,212,0.08);
+            animation: lobby-stage-breath 5s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+        @keyframes lobby-stage-breath {
+            0%,100% { box-shadow: 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 80px rgba(6,182,212,0.08), 0 0 40px rgba(6,182,212,0.05); }
+            50%     { box-shadow: 0 0 0 1px rgba(255,255,255,0.1),  inset 0 0 80px rgba(6,182,212,0.14), 0 0 80px rgba(6,182,212,0.10); }
+        }
+        .game-identity-icon img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Corner brackets — the signature "container without walls" */
+        .lobby-brackets { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+        .lobby-brackets b {
+            position: absolute; width: 22px; height: 22px;
+            border-color: rgba(6,182,212,0.4);
+        }
+        .lobby-brackets b.tl { top: 0; left: 0; border-top: 1px solid; border-left: 1px solid; }
+        .lobby-brackets b.tr { top: 0; right: 0; border-top: 1px solid; border-right: 1px solid; }
+        .lobby-brackets b.bl { bottom: 0; left: 0; border-bottom: 1px solid; border-left: 1px solid; }
+        .lobby-brackets b.br { bottom: 0; right: 0; border-bottom: 1px solid; border-right: 1px solid; }
+
+        /* Right Wing — monospace live metrics stack, no container */
+        .lobby-metrics {
+            display: flex; flex-direction: column; gap: 2px;
+            animation: lobby-breath 8s ease-in-out infinite;
+        }
+        .lobby-metric {
+            display: flex; justify-content: space-between; align-items: baseline;
+            font-family: var(--mono);
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .lobby-metric:last-child { border-bottom: 0; }
+        .lobby-metric .label {
+            font-size: 10.5px; letter-spacing: 0.3em; text-transform: uppercase;
+            color: rgba(255,255,255,0.45);
+        }
+        .lobby-metric .val {
+            font-size: 22px; font-weight: 600; color: #fff;
+            font-variant-numeric: tabular-nums;
+        }
+        .lobby-metric .val .health-pill {
+            display: inline-block; padding: 3px 12px; border-radius: 2px;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.25em;
+            background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.55);
+        }
+
+        /* Countdown — thin HUD scanline */
+        .countdown-banner {
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--mono); font-size: 11px; letter-spacing: 0.3em;
+            color: rgba(6,182,212,0.85); text-transform: uppercase;
+            padding: 12px 0;
+            border-top: 1px solid rgba(6,182,212,0.2);
+            border-bottom: 1px solid rgba(6,182,212,0.2);
+            margin: -36px 0 40px;
+        }
+
+        /* Badges — HUD-style rectangles, no fill */
+        .badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 12px; border-radius: 2px;
+            font-family: var(--mono); font-size: 10px;
+            font-weight: 600; text-transform: uppercase; letter-spacing: 0.22em;
+            border: 1px solid;
+            background: transparent;
+        }
+        .badge-tier-gold   { color: #f59e0b; border-color: rgba(245,158,11,0.6); }
+        .badge-tier-silver { color: #cbd5e1; border-color: rgba(203,213,225,0.5); }
+        .badge-tier-bronze { color: #d97706; border-color: rgba(217,119,6,0.55); }
+        .badge-live    { color: #22c55e; border-color: rgba(34,197,94,0.55); box-shadow: 0 0 16px rgba(34,197,94,0.15); }
+        .badge-pending { color: #06b6d4; border-color: rgba(6,182,212,0.55); }
+        .badge-blocked { color: #ef4444; border-color: rgba(239,68,68,0.55); }
+
+        /* Roster */
+        .lobby-roster-head {
+            display: flex; align-items: baseline; justify-content: space-between;
+            font-family: var(--mono); margin-bottom: 28px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .lobby-roster-head .h {
+            font-size: 13px; letter-spacing: 0.4em;
+            text-transform: uppercase; color: rgba(255,255,255,0.75);
+        }
+        .lobby-roster-head .c {
+            font-size: 12px; color: rgba(255,255,255,0.45);
+            font-variant-numeric: tabular-nums; letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        /* Hero grid — refined roster cards */
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 18px;
+        }
+        .hero-card {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 3px; overflow: hidden;
+            text-decoration: none; color: #fff;
+            transition: transform .25s ease, border-color .25s, box-shadow .25s;
+            position: relative;
+        }
+        .hero-card:hover {
+            border-color: rgba(6,182,212,0.5);
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 8px 32px rgba(6,182,212,0.18), 0 0 0 1px rgba(6,182,212,0.3);
+        }
+        .hero-card-img {
+            width: 100%; aspect-ratio: 1;
+            object-fit: cover; background: rgba(255,255,255,0.03);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; font-weight: 700;
+        }
+        .hero-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .hero-card-body {
+            padding: 10px 12px;
+            font-family: var(--mono);
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        .hero-card-name {
+            font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            color: rgba(255,255,255,0.8); font-weight: 500;
+        }
+        .hero-card-remove {
+            position: absolute; top: 8px; right: 8px;
+            width: 22px; height: 22px; border-radius: 50%;
+            background: rgba(0,0,0,0.7); border: 1px solid rgba(239,68,68,0.7); cursor: pointer;
+            color: #ef4444; font-size: 14px; line-height: 1;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity .15s;
+        }
+        .hero-card:hover .hero-card-remove { opacity: 1; }
+
+        .empty-heroes {
+            padding: 60px 20px; text-align: center;
+            font-family: var(--mono); font-size: 11px;
+            letter-spacing: 0.25em; text-transform: uppercase;
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* Load / not-connected / not-found (JS sets display:flex) */
+        .state-box {
+            text-align: center; padding: 100px 20px; color: rgba(255,255,255,0.6);
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        .state-box h2 {
+            font-size: 28px; font-weight: 700; color: #fff;
+            letter-spacing: 0.2em; text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        .state-box p { font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; color: rgba(255,255,255,0.5); text-transform: uppercase; }
+
+        /* CTA — HUD outline, cyan glow */
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 12px 28px; border-radius: 2px;
+            background: transparent;
+            color: #06b6d4; font-family: var(--mono);
+            font-size: 11px; font-weight: 600;
+            letter-spacing: 0.3em; text-transform: uppercase;
+            text-decoration: none; cursor: pointer;
+            border: 1px solid rgba(6,182,212,0.5);
+            transition: all .2s;
+            margin-top: 28px;
+        }
+        .btn-primary:hover {
+            color: #fff; background: rgba(6,182,212,0.08);
+            border-color: #06b6d4;
+            box-shadow: 0 0 28px rgba(6,182,212,0.28);
+        }
+
+        /* Bottom Bar — fixed API-key HUD */
+        .lobby-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 14px 28px;
+            display: flex; align-items: center; gap: 18px;
+            font-family: var(--mono);
+            z-index: 50;
+            animation: lobby-bar-rise 600ms ease-out both;
+        }
+        @keyframes lobby-bar-rise {
+            from { transform: translateY(8px); opacity: 0; }
+            to   { transform: translateY(0); opacity: 1; }
+        }
+        .lobby-bar .bar-label {
+            font-size: 10.5px; letter-spacing: 0.35em;
+            text-transform: uppercase; color: rgba(255,255,255,0.45);
+            flex-shrink: 0;
+        }
+        .lobby-bar .bar-line { flex: 1; min-width: 0; }
+        .lobby-bar .key-row { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .lobby-bar .bar-line.muted {
+            color: rgba(255,255,255,0.45); font-size: 11px;
+            letter-spacing: 0.25em; text-transform: uppercase;
+        }
+
+        .api-key-display {
+            flex: 1; min-width: 0;
+            display: flex; align-items: center; gap: 12px;
+            background: transparent; border: 0; padding: 0;
+        }
+        .api-key-value {
+            font-family: var(--mono); font-size: 13px;
+            color: rgba(255,255,255,0.85); flex: 1; min-width: 0;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            letter-spacing: 0.04em;
+        }
+        .btn-copy, .btn-regenerate {
+            background: transparent; border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.7); padding: 6px 14px; border-radius: 2px;
+            font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.25em;
+            text-transform: uppercase; cursor: pointer;
+            transition: all .15s;
+            margin-top: 0; flex-shrink: 0;
+        }
+        .btn-copy:hover, .btn-regenerate:hover {
+            color: #06b6d4; border-color: rgba(6,182,212,0.5);
+            box-shadow: 0 0 18px rgba(6,182,212,0.18);
+        }
+        .key-meta {
+            font-size: 10.5px; color: rgba(255,255,255,0.4);
+            letter-spacing: 0.14em; text-transform: uppercase;
+        }
+
+        /* Mobile collapse — natural grid, no separate layout */
+        @media (max-width: 900px) {
+            .dashboard-container { padding: 24px 16px 140px; }
+            .lobby-strip { margin-bottom: 36px; font-size: 10px; letter-spacing: 0.28em; }
+            .lobby-stage-row {
+                grid-template-columns: 1fr;
+                gap: 32px;
+                margin-bottom: 60px;
+                text-align: center;
+            }
+            .lobby-identity { text-align: center; order: 2; }
+            .lobby-stage { order: 1; }
+            .lobby-metrics { order: 3; max-width: 420px; margin: 0 auto; width: 100%; }
+            .lobby-identity .badges { justify-content: center; }
+            .lobby-identity .title { font-size: 30px; }
+            .hero-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+            .lobby-bar { padding: 10px 14px; gap: 10px; flex-wrap: wrap; }
+            .lobby-bar .bar-label { display: none; }
+            .lobby-bar .key-row { flex-wrap: wrap; }
+            .btn-copy, .btn-regenerate { padding: 6px 10px; font-size: 9.5px; }
+            .api-key-value { font-size: 12px; }
+            .state-box { padding: 60px 20px; }
+            .state-box h2 { font-size: 22px; }
+            .countdown-banner { margin: 0 0 32px; }
+        }
+    </style>
+</head>
+
+<body class="lobby-page">
+    <div id="header-placeholder"></div>
+    <main>
+        <div class="dashboard-container">
+
+            <!-- Loading -->
+            <div id="state-loading" class="state-box">
+                <div class="model-spinner" style="margin:0 auto 20px;"></div>
+                <p>Loading</p>
+            </div>
+
+            <!-- Not connected -->
+            <div id="state-not-connected" style="display:none;" class="state-box">
+                <h2>Connect Wallet</h2>
+                <p>Connect the wallet tied to this game.</p>
+            </div>
+
+            <!-- No game found -->
+            <div id="state-no-game" style="display:none;" class="state-box">
+                <h2>Not Found</h2>
+                <p>This game doesn't exist or you don't have access.</p>
+                <a href="/pages/profile.html" class="btn-primary">Profile</a>
+            </div>
+
+            <!-- Dashboard content -->
+            <div id="dash-content" style="display:none;">
+
+                <!-- Top strip — breadcrumb HUD -->
+                <nav class="lobby-strip" aria-label="Breadcrumb">
+                    <a href="/pages/profile.html">Profile</a>
+                    <span class="sep">▸</span>
+                    <span class="curr" id="dash-slug"></span>
+                </nav>
+
+                <!-- Stage row: identity ▏ subject ▏ live metrics -->
+                <section class="lobby-stage-row">
+
+                    <aside class="lobby-identity">
+                        <div class="title" id="dash-title"></div>
+                        <div class="badges" id="dash-badges"></div>
+                    </aside>
+
+                    <div class="lobby-stage">
+                        <div class="lobby-brackets" aria-hidden="true"><b class="tl"></b><b class="tr"></b><b class="bl"></b><b class="br"></b></div>
+                        <div class="game-identity-icon" id="dash-icon"></div>
+                    </div>
+
+                    <aside id="dash-cloud-section" style="display:none;">
+                        <div class="lobby-metrics">
+                            <div class="lobby-metric">
+                                <span class="label">Sessions</span>
+                                <span class="val" id="dash-cloud-sessions">0</span>
+                            </div>
+                            <div class="lobby-metric">
+                                <span class="label">Servers</span>
+                                <span class="val" id="dash-cloud-nodes">0</span>
+                            </div>
+                            <div class="lobby-metric">
+                                <span class="label">Quality</span>
+                                <span class="val" id="dash-cloud-quality">—</span>
+                            </div>
+                            <div class="lobby-metric">
+                                <span class="label">Health</span>
+                                <span class="val"><span id="dash-cloud-health" class="health-pill">—</span></span>
+                            </div>
+                        </div>
+                    </aside>
+
+                </section>
+
+                <!-- Countdown (pending) -->
+                <div id="dash-countdown" class="countdown-banner" style="display:none;">
+                    <span id="dash-countdown-text">Goes live in …</span>
+                </div>
+
+                <!-- Roster -->
+                <section>
+                    <header class="lobby-roster-head">
+                        <span class="h">Roster</span>
+                        <span class="c" id="dash-hero-count"></span>
+                    </header>
+                    <div id="dash-heroes-loading" class="empty-heroes">Loading</div>
+                    <div class="hero-grid" id="dash-hero-grid" style="display:none;"></div>
+                    <div id="dash-heroes-empty" class="empty-heroes" style="display:none;">No DexHeros linked</div>
+                </section>
+
+                <!-- Bottom Bar — API key HUD -->
+                <div class="lobby-bar">
+                    <span class="bar-label">Key</span>
+                    <div id="dash-key-loading" class="bar-line muted">Loading</div>
+                    <div id="dash-key-content" class="bar-line" style="display:none;">
+                        <div class="key-row">
+                            <div class="api-key-display">
+                                <span class="api-key-value" id="dash-key-value"></span>
+                                <button class="btn-copy" onclick="copyApiKey()">Copy</button>
+                            </div>
+                            <button class="btn-regenerate" onclick="regenerateKey()">Regenerate</button>
+                            <span class="key-meta" id="dash-key-meta"></span>
+                        </div>
+                    </div>
+                    <div id="dash-no-key" class="bar-line" style="display:none;">
+                        <div class="key-row">
+                            <span class="muted" style="letter-spacing:0.25em;text-transform:uppercase;font-size:11px;">No key yet</span>
+                            <button class="btn-primary" onclick="generateFirstKey()" style="margin-top:0;padding:8px 20px;">Generate</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+    <div id="footer-placeholder"></div>
+    <div id="modals-placeholder"></div>
+
+    <script src="../components/header.js"></script>
+    <script src="../components/footer.js"></script>
+    <script src="../components/modals.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="../supabase-config.js"></script>
+    <script>
+        let _game = null;
+        let _apiKey = null; // raw key (only available right after generation)
+        let _keyPrefix = null;
+        let _keyId = null;
+        let _keyCreatedAt = null;
+        let _gameId = null;
+
+        function show(id) {
+            ['state-loading','state-not-connected','state-no-game','dash-content'].forEach(s => {
+                const el = document.getElementById(s);
+                if (el) el.style.display = s === id ? (id === 'dash-content' ? 'block' : 'flex') : 'none';
+            });
+        }
+
+        function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+        function sanitizeUrl(u) { if (!u) return '#'; try { const p = new URL(u); return (p.protocol === 'https:' || p.protocol === 'http:') ? u : '#'; } catch { return '#'; } }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            _gameId = params.get('gameId');
+            setTimeout(init, 350);
+            window.addEventListener('walletConnected', () => init());
+            window.addEventListener('walletChanged',   () => init());
+        });
+
+        async function init() {
+            if (!_gameId) { show('state-no-game'); return; }
+            const wallet = sessionStorage.getItem('walletAddress');
+            const isConn = sessionStorage.getItem('walletConnected') === 'true';
+            if (!isConn || !wallet) { show('state-not-connected'); return; }
+            show('state-loading');
+
+            try {
+                await window.DexHeroSupabase.init();
+                const supabase = window.DexHeroSupabase.get();
+                if (!supabase) { show('state-not-connected'); return; }
+
+                const { data: game } = await supabase
+                    .from('registered_games')
+                    .select('*')
+                    .eq('id', _gameId)
+                    .eq('owner_wallet', wallet.toLowerCase())
+                    .not('status', 'eq', 'deactivated')
+                    .single();
+
+                if (!game) { show('state-no-game'); return; }
+                _game = game;
+
+                show('dash-content');
+                renderIdentity();
+                await Promise.all([loadApiKey(), loadHeroes(), loadCloudStats()]);
+            } catch (e) {
+                console.error(e);
+                show('state-no-game');
+            }
+        }
+
+        // ── Game identity ─────────────────────────────────────────────────────
+        function renderIdentity() {
+            const g = _game;
+            document.title = `${g.title} — DexHero`;
+
+            // Icon
+            const iconEl = document.getElementById('dash-icon');
+            if (g.icon_url) {
+                iconEl.innerHTML = `<img src="${sanitizeUrl(g.icon_url)}" alt="">`;
+            } else {
+                iconEl.textContent = g.title.charAt(0).toUpperCase();
+            }
+
+            document.getElementById('dash-title').textContent = g.title;
+            document.getElementById('dash-slug').textContent  = `/${g.slug}`;
+
+            // Badges
+            const tierClass = `badge-tier-${g.tier || 'bronze'}`;
+            const tierLabel = { gold: 'Gold', silver: 'Silver', bronze: 'Bronze' }[g.tier] || 'Bronze';
+            const now = new Date();
+            const isLive = g.status === 'active' || (g.status === 'pending' && g.goes_live_at && new Date(g.goes_live_at) <= now);
+            const statusClass = g.status === 'active' ? 'badge-live' : g.status === 'blocked' ? 'badge-blocked' : 'badge-pending';
+            const statusLabel = g.status === 'active' ? 'Live' : g.status === 'blocked' ? 'Blocked' : 'Pending';
+            document.getElementById('dash-badges').innerHTML =
+                `<span class="badge ${tierClass}">${escHtml(tierLabel)}</span>
+                 <span class="badge ${statusClass}">${statusLabel}</span>`;
+
+            // Countdown banner
+            if (!isLive && g.goes_live_at) {
+                const countdownEl = document.getElementById('dash-countdown');
+                const textEl      = document.getElementById('dash-countdown-text');
+                countdownEl.style.display = 'flex';
+                (function tick() {
+                    const diff = new Date(g.goes_live_at) - new Date();
+                    if (diff <= 0) { textEl.textContent = 'Going live soon…'; return; }
+                    const h = Math.floor(diff / 3600000);
+                    const m = Math.floor((diff % 3600000) / 60000);
+                    const s = Math.floor((diff % 60000) / 1000);
+                    textEl.textContent = `Your game goes live in ${h}h ${m}m ${s}s`;
+                    setTimeout(tick, 1000);
+                })();
+            }
+        }
+
+        // ── API Key ──────────────────────────────────────────────────────────
+        async function loadApiKey() {
+            try {
+                const resp = await fetch(`/api/game/keys?wallet=${encodeURIComponent(sessionStorage.getItem('walletAddress').toLowerCase())}`);
+                const data = await resp.json();
+                const keys = (data.keys || []).filter(k => k.game_id === _gameId);
+                document.getElementById('dash-key-loading').style.display = 'none';
+                if (!keys.length) {
+                    document.getElementById('dash-no-key').style.display = 'block';
+                    return;
+                }
+                const key = keys[0];
+                _keyPrefix  = key.key_prefix;
+                _keyId      = key.id;
+                _keyCreatedAt = key.created_at;
+                showKeyDisplay(_keyPrefix + '••••••••••••••••', key.created_at, key.last_used_at);
+            } catch (e) {
+                document.getElementById('dash-key-loading').textContent = 'Failed to load key.';
+            }
+        }
+
+        function showKeyDisplay(displayVal, createdAt, lastUsed) {
+            document.getElementById('dash-key-content').style.display = 'block';
+            document.getElementById('dash-key-value').textContent = displayVal;
+            const created = createdAt ? new Date(createdAt).toLocaleDateString() : '—';
+            const used    = lastUsed  ? new Date(lastUsed).toLocaleDateString()  : 'Never';
+            document.getElementById('dash-key-meta').textContent = `Created ${created} · Last used ${used}`;
+        }
+
+        async function copyApiKey() {
+            const val = document.getElementById('dash-key-value').textContent;
+            if (val.includes('•')) { alert('The full key was only shown once at registration. Regenerate to get a new one.'); return; }
+            await navigator.clipboard.writeText(val);
+            const btn = document.querySelector('.btn-copy');
+            btn.textContent = 'Copied!';
+            setTimeout(() => btn.textContent = 'Copy', 1800);
+        }
+
+        async function regenerateKey() {
+            if (!confirm('This will invalidate your current key. Any integrations using it will break until updated. Continue?')) return;
+            await callKeyEndpoint('/api/game/keys/generate');
+        }
+
+        async function generateFirstKey() {
+            await callKeyEndpoint('/api/game/keys/generate');
+        }
+
+        async function callKeyEndpoint(endpoint) {
+            try {
+                if (!window.DexHeroBlockchain?.signer) { alert('Connect your wallet first.'); return; }
+                const wallet  = window.DexHeroBlockchain.userAddress;
+                const message = `DexHero API Key — ${Date.now()}`;
+                const sig     = await window.DexHeroBlockchain.signer.signMessage(message);
+                const resp = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ walletAddress: wallet, signature: sig, message, gameId: _gameId })
+                });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Failed');
+
+                // Show the full raw key once
+                const rawKey = data.apiKey;
+                document.getElementById('dash-no-key').style.display   = 'none';
+                document.getElementById('dash-key-loading').style.display = 'none';
+                document.getElementById('dash-key-content').style.display = 'block';
+                document.getElementById('dash-key-value').textContent = rawKey;
+                document.getElementById('dash-key-meta').textContent  = 'Copy this key now — it won\'t be shown again.';
+                document.getElementById('dash-key-value').style.color = '#60a5fa';
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        // ── Connected DexHeros ────────────────────────────────────────────────
+        async function loadCloudStats() {
+            if (!_game || !_game.cloud_gaming_enabled) return;
+            document.getElementById('dash-cloud-section').style.display = 'block';
+            try {
+                const resp = await fetch(`/api/cloud/availability?gameId=${encodeURIComponent(_game.id)}`);
+                if (!resp.ok) return;
+                const d = await resp.json();
+                if (d.activeSessions != null) document.getElementById('dash-cloud-sessions').textContent = d.activeSessions;
+                if (d.availableNodes != null) document.getElementById('dash-cloud-nodes').textContent = d.availableNodes;
+                if (d.avgQuality) document.getElementById('dash-cloud-quality').textContent = d.avgQuality;
+                const hEl = document.getElementById('dash-cloud-health');
+                if (d.health === 'green') { hEl.style.background = 'rgba(74,222,128,0.15)'; hEl.style.color = '#4ade80'; hEl.textContent = 'GREEN'; }
+                else if (d.health === 'yellow') { hEl.style.background = 'rgba(251,191,36,0.15)'; hEl.style.color = '#fbbf24'; hEl.textContent = 'YELLOW'; }
+                else if (d.health === 'red') { hEl.style.background = 'rgba(239,68,68,0.15)'; hEl.style.color = '#ef4444'; hEl.textContent = 'RED'; }
+            } catch (e) { console.warn('Cloud stats load error:', e); }
+        }
+
+        async function loadHeroes() {
+            try {
+                const supabase = window.DexHeroSupabase.get();
+                const { data: links } = await supabase
+                    .from('game_token_links')
+                    .select('token_id, linked_at')
+                    .eq('game_id', _gameId)
+                    .order('linked_at', { ascending: false });
+
+                document.getElementById('dash-heroes-loading').style.display = 'none';
+
+                if (!links || !links.length) {
+                    document.getElementById('dash-heroes-empty').style.display = 'block';
+                    return;
+                }
+
+                const tokenIds = links.map(l => l.token_id);
+                const { data: tokens } = await supabase
+                    .from('tokens')
+                    .select('id, name, image_url, manager_address')
+                    .in('id', tokenIds);
+
+                const tokenMap = {};
+                (tokens || []).forEach(t => { tokenMap[t.id] = t; });
+                document.getElementById('dash-hero-count').textContent = `${links.length} connected`;
+                document.getElementById('dash-hero-grid').style.display = 'grid';
+                document.getElementById('dash-hero-grid').innerHTML = links.map(l => {
+                    const t = tokenMap[l.token_id];
+                    if (!t) return '';
+                    return `
+                    <a class="hero-card" href="/pages/token-detail.html?address=${escHtml(t.manager_address || '')}" title="${escHtml(t.name)}">
+                        <div class="hero-card-img">
+                            ${t.image_url
+                                ? `<img src="${sanitizeUrl(t.image_url)}" alt="${escHtml(t.name)}">`
+                                : escHtml(t.name.charAt(0))}
+                        </div>
+                        <div class="hero-card-body">
+                            <div class="hero-card-name">${escHtml(t.name)}</div>
+                        </div>
+                        <button class="hero-card-remove" onclick="removeHero(event,'${escHtml(l.token_id)}')" title="Remove">×</button>
+                    </a>`;
+                }).join('');
+            } catch (e) {
+                document.getElementById('dash-heroes-loading').textContent = 'Failed to load DexHeros.';
+            }
+        }
+
+        async function removeHero(e, tokenId) {
+            e.preventDefault(); e.stopPropagation();
+            if (!confirm('Remove this DexHero from your game?')) return;
+            try {
+                if (!window.DexHeroBlockchain?.signer) { alert('Connect your wallet first.'); return; }
+                const wallet  = window.DexHeroBlockchain.userAddress;
+                const message = `DexHero Game Link — ${Date.now()}`;
+                const sig     = await window.DexHeroBlockchain.signer.signMessage(message);
+                const resp = await fetch('/api/game/tokens/unlink', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ walletAddress: wallet, signature: sig, message, tokenId, gameId: _gameId })
+                });
+                if (!resp.ok) throw new Error((await resp.json()).error || 'Failed');
+                await loadHeroes();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+    </script>
+</body>
+</html>

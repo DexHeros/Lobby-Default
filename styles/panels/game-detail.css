@@ -1,0 +1,682 @@
+/* Game-detail panel — Steam "pick profile / character to play as" picker.
+   Surfaces everything Steam exposes for the (steamId, appid) pair so the
+   user can choose what to launch into before entering the game. */
+
+.td-steam-profile {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 14px;
+    border: 1px solid var(--rule, rgba(255, 255, 255, 0.10));
+    border-radius: 10px;
+    background: linear-gradient(180deg,
+        rgba(102, 192, 244, 0.05) 0%,
+        rgba(0, 0, 0, 0) 100%);
+    margin-bottom: 14px;
+}
+.td-steam-profile__id {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+.td-steam-profile__avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(102, 192, 244, 0.55);
+    box-shadow: 0 0 12px rgba(102, 192, 244, 0.18);
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.td-steam-profile__avatar--placeholder {
+    background: var(--surf-2, rgba(255, 255, 255, 0.04));
+    color: rgba(255, 255, 255, 0.85);
+}
+.td-steam-profile__avatar--placeholder .td-steam-fallback {
+    width: 60%;
+    height: 60%;
+}
+.td-steam-profile__meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.td-steam-profile__name {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    color: var(--ink-0, #fff);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.td-steam-profile__stats {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.10em;
+    color: var(--ink-3, rgba(255, 255, 255, 0.55));
+    text-transform: uppercase;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.td-steam-profile__ach {
+    margin-top: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.td-steam-profile__ach-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.td-steam-profile__ach-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #66c0f4 0%, #1a9fff 100%);
+    box-shadow: 0 0 8px rgba(102, 192, 244, 0.40);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+}
+.td-steam-profile__ach-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.10em;
+    color: var(--ink-3, rgba(255, 255, 255, 0.55));
+    text-transform: uppercase;
+}
+.td-steam-profile .hud-btn--primary {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+}
+
+/* Section blocks (DexHeros / Characters / Inventory) */
+.td-steam-section {
+    margin-top: 18px;
+}
+.td-steam-section__title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ink-2, rgba(255, 255, 255, 0.65));
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--rule, rgba(255, 255, 255, 0.08));
+}
+
+/* Tile grid */
+.td-steam-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+}
+.td-steam-grid--small {
+    grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+    gap: 6px;
+}
+.td-steam-tile {
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+    border: 1px solid var(--rule, rgba(255, 255, 255, 0.10));
+    border-radius: 4px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--ink-0, #fff);
+    transition: border-color var(--dur-sm), box-shadow var(--dur-sm), transform var(--dur-sm);
+}
+.td-steam-tile:hover {
+    border-color: rgba(102, 192, 244, 0.55);
+    box-shadow: 0 0 12px rgba(102, 192, 244, 0.18);
+    transform: translateY(-1px);
+}
+.td-steam-tile__img {
+    aspect-ratio: 1;
+    background: var(--surf-1, rgba(255, 255, 255, 0.02));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.td-steam-tile__img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.td-steam-tile__initial {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: rgba(255, 255, 255, 0.85);
+}
+.td-steam-tile__initial .td-steam-fallback {
+    width: 50%;
+    height: 50%;
+}
+.td-steam-tile__name {
+    padding: 6px 8px 2px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.td-steam-tile__sub {
+    padding: 0 8px 8px;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--ink-3, rgba(255, 255, 255, 0.55));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.td-steam-tile__sub--rarity {
+    color: #66c0f4;
+}
+.td-steam-tile--inv .td-steam-tile__img {
+    background: linear-gradient(180deg,
+        rgba(102, 192, 244, 0.08) 0%,
+        rgba(0, 0, 0, 0) 100%);
+}
+
+/* ═══ Game landing-page chrome ═══════════════════════════════════════
+   The game-detail panel acts as the developer's landing card. Single
+   560px column, but each section is treated as a discrete "frame" so
+   the eye reads:
+     ┌─ HERO BANNER (art + title + status LED) ─┐
+     │  STAT ROW (genre · price · release · hosts)
+     ├─ ABOUT ─┤  (short synopsis)
+     ├─ SERVERS · TOP REGIONS ─┤  (3 mini rows + ping)
+     ├─ PICK A PROFILE ─┤  (DexHero / Steam profile picker)
+     ├─ SCREENSHOTS ─┤  (horizontal scroll strip)
+     └─ COMMUNITY ROSTER (first-party only) ─┘
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Hero banner ───────────────────────────────────────────────────── */
+.td-hero {
+    margin-bottom: 22px;
+}
+.td-hero__frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/7.5;       /* Matches Steam header_image (460×215) */
+    overflow: hidden;
+    border-radius: 2px;
+    background: linear-gradient(135deg, rgba(6, 9, 18, 0.95), rgba(6, 9, 18, 0.8));
+    border: 1px solid rgba(102, 192, 244, 0.15);
+    box-shadow:
+        inset 0 0 80px rgba(0, 0, 0, 0.5),
+        0 0 24px rgba(6, 182, 212, 0.08);
+}
+.td-hero__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.85);
+}
+.td-hero__img--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display, 'Inter'), system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 80px;
+    color: var(--ink-3, rgba(255, 255, 255, 0.40));
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(168, 85, 247, 0.05));
+}
+.td-hero__scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+        rgba(0, 0, 0, 0) 0%,
+        rgba(0, 0, 0, 0.35) 55%,
+        rgba(6, 9, 18, 0.92) 100%);
+    pointer-events: none;
+}
+/* Corner brackets — reuses the stream overlay element from host-play-hud.css */
+.td-hero__corners {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+.td-hero__corners .hpd-stream__bracket { width: 18px; height: 18px; }
+.td-hero__corners .hpd-stream__bracket--tl { top: 8px; left: 8px; }
+.td-hero__corners .hpd-stream__bracket--tr { top: 8px; right: 8px; }
+.td-hero__corners .hpd-stream__bracket--bl { bottom: 8px; left: 8px; }
+.td-hero__corners .hpd-stream__bracket--br { bottom: 8px; right: 8px; }
+
+.td-hero__overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 16px 20px 18px;
+    z-index: 2;
+}
+.td-hero__overlay .hpd-eyebrow {
+    margin-bottom: 8px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+.td-hero__title {
+    font-family: var(--font-display, 'Inter'), system-ui, sans-serif;
+    font-size: clamp(22px, 3.2vw, 28px);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: #fff;
+    margin: 0;
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.8),
+        0 0 24px rgba(0, 0, 0, 0.5);
+}
+.td-byline {
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.78);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ── About / synopsis (click-to-expand) ─────────────────────────────── */
+.td-about-section { margin-bottom: 18px; }
+.td-about__toggle {
+    all: unset;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    cursor: pointer;
+    margin: 22px 0 14px;
+}
+.td-about__toggle:focus-visible {
+    outline: 1px solid var(--acc-cyan, #06b6d4);
+    outline-offset: 2px;
+}
+.td-about__toggle:hover .hpd-divider__tag {
+    color: var(--ink-0, #fff);
+    border-color: rgba(102, 192, 244, 0.45);
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.18);
+}
+.td-about__chev {
+    display: inline-block;
+    margin-left: 6px;
+    color: var(--acc-cyan, #06b6d4);
+    transition: transform var(--dur-sm, 0.18s);
+    font-size: 10px;
+}
+.td-about-section--expanded .td-about__chev {
+    transform: rotate(180deg);
+}
+.td-about {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.7;
+    letter-spacing: 0.02em;
+    color: var(--ink-1, rgba(255, 255, 255, 0.78));
+    margin: 0;
+    /* Collapsed by default — the divider line is all you see until the
+       user clicks it. Expanding reveals the full description. */
+    display: none;
+}
+.td-about-section--expanded .td-about {
+    display: block;
+    margin: 10px 0 14px;
+}
+
+/* ── Profile picker (click-to-expand) ───────────────────────────────── */
+.td-profile-section { margin-bottom: 18px; }
+.td-profile__toggle {
+    all: unset;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    cursor: pointer;
+    margin: 22px 0 14px;
+}
+.td-profile__toggle:focus-visible {
+    outline: 1px solid var(--acc-cyan, #06b6d4);
+    outline-offset: 2px;
+}
+.td-profile__toggle:hover .hpd-divider__tag {
+    color: var(--ink-0, #fff);
+    border-color: rgba(102, 192, 244, 0.45);
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.18);
+}
+.td-profile-section [data-my-heroes] {
+    display: none;       /* Collapsed by default — toggle expands it */
+}
+.td-profile-section--expanded [data-my-heroes] {
+    display: block;
+}
+.td-profile-section--expanded .td-about__chev {
+    transform: rotate(180deg);
+}
+
+/* Selected tile highlight — applied imperatively after the click capture. */
+.td-profile-tile--selected {
+    border-color: var(--acc-cyan, #06b6d4) !important;
+    box-shadow: 0 0 14px rgba(6, 182, 212, 0.28) !important;
+}
+
+/* ═══ Steam sign-in button ═════════════════════════════════════════════
+   Brand-correct sign-in surface that fits between Valve's official
+   button style and the V3 HUD vocabulary. Steam-navy gradient base,
+   cyan rim, Steam logo on the left, two-tier label ("SIGN IN THROUGH"
+   small + "STEAM" big bold), chevron on the right. Hover inverts to a
+   cyan-fill that lifts. Used in the Pick-a-profile section when the
+   user hasn't yet authenticated through Steam. */
+.td-steam-signin-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;        /* button sizes to content, centered */
+    gap: 10px;
+    padding: 6px 0;
+}
+.td-steam-signin {
+    all: unset;
+    box-sizing: border-box;
+    display: inline-grid;
+    grid-template-columns: auto auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    cursor: pointer;
+    border: 1px solid rgba(102, 192, 244, 0.55);
+    border-radius: 2px;
+    background:
+        linear-gradient(180deg,
+            rgba(35, 65, 92, 0.96) 0%,
+            rgba(27, 40, 56, 0.96) 60%,
+            rgba(23, 26, 33, 0.96) 100%);
+    color: #fff;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 0 18px rgba(6, 182, 212, 0.10);
+    transition: background var(--dur-sm), border-color var(--dur-sm), box-shadow var(--dur-sm), transform var(--dur-sm), color var(--dur-sm);
+}
+.td-steam-signin:hover {
+    /* Subtle lift — keep the Steam-navy base, just lighten the gradient
+       a touch and brighten the border. No color invert. */
+    background:
+        linear-gradient(180deg,
+            rgba(46, 80, 110, 0.96) 0%,
+            rgba(32, 48, 68, 0.96) 60%,
+            rgba(26, 32, 42, 0.96) 100%);
+    border-color: rgba(102, 192, 244, 0.85);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 0 16px rgba(6, 182, 212, 0.16);
+    transform: translateY(-1px);
+}
+.td-steam-signin:active   { transform: translateY(0); }
+.td-steam-signin:focus-visible {
+    outline: none;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.10),
+        0 0 0 2px rgba(102, 192, 244, 0.55);
+}
+
+.td-steam-signin__icon {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.32);
+    color: #66c0f4;          /* Steam cyan */
+    flex-shrink: 0;
+    transition: background var(--dur-sm), color var(--dur-sm);
+}
+.td-steam-signin:hover .td-steam-signin__icon {
+    background: rgba(0, 0, 0, 0.24);
+}
+
+.td-steam-signin__label {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    min-width: 0;
+    line-height: 1;
+    text-align: left;
+}
+.td-steam-signin__top {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-2, rgba(255, 255, 255, 0.65));
+    transition: color var(--dur-sm);
+}
+.td-steam-signin__brand {
+    font-family: var(--font-display, 'Inter'), system-ui, sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #fff;
+    transition: color var(--dur-sm);
+}
+
+.td-steam-signin__chev {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #66c0f4;
+    transition: transform var(--dur-sm), color var(--dur-sm);
+}
+.td-steam-signin:hover .td-steam-signin__chev {
+    transform: translateX(3px);
+}
+
+.td-steam-signin__note {
+    margin: 0;
+    padding: 0 4px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    line-height: 1.55;
+    letter-spacing: 0.06em;
+    color: var(--ink-3, rgba(255, 255, 255, 0.55));
+    text-align: center;
+}
+
+/* ═══ Vertical slot-machine strip ═══════════════════════════════════════
+   One profile-row visible at the center; the row above and below peek
+   through top/bottom mask gradients so the user can tell there's more
+   to scroll. Snap-Y locks each scroll step to a single row, giving the
+   slot-machine "tick" feel. Up/down chevron buttons sit on the right
+   edge as an explicit affordance alongside native wheel/touch scroll.
+
+   Tile design is rebuilt as a horizontal row inside this container —
+   small image on the left, name + sub label on the right. This is the
+   natural list-item layout for a vertical wheel; tiles outside this
+   strip continue to use the original vertical card layout. */
+.td-steam-strip-wrap {
+    position: relative;
+    margin: 0;
+}
+.td-steam-strip--slot {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    /* 1 main row (92px) + 2 peeks (~32px each) ≈ 156px container.
+       padding lets the first/last row snap-center cleanly. */
+    height: 156px;
+    padding: 32px 0;
+    box-sizing: content-box;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    /* Slot-machine fade mask — center row sharp, edges fade to peek. */
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 24%, #000 76%, transparent 100%);
+            mask-image: linear-gradient(180deg, transparent 0%, #000 24%, #000 76%, transparent 100%);
+}
+.td-steam-strip--slot::-webkit-scrollbar { display: none; }
+
+/* Each row tile — horizontal list-item layout, full strip width. */
+.td-steam-strip--slot > .td-steam-tile {
+    flex: 0 0 92px;
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: 64px 1fr;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    box-sizing: border-box;
+    scroll-snap-align: center;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.015);
+    transition: background var(--dur-sm), border-color var(--dur-sm), box-shadow var(--dur-sm);
+}
+.td-steam-strip--slot > .td-steam-tile:hover {
+    background: rgba(102, 192, 244, 0.06);
+    border-color: rgba(102, 192, 244, 0.32);
+}
+.td-steam-strip--slot > .td-steam-tile .td-steam-tile__img {
+    width: 64px;
+    height: 64px;
+    aspect-ratio: 1;
+    border-radius: 3px;
+}
+.td-steam-strip--slot > .td-steam-tile .td-steam-tile__name {
+    padding: 0;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    text-transform: none;
+}
+.td-steam-strip--slot > .td-steam-tile .td-steam-tile__sub {
+    padding: 0;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+}
+
+/* Right-edge nav (up + down chevrons stacked) */
+.td-steam-strip__nav {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    z-index: 3;
+    pointer-events: none;        /* let the strip take wheel events */
+}
+.td-steam-strip__arrow {
+    pointer-events: auto;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(6, 9, 18, 0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(102, 192, 244, 0.32);
+    border-radius: 50%;
+    color: var(--ink-1, rgba(255, 255, 255, 0.85));
+    cursor: pointer;
+    padding: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+    transition: color var(--dur-sm), border-color var(--dur-sm), background var(--dur-sm), transform var(--dur-sm);
+}
+.td-steam-strip__arrow:hover {
+    color: var(--acc-cyan, #06b6d4);
+    border-color: var(--acc-cyan, #06b6d4);
+    box-shadow: 0 0 14px rgba(6, 182, 212, 0.30);
+}
+.td-steam-strip__arrow[hidden] { display: none; }
+
+/* When the section title sits directly above, give it a little breathing
+   room from the strip's first row. */
+.td-steam-section .td-steam-strip-wrap { margin-top: 4px; }
+
+/* ── Screenshots strip ──────────────────────────────────────────────── */
+.td-shots {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 6px;
+    margin: 0 0 18px;
+    scroll-snap-type: x mandatory;
+    /* Hide scrollbar visually but keep it functional */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(102, 192, 244, 0.3) transparent;
+}
+.td-shots::-webkit-scrollbar { height: 4px; }
+.td-shots::-webkit-scrollbar-track { background: transparent; }
+.td-shots::-webkit-scrollbar-thumb { background: rgba(102, 192, 244, 0.3); border-radius: 2px; }
+
+.td-shots__tile {
+    flex: 0 0 auto;
+    width: 200px;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: border-color var(--dur-sm), box-shadow var(--dur-sm), transform var(--dur-sm);
+    scroll-snap-align: start;
+    cursor: pointer;
+}
+.td-shots__tile:hover {
+    border-color: rgba(102, 192, 244, 0.55);
+    box-shadow: 0 0 14px rgba(6, 182, 212, 0.22);
+    transform: translateY(-2px);
+}
+.td-shots__tile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* ── Region preview row (anchor instead of button) ──────────────────── */
+.td-regions a.hpd-server-row {
+    text-decoration: none;
+    color: inherit;
+}
+.td-regions a.hpd-server-row:hover {
+    transform: translateX(2px);
+}
+
+/* ── Mobile tweaks ──────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    .td-hero__frame   { aspect-ratio: 16/8.5; }
+    .td-hero__title   { font-size: 20px; }
+    .td-shots__tile   { width: 160px; }
+}
+
+/* Small-phone polish */
+@media (max-width: 360px) {
+    .td-hero__title   { font-size: 17px; }
+    .td-shots__tile   { width: 140px; }
+}
